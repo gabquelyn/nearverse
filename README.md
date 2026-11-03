@@ -79,6 +79,9 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 - Crash damage, driving fuel and location are reported by the browser, so a modified client could skip those costs or build a stall without driving there.
 - Resource positions are hidden from the map, not secret: this is open source, so they can be read from `packages/economy/generated/rules.json`, and a script could gather without driving.
 - `leaderboard` scans up to 200 players. Approvals in NEP-245 aren't implemented.
+- Phones get a thumb stick and pedals in landscape. Android switches by itself after a tap. iPhones ask you to turn the phone, because Safari doesn't let pages lock the screen.
+- The profile page has a faucet of 1 test NEAR per account every 2 hours, paid by the treasury. Its limits live in server memory, so a restart resets them.
+- Export wallet shows a guest's private key. A sign-in wallet has no key to reveal, so export adds a new full-access key from a fresh seed phrase.
 - Guest play keeps a throwaway full-access key in the browser for a faucet-funded testnet account. It isn't suitable for real value.
 
 ## Layout

@@ -5,6 +5,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 import { serverPublicConfig } from "@/lib/near/config";
 export const metadata = { title: "Nearverse", description: "Drive a truck, gather materials and trade with merchants whose prices follow supply." };
+export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" as const };
 // Rendered per request so settings can change without rebuilding the image.
 export const dynamic = "force-dynamic";
 

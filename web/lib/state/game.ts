@@ -271,7 +271,7 @@ export const useGame = create<State>((set, get) => ({
     }
     if (s.session?.kind === "login") {
       // A signed-in player's game key can't attach NEAR, so each purchase takes one approval.
-      try { const auth = await import("../near/login"); await auth.requestBuyCredits(amount, () => {}); } catch (e) { get().say(String((e as Error).message ?? e), true); }
+      try { const auth = await import("../near/login"); await auth.requestBuyCredits(amount); } catch (e) { get().say(String((e as Error).message ?? e), true); }
       return;
     }
     try {

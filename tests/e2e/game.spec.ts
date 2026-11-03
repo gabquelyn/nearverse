@@ -175,3 +175,32 @@ test("sign-in explains itself when no contract is set", async ({ page }) => {
   await expect(page.getByText("Sign-in needs a deployed contract")).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Google/ })).toBeDisabled();
 });
+
+test("a phone drives with a thumb stick and pedals, and asks for landscape", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  await page.goto("/play");
+  await ready(page);
+  const speed = () => page.evaluate(() => (window as never as { __nearverse: { truck: { speed: number } } }).__nearverse.truck.speed);
+  await expect(page.getByTestId("stick")).toBeVisible();
+  await expect(page.getByText("Turn your phone sideways")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Show details" })).toBeVisible();
+  // Two real thumbs at once: the gas pedal and the stick pushed to the right.
+  const cdp = await ctx.newCDPSession(page);
+  const centre = async (l: import("@playwright/test").Locator) => { const b = (await l.boundingBox())!; return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; };
+  const g = await centre(page.getByRole("button", { name: "Gas" })), st = await centre(page.getByTestId("stick"));
+  const yaw = () => page.evaluate(() => (window as never as { __nearverse: { truck: { yaw: number } } }).__nearverse.truck.yaw);
+  const before = await yaw();
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: g.x, y: g.y, id: 1 }, { x: st.x, y: st.y, id: 2 }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: g.x, y: g.y, id: 1 }, { x: st.x + 40, y: st.y, id: 2 }] });
+  await expect.poll(speed, { timeout: 20_000 }).toBeGreaterThan(3);
+  await expect.poll(async () => Math.abs((await yaw()) - before), { timeout: 20_000 }).toBeGreaterThan(0.1);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect.poll(() => page.evaluate(() => (window as never as { __nearverse: { keys: Set<string> } }).__nearverse.keys.size)).toBe(0);
+  await ctx.close();
+  const upright = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const tall = await upright.newPage();
+  await tall.goto("/play");
+  await expect(tall.getByText("Turn your phone sideways")).toBeVisible();
+  await upright.close();
+});

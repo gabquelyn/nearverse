@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
-import { ITEM_COLOR, keys, truck } from "./world";
+import { ITEM_COLOR, keys, stick, truck } from "./world";
 import { sfx } from "./sound";
 import { sky } from "./daynight";
 import { buildVehicle, type VehicleModel } from "./vehicleModel";
@@ -89,7 +89,7 @@ export function Truck() {
     const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q), side = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const v = b.linvel(), t = b.translation();
     const speed = v.x * fwd.x + v.z * fwd.z, grounded = t.y < 1.2;
-    const up = keys.has("KeyW") || keys.has("ArrowUp"), down = keys.has("KeyS") || keys.has("ArrowDown");
+    const up = keys.has("KeyW") || keys.has("ArrowUp") || stick.y > 0.35, down = keys.has("KeyS") || keys.has("ArrowDown") || stick.y < -0.35;
     const left = keys.has("KeyA") || keys.has("ArrowLeft"), right = keys.has("KeyD") || keys.has("ArrowRight"), boost = keys.has("ShiftLeft") || keys.has("ShiftRight");
     const player = useGame.getState().player, healthPct = player.durability / v0.endurance;
     if (grounded) {
@@ -104,7 +104,7 @@ export function Truck() {
       const lateral = (v.x * side.x + v.z * side.z) * Math.exp(-8 * d);
       b.setLinvel({ x: fwd.x * along + side.x * lateral, y: v.y, z: fwd.z * along + side.z * lateral }, true);
     }
-    const steer = (left ? 1 : 0) - (right ? 1 : 0);
+    const steer = THREE.MathUtils.clamp((left ? 1 : 0) - (right ? 1 : 0) - stick.x, -1, 1);
     smoothSteer.current = THREE.MathUtils.lerp(smoothSteer.current, steer, 1 - Math.exp(-d * 10));
     b.setAngvel({ x: 0, y: smoothSteer.current * 2.4 * Math.min(1, Math.abs(speed) / 5) * (speed >= 0 ? 1 : -1), z: 0 }, true);
     if (keys.has("KeyR") || t.y < -8) { b.setTranslation(START, true); b.setLinvel({ x: 0, y: 0, z: 0 }, true); b.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true); keys.delete("KeyR"); }

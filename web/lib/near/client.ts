@@ -29,9 +29,14 @@ export function base58ToHex(s: string): string {
 /** An implicit NEAR account id is the hex of its ed25519 public key. */
 export const implicitAccountId = (publicKey: string) => base58ToHex(publicKey.replace(/^ed25519:/, ""));
 
+/** Long implicit ids become 053a49...9f27ef. Named accounts stay readable. */
+export const shortAccount = (id: string) => (id.length > 20 ? `${id.slice(0, 6)}...${id.slice(-6)}` : id);
+
 const reader = () => new Near({ network: NETWORK, rpcUrl: RPC_URL } as ConstructorParameters<typeof Near>[0]);
 const signer = (s: Session) => new Near({ network: NETWORK, rpcUrl: RPC_URL, privateKey: s.secretKey as `ed25519:${string}`, defaultSignerId: s.accountId } as ConstructorParameters<typeof Near>[0]);
 
+/** Spendable NEAR, or null if the account doesn't exist yet. */
+export const fetchBalance = (accountId: string) => reader().getBalance(accountId).catch(() => null);
 export const fetchMarket = () => reader().view<Market>(CONTRACT, "get_market", {});
 export const fetchGenesis = () => reader().view<number>(CONTRACT, "get_genesis_ms", {});
 export const fetchPlayer = (accountId: string) => reader().view<Player | null>(CONTRACT, "get_player", { account_id: accountId });
@@ -55,6 +60,13 @@ export async function createGuest(): Promise<Session> {
   const session: Session = { accountId, secretKey: key.secretKey, kind: "guest" };
   saveSession(session);
   return session;
+}
+
+/** Sends 1 test NEAR. Returns when another can be taken, as a timestamp. */
+export async function dripNear(accountId: string): Promise<{ nextAt?: number; error?: string }> {
+  const res = await fetch("/api/drip", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accountId }) });
+  const body = await res.json().catch(() => ({ error: "Test funds are unavailable right now." }));
+  return res.ok ? { nextAt: body.nextAt } : { nextAt: body.nextAt, error: body.error };
 }
 
 export const explorerTx = (hash: string) => `https://testnet.nearblocks.io/txns/${hash}`;

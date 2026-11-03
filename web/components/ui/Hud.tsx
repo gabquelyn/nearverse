@@ -9,6 +9,7 @@ import { LotPanel } from "./StallPanel";
 import { TopMap } from "./WorldMap";
 import { timeLabel } from "../world/daynight";
 import { gatherBar } from "../world/world";
+import { isTouch } from "@/lib/landscape";
 
 const Stats = memo(function Stats() {
   const player = useGame((s) => s.player), tick = useGame((s) => s.market.tick), act = useGame((s) => s.act);
@@ -52,7 +53,7 @@ function GatherPrompt({ index }: { index: number }) {
   useEffect(() => { gatherBar.el = bar.current; return () => { gatherBar.el = null; }; }, []);
   return (
     <div className="prompt">
-      You found a {node.name.toLowerCase()}: hold E to load {node.yield_qty} {c.items[node.item].name.toLowerCase()}
+      You found a {node.name.toLowerCase()}: hold {isTouch() ? "Load" : "E"} to load {node.yield_qty} {c.items[node.item].name.toLowerCase()}
       <div style={{ fontWeight: 400, fontSize: 13 }}>{left} left, uses {burn} fuel{node.wear ? ` and ${node.wear} truck wear` : ""}</div>
       <div className="bar"><i ref={bar} style={{ width: 0 }} /></div>
     </div>
@@ -89,19 +90,21 @@ const KEY = "nearverse.hudOpen";
 /** Everything except what you need in the moment can be hidden, for a clear view of the world. */
 export const Hud = memo(function Hud() {
   const [open, setOpen] = useState(true);
-  useEffect(() => { try { if (localStorage.getItem(KEY) === "0") setOpen(false); } catch { /* use the default */ } }, []);
+  useEffect(() => { try { const saved = localStorage.getItem(KEY); if (saved === "0" || (saved === null && isTouch())) setOpen(false); } catch { /* use the default */ } }, []);
   const toggle = useCallback((next?: boolean) => setOpen((o) => { const v = next ?? !o; try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* not remembered */ } return v; }), []);
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.code === "Tab" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); toggle(); } };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, [toggle]);
+  const [canFull, setCanFull] = useState(false);
+  useEffect(() => setCanFull(Boolean(document.documentElement.requestFullscreen)), []); // iPhones have no full screen for web pages
   const fullscreen = () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else document.documentElement.requestFullscreen?.().catch(() => {}); };
   return (
     <>
       <div className="hudbar">
-        <button className="btn small" aria-expanded={open} onClick={() => toggle()}>{open ? "Hide details (Tab)" : "Show details (Tab)"}</button>
-        <button className="btn small ghost" onClick={fullscreen}>Full screen</button>
+        <button className="btn small" aria-expanded={open} onClick={() => toggle()}>{open ? "Hide details" : "Show details"}</button>
+        {canFull && <button className="btn small ghost" onClick={fullscreen}>Full screen</button>}
       </div>
       {open && <><Stats /><nav className="links" aria-label="Pages"><Clock /><Link href="/profile">Shop and profile</Link><Link href="/judge">Judge view</Link></nav><TopMap /><Banner /><Mode /></>}
       <Toast />
