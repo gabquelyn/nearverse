@@ -1,9 +1,9 @@
-// Testnet drip: 1 NEAR per account every 2 hours, paid by the treasury. Limits live in memory, so a restart resets them.
+// Testnet drip: 1 NEAR per account every 10 minutes, paid by the treasury. Limits live in memory, so a restart resets them.
 import { NextResponse } from "next/server";
 import { Near } from "near-kit";
 
 const YOCTO = "1000000000000000000000000";
-const WINDOW = 2 * 60 * 60_000;
+const WINDOW = 10 * 60_000;
 const HOURLY_CAP = 12; // stops a burst of made-up accounts emptying the treasury
 const seen = new Map<string, number>();
 let recent: number[] = [];

@@ -73,7 +73,7 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 
 ## Known limits
 
-- **Google or email sign-in doesn't work on the hosted demo yet.** Testnet uses NEAR Auth's shared login, which only returns to addresses on its own allowed list. That list includes `http://localhost:3000` but not our Vercel address. Judges can play as a guest on the hosted demo, or run the app locally on port 3000 to try sign-in ([DEPLOY.md](DEPLOY.md)).
+- **Google or email sign-in doesn't work on the hosted demo yet.** Testnet uses NEAR Auth's shared login, which only returns to addresses on its own allowed list. That list includes `http://localhost:3000` but not our Vercel address, and only the NEAR Auth team can change it, so the hosted site shows an invalid callback URL error. Judges can play as a guest on the hosted demo, or run the app locally on port 3000 to try sign-in ([DEPLOY.md](DEPLOY.md)).
 - **The contract can't verify driving.** A script could call `gather` without driving. The limits are on-chain: node stock, a per-player cooldown, fuel, wear and cargo space. `take_damage` and `burn_fuel` can only hurt the player who reports them.
 - **Credits and coins can't be withdrawn yet.** NEAR paid for credits stays with the game, which removes the reason to farm with scripts.
 - **The contract pays storage** for player records, which is fine for a testnet game but would need a fee on mainnet.
@@ -81,7 +81,7 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 - Resource positions are hidden from the map, not secret: this is open source, so they can be read from `packages/economy/generated/rules.json`, and a script could gather without driving.
 - `leaderboard` scans up to 200 players. Approvals in NEP-245 aren't implemented.
 - Phones get a right-hand thumb stick that steers from the vehicle's point of view, plus Gas, in landscape. Android switches by itself after a tap. iPhones ask you to turn the phone, because Safari doesn't let pages lock the screen.
-- The profile page has a faucet of 1 test NEAR per account every 2 hours, paid by the treasury. Its limits live in server memory, so a restart resets them.
+- The profile page has a faucet of 1 test NEAR per account every 10 minutes, paid by the treasury. Its limits live in server memory, so a restart resets them.
 - Export wallet shows a guest's private key. A sign-in wallet has no key to reveal, so export adds a new full-access key from a fresh seed phrase.
 - Guest play keeps a throwaway full-access key in the browser for a faucet-funded testnet account. It isn't suitable for real value.
 

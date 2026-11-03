@@ -39,7 +39,7 @@ function Wallet({ accountId }: { accountId: string }) {
     <div className="wallet">
       <div><small>NEAR balance</small><b data-testid="near-balance">{balance === undefined ? "..." : balance ?? "0"}</b></div>
       <button className="btn" disabled={busy || wait > 0} onClick={drip}>{busy ? "Sending" : wait > 0 ? `Next in ${waitText(wait)}` : "Get 1 test NEAR"}</button>
-      <small className="muted">One free test NEAR every 2 hours.</small>
+      <small className="muted">One free test NEAR every 10 minutes.</small>
     </div>
   );
 }
