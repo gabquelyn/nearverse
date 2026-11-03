@@ -104,6 +104,7 @@ export const Hud = memo(function Hud() {
     <>
       <div className="hudbar">
         <button className="btn small" aria-expanded={open} onClick={() => toggle()}>{open ? "Hide details" : "Show details"}</button>
+        <Link className="btn small phone-only" href="/profile">Profile</Link>
         {canFull && <button className="btn small ghost" onClick={fullscreen}>Full screen</button>}
       </div>
       {open && <><Stats /><nav className="links" aria-label="Pages"><Clock /><Link href="/profile">Shop and profile</Link><Link href="/judge">Judge view</Link></nav><TopMap /><Banner /><Mode /></>}

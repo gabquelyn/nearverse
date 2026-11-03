@@ -89,7 +89,8 @@ export function Truck() {
     const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q), side = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const v = b.linvel(), t = b.translation();
     const speed = v.x * fwd.x + v.z * fwd.z, grounded = t.y < 1.2;
-    const up = keys.has("KeyW") || keys.has("ArrowUp") || stick.y > 0.35, down = keys.has("KeyS") || keys.has("ArrowDown") || stick.y < -0.35;
+    // The phone stick works from the vehicle's point of view: up goes, down reverses, left and right turn. Turning needs movement, so a sideways push also rolls forward.
+    const up = keys.has("KeyW") || keys.has("ArrowUp") || stick.y > 0.35 || (Math.abs(stick.x) > 0.35 && stick.y > -0.35), down = keys.has("KeyS") || keys.has("ArrowDown") || stick.y < -0.35;
     const left = keys.has("KeyA") || keys.has("ArrowLeft"), right = keys.has("KeyD") || keys.has("ArrowRight"), boost = keys.has("ShiftLeft") || keys.has("ShiftRight");
     const player = useGame.getState().player, healthPct = player.durability / v0.endurance;
     if (grounded) {

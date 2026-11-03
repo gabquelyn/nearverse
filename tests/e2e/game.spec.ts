@@ -176,7 +176,7 @@ test("sign-in explains itself when no contract is set", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Continue with Google/ })).toBeDisabled();
 });
 
-test("a phone drives with a thumb stick and pedals, and asks for landscape", async ({ browser }) => {
+test("a phone steers from the vehicle's view with a right-hand stick, and asks for landscape", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   await page.goto("/play");
@@ -185,22 +185,53 @@ test("a phone drives with a thumb stick and pedals, and asks for landscape", asy
   await expect(page.getByTestId("stick")).toBeVisible();
   await expect(page.getByText("Turn your phone sideways")).toBeHidden();
   await expect(page.getByRole("button", { name: "Show details" })).toBeVisible();
-  // Two real thumbs at once: the gas pedal and the stick pushed to the right.
+  // The stick works from the vehicle's point of view, whichever way it faces, and the camera follows behind it.
   const cdp = await ctx.newCDPSession(page);
-  const centre = async (l: import("@playwright/test").Locator) => { const b = (await l.boundingBox())!; return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; };
-  const g = await centre(page.getByRole("button", { name: "Gas" })), st = await centre(page.getByTestId("stick"));
-  const yaw = () => page.evaluate(() => (window as never as { __nearverse: { truck: { yaw: number } } }).__nearverse.truck.yaw);
-  const before = await yaw();
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: g.x, y: g.y, id: 1 }, { x: st.x, y: st.y, id: 2 }] });
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: g.x, y: g.y, id: 1 }, { x: st.x + 40, y: st.y, id: 2 }] });
-  await expect.poll(speed, { timeout: 20_000 }).toBeGreaterThan(3);
-  await expect.poll(async () => Math.abs((await yaw()) - before), { timeout: 20_000 }).toBeGreaterThan(0.1);
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await expect.poll(() => page.evaluate(() => (window as never as { __nearverse: { keys: Set<string> } }).__nearverse.keys.size)).toBe(0);
+  const box = (await page.getByTestId("stick").boundingBox())!, cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+  const state = () => page.evaluate(() => { const t = (window as never as { __nearverse: { truck: { yaw: number; speed: number; cameraYaw: number } } }).__nearverse.truck; return { yaw: t.yaw, speed: t.speed, cameraYaw: t.cameraYaw }; });
+  const gap = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+  const face = (a: number) => page.evaluate((y) => (window as never as { __nearverse: { teleport(x: number, z: number, yaw: number): void } }).__nearverse.teleport(300, 300, y), a);
+  const push = async (dx: number, dy: number, ok: (s: { turned: number; speed: number }) => boolean) => {
+    await page.waitForTimeout(300);
+    const from = (await state()).yaw;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: cx, y: cy, id: 1 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: cx + dx, y: cy + dy, id: 1 }] });
+    await expect.poll(async () => { const s = await state(); return ok({ turned: gap(s.yaw, from), speed: s.speed }); }, { timeout: 20_000 }).toBe(true);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+  for (const start of [0, Math.PI, Math.PI / 2, -Math.PI / 2]) {
+    await face(start);
+    await expect.poll(async () => Math.abs(gap((await state()).cameraYaw, start)), { timeout: 20_000 }).toBeLessThan(0.2);
+    await face(start); await push(45, 0, (s) => s.turned < -0.15); // right turns the vehicle to its right
+    await face(start); await push(-45, 0, (s) => s.turned > 0.15); // left turns it to its left
+    await face(start); await push(0, -45, (s) => s.speed > 2); // up goes forward
+    await face(start); await push(0, 45, (s) => s.speed < -2); // down reverses
+  }
+  const g = (await page.getByRole("button", { name: "Gas" }).boundingBox())!;
+  expect(g.x + g.width / 2).toBeLessThan(box.x);
+  await expect(page.getByRole("button", { name: /Horn|Jump|Boost|Brake/ })).toHaveCount(0);
+  const profile = page.getByRole("link", { name: "Profile" });
+  await expect(profile).toBeInViewport({ ratio: 1 });
+  await page.getByRole("button", { name: "Show details" }).tap();
+  await expect(profile).toBeInViewport({ ratio: 1 });
+  await profile.tap();
+  await expect(page).toHaveURL(/\/profile/);
   await ctx.close();
   const upright = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const tall = await upright.newPage();
   await tall.goto("/play");
   await expect(tall.getByText("Turn your phone sideways")).toBeVisible();
   await upright.close();
+});
+
+test("on a keyboard, left and right follow the vehicle and the camera stays behind it", async ({ page }) => {
+  await page.goto("/play");
+  await ready(page);
+  const state = () => page.evaluate(() => { const t = (window as never as { __nearverse: { truck: { yaw: number; cameraYaw: number } } }).__nearverse.truck; return { yaw: t.yaw, cameraYaw: t.cameraYaw }; });
+  const gap = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+  await page.evaluate(() => (window as never as { __nearverse: { teleport(x: number, z: number, yaw: number): void } }).__nearverse.teleport(300, 300, Math.PI));
+  await expect.poll(async () => Math.abs(gap((await state()).cameraYaw, Math.PI)), { timeout: 20_000 }).toBeLessThan(0.2);
+  await page.keyboard.down("KeyW"); await page.keyboard.down("KeyA");
+  await expect.poll(async () => gap((await state()).yaw, Math.PI), { timeout: 20_000 }).toBeGreaterThan(0.2);
+  await page.keyboard.up("KeyA"); await page.keyboard.up("KeyW");
 });

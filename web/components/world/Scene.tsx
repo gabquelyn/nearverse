@@ -67,9 +67,14 @@ function FollowCamera() {
     const portrait = size.width < size.height;
     // The lead follows smoothly, so a sudden stop at an obstacle doesn't jolt the view.
     lead.current = THREE.MathUtils.damp(lead.current, THREE.MathUtils.clamp(truck.speed * 0.3, -3, 8), 2.2, dt);
-    yaw.current = truck.yaw;
-    const target = new THREE.Vector3(truck.pos.x + Math.sin(yaw.current) * lead.current, 0, truck.pos.z + Math.cos(yaw.current) * lead.current);
-    const off = portrait ? new THREE.Vector3(0, 40, -30) : new THREE.Vector3(0, 28, -27);
+    // The camera swings round behind the vehicle, so left and right on screen are always the vehicle's left and right.
+    const turn = Math.atan2(Math.sin(truck.yaw - yaw.current), Math.cos(truck.yaw - yaw.current));
+    yaw.current += turn * (1 - Math.exp(-3.5 * dt));
+    truck.cameraYaw = yaw.current;
+    const sin = Math.sin(yaw.current), cos = Math.cos(yaw.current);
+    const target = new THREE.Vector3(truck.pos.x + Math.sin(truck.yaw) * lead.current, 0, truck.pos.z + Math.cos(truck.yaw) * lead.current);
+    const back = portrait ? 30 : 27;
+    const off = new THREE.Vector3(-sin * back, portrait ? 40 : 28, -cos * back);
     camera.position.x = THREE.MathUtils.damp(camera.position.x, target.x + off.x, 5, dt);
     camera.position.y = THREE.MathUtils.damp(camera.position.y, off.y, 5, dt);
     camera.position.z = THREE.MathUtils.damp(camera.position.z, target.z + off.z, 5, dt);

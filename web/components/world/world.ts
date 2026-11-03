@@ -6,9 +6,9 @@ export const HOME: [number, number] = [0, 0];
 export const PLOT: [number, number] = [0, -14];
 export const DRIVE_RADIUS = 1000;
 export const WORLD_SIZE = 2240; // the painted ground maps cover -1120..1120
-export const truck = { pos: new THREE.Vector3(0, 2, 0), yaw: 0, speed: 0 };
+export const truck = { pos: new THREE.Vector3(0, 2, 0), yaw: 0, speed: 0, cameraYaw: 0 };
 export const keys = new Set<string>();
-/** The phone thumb stick. x is right, y is forward, each from -1 to 1. */
+/** The phone thumb stick. x is the vehicle's right, y is its forward, each from -1 to 1. */
 export const stick = { x: 0, y: 0 };
 /** Written straight to the page, so loading a spot doesn't re-render the interface every frame. */
 export const gatherBar: { el: HTMLElement | null } = { el: null };

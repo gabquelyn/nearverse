@@ -24,7 +24,7 @@ A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` trac
 | Web game in practice mode, judge view, fast-forward | Tested in a browser against the web container |
 | Deployed contract on real testnet | **Not yet run.** See step B below |
 | Guest play, ghost traders on testnet | **Not yet run** |
-| NEAR Auth sign-in adding a game key (`/signin`) | **Not yet run.** Docs don't confirm that `AddKey` can be signed. Guest play is the fallback |
+| NEAR Auth sign-in adding a game key (`/signin`) | **Works on `http://localhost:3000`** against testnet. **Rejected on the hosted demo** (see Known limits). Guest play is the fallback |
 
 Contract account on testnet: *not deployed yet*. See DEPLOY.md.
 
@@ -73,13 +73,14 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 
 ## Known limits
 
+- **Google or email sign-in doesn't work on the hosted demo yet.** Testnet uses NEAR Auth's shared login, which only returns to addresses on its own allowed list. That list includes `http://localhost:3000` but not our Vercel address. Judges can play as a guest on the hosted demo, or run the app locally on port 3000 to try sign-in ([DEPLOY.md](DEPLOY.md)).
 - **The contract can't verify driving.** A script could call `gather` without driving. The limits are on-chain: node stock, a per-player cooldown, fuel, wear and cargo space. `take_damage` and `burn_fuel` can only hurt the player who reports them.
 - **Credits and coins can't be withdrawn yet.** NEAR paid for credits stays with the game, which removes the reason to farm with scripts.
 - **The contract pays storage** for player records, which is fine for a testnet game but would need a fee on mainnet.
 - Crash damage, driving fuel and location are reported by the browser, so a modified client could skip those costs or build a stall without driving there.
 - Resource positions are hidden from the map, not secret: this is open source, so they can be read from `packages/economy/generated/rules.json`, and a script could gather without driving.
 - `leaderboard` scans up to 200 players. Approvals in NEP-245 aren't implemented.
-- Phones get a thumb stick and pedals in landscape. Android switches by itself after a tap. iPhones ask you to turn the phone, because Safari doesn't let pages lock the screen.
+- Phones get a right-hand thumb stick that steers from the vehicle's point of view, plus Gas, in landscape. Android switches by itself after a tap. iPhones ask you to turn the phone, because Safari doesn't let pages lock the screen.
 - The profile page has a faucet of 1 test NEAR per account every 2 hours, paid by the treasury. Its limits live in server memory, so a restart resets them.
 - Export wallet shows a guest's private key. A sign-in wallet has no key to reveal, so export adds a new full-access key from a fresh seed phrase.
 - Guest play keeps a throwaway full-access key in the browser for a faucet-funded testnet account. It isn't suitable for real value.
@@ -87,5 +88,9 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 ## Layout
 
 `Dockerfile`, `compose.yaml` every build, test and deploy command. `config/` rules. `contracts/nearverse/` Rust contract. `packages/economy/` pure TypeScript rules, simulation and tooltips. `web/` Next.js app (`/` landing, `/play`, `/judge`, `/profile`, `/spike`). `scripts/` generation, deploy, smoke tests, ghost traders. `tests/e2e/` browser tests.
+
+## Third-party code and AI disclosure
+
+Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
 
 License: MIT.

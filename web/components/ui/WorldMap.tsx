@@ -6,7 +6,7 @@ import { PRACTICE_ID, useGame } from "@/lib/state/game";
 import { DRIVE_RADIUS, REGIONS, biomeAt, biomeName, coast, truck } from "../world/world";
 
 const SPAN = 1140; // world units from the map's centre to its edge
-// The camera looks toward +z with +x on the left, so the map is drawn the same way round as the screen.
+// The map stays fixed with +z up and +x on the left, which is how the view starts. The player arrow shows the heading.
 const toPct = (x: number, z: number) => ({ left: 50 - (x / SPAN) * 50, top: 50 - (z / SPAN) * 50 });
 const KEY = "nearverse.mapOpen";
 

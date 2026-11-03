@@ -1,5 +1,5 @@
 "use client";
-// Phone controls: a thumb stick on the left, pedals and actions on the right. Each thumb is tracked on its own.
+// Phone controls: a thumb stick on the right that steers from the vehicle's point of view, and Gas on the left. Each thumb is tracked on its own.
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useGame } from "@/lib/state/game";
 import { canForceLandscape, enterLandscape } from "@/lib/landscape";
@@ -54,15 +54,11 @@ export function TouchControls() {
   }, []);
   return (
     <div className="touch">
-      <Stick />
       <div className="pad">
         <Hold code="KeyW" label="Gas" className="gas" />
-        <Hold code="KeyS" label="Brake" className="brake" />
-        <Hold code="ShiftLeft" label="Boost" className="boost" />
-        <Hold code="Space" label="Jump" className="jump" />
-        <Hold code="KeyH" label="Horn" className="horn" />
         {atNode && <Hold code="KeyE" label="Load" className="load" />}
       </div>
+      <Stick />
     </div>
   );
 }
