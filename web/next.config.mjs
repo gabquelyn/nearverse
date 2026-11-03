@@ -1,0 +1,1 @@
+export default { output: "standalone", devIndicators: false, transpilePackages: ["@nearverse/economy"], turbopack: { root: new URL("..", import.meta.url).pathname }, outputFileTracingRoot: new URL("..", import.meta.url).pathname };

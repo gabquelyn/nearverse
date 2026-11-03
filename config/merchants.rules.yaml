@@ -1,0 +1,75 @@
+# THE pricing rules. Contract, simulation and tooltips are all generated from this file.
+#
+#   price = base * (target_stock / current_stock) ^ k, clamped to floor..ceiling
+#   merchant pays you  = price * (1 + blueprint_premium) * (1 - spread)
+#   merchant charges you = price * (1 + spread)
+#
+# k is written in quarters so the contract can compute it exactly with integer
+# square roots. Allowed k_quarters: 1 (0.25), 2 (0.5), 3 (0.75), 4 (1), 6 (1.5), 8 (2).
+# Percentages are basis points: 100 bps = 1%.
+
+time:
+  tick_ms: 600000           # one market hour passes every 10 real minutes
+  max_catchup_ticks: 168    # one call catches up at most a market week
+
+price:
+  floor_bps: 3500           # never under 35% of base
+  ceiling_bps: 30000        # never over 300% of base
+
+merchants:
+  - id: hoarder
+    name: Hoarder
+    personality: Holds large stock, so prices move slowly
+    k_quarters: 2           # k = 0.5
+    spread_bps: 1000
+    premium_bps: 0
+    start_cash: 900000
+    cash_cap: 1200000
+    stipend: 1500           # coins from townsfolk each market hour, up to cash_cap
+    reversion_bps: 80       # stock drifts 0.8% toward target each hour
+    targets: { wood: 300, iron: 160, slate: 200, clay: 280, fuel: 240 }
+  - id: flipper
+    name: Flipper
+    personality: Tight spreads, reacts fast to stock changes
+    k_quarters: 6           # k = 1.5
+    spread_bps: 350
+    premium_bps: 0
+    start_cash: 300000
+    cash_cap: 500000
+    stipend: 1200
+    reversion_bps: 350
+    targets: { wood: 60, iron: 30, slate: 40, clay: 55, fuel: 50 }
+  - id: foreman
+    name: Foreman
+    personality: Builds to blueprints and pays extra for what the current one needs
+    k_quarters: 4           # k = 1
+    spread_bps: 600
+    premium_bps: 500        # must stay below spread_bps so buy-back loops lose money
+    start_cash: 500000
+    cash_cap: 800000
+    stipend: 1000
+    reversion_bps: 200
+    targets: { wood: 100, iron: 70, slate: 80, clay: 90, fuel: 40 }
+
+# Merchants learn. When stock stays outside the band, they change what they stock.
+adaptation:
+  every_ticks: 24
+  band_bps: 800             # react if stock is more than 8% away from target
+  step_bps: 500             # change the target by 5%
+  target_min_bps: 6000      # stay within 60% of the original target
+  target_max_bps: 16000     # and 160% of it
+
+# Foreman's current blueprint rotates through config/items.yaml blueprints.
+foreman_blueprint_period_ticks: 36
+
+# One event fires every period, cycling through the list. keep_bps scales every merchant's stock:
+# 5500 keeps 55% (a shortage), 15000 makes it 150% (a glut).
+events:
+  period_ticks: 30
+  duration_ticks: 8
+  list:
+    - { id: iron-shortage, title: Iron shortage, text: A caravan never arrived. Merchants lost iron., item: iron, keep_bps: 5500 }
+    - { id: timber-glut, title: Timber glut, text: Storm-felled trees flooded the market., item: wood, keep_bps: 15000 }
+    - { id: slate-slide, title: Slate slide, text: The cut collapsed and slate is scarce., item: slate, keep_bps: 6000 }
+    - { id: fuel-rush, title: Fuel rush, text: Everyone is driving. Fuel is running low., item: fuel, keep_bps: 6500 }
+    - { id: clay-flood, title: River flood, text: The river left clay everywhere., item: clay, keep_bps: 14000 }

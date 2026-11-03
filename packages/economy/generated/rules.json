@@ -1,0 +1,330 @@
+{
+ "tick_ms": 600000,
+ "max_catchup_ticks": 168,
+ "floor_bps": 3500,
+ "ceiling_bps": 30000,
+ "items": [
+  {
+   "id": "wood",
+   "name": "Wood",
+   "base_price": 800
+  },
+  {
+   "id": "iron",
+   "name": "Iron",
+   "base_price": 2000
+  },
+  {
+   "id": "slate",
+   "name": "Slate",
+   "base_price": 1400
+  },
+  {
+   "id": "clay",
+   "name": "Clay",
+   "base_price": 1000
+  },
+  {
+   "id": "fuel",
+   "name": "Fuel",
+   "base_price": 600
+  }
+ ],
+ "merchants": [
+  {
+   "id": "hoarder",
+   "name": "Hoarder",
+   "personality": "Holds large stock, so prices move slowly",
+   "k_quarters": 2,
+   "spread_bps": 1000,
+   "premium_bps": 0,
+   "start_cash": 900000,
+   "cash_cap": 1200000,
+   "stipend": 1500,
+   "reversion_bps": 80,
+   "targets": [
+    300,
+    160,
+    200,
+    280,
+    240
+   ]
+  },
+  {
+   "id": "flipper",
+   "name": "Flipper",
+   "personality": "Tight spreads, reacts fast to stock changes",
+   "k_quarters": 6,
+   "spread_bps": 350,
+   "premium_bps": 0,
+   "start_cash": 300000,
+   "cash_cap": 500000,
+   "stipend": 1200,
+   "reversion_bps": 350,
+   "targets": [
+    60,
+    30,
+    40,
+    55,
+    50
+   ]
+  },
+  {
+   "id": "foreman",
+   "name": "Foreman",
+   "personality": "Builds to blueprints and pays extra for what the current one needs",
+   "k_quarters": 4,
+   "spread_bps": 600,
+   "premium_bps": 500,
+   "start_cash": 500000,
+   "cash_cap": 800000,
+   "stipend": 1000,
+   "reversion_bps": 200,
+   "targets": [
+    100,
+    70,
+    80,
+    90,
+    40
+   ]
+  }
+ ],
+ "adapt_every_ticks": 24,
+ "adapt_band_bps": 800,
+ "adapt_step_bps": 500,
+ "adapt_min_bps": 6000,
+ "adapt_max_bps": 16000,
+ "blueprint_period_ticks": 36,
+ "event_period_ticks": 30,
+ "event_duration_ticks": 8,
+ "events": [
+  {
+   "id": "iron-shortage",
+   "title": "Iron shortage",
+   "text": "A caravan never arrived. Merchants lost iron.",
+   "item": 1,
+   "keep_bps": 5500
+  },
+  {
+   "id": "timber-glut",
+   "title": "Timber glut",
+   "text": "Storm-felled trees flooded the market.",
+   "item": 0,
+   "keep_bps": 15000
+  },
+  {
+   "id": "slate-slide",
+   "title": "Slate slide",
+   "text": "The cut collapsed and slate is scarce.",
+   "item": 2,
+   "keep_bps": 6000
+  },
+  {
+   "id": "fuel-rush",
+   "title": "Fuel rush",
+   "text": "Everyone is driving. Fuel is running low.",
+   "item": 4,
+   "keep_bps": 6500
+  },
+  {
+   "id": "clay-flood",
+   "title": "River flood",
+   "text": "The river left clay everywhere.",
+   "item": 3,
+   "keep_bps": 14000
+  }
+ ],
+ "nodes": [
+  {
+   "id": "birch-grove",
+   "item": 0,
+   "yield_qty": 3,
+   "max_stock": 60,
+   "regrow": 6,
+   "fuel_cost": 1,
+   "wear": 0,
+   "x": -26,
+   "z": -18
+  },
+  {
+   "id": "clay-pit",
+   "item": 3,
+   "yield_qty": 3,
+   "max_stock": 60,
+   "regrow": 6,
+   "fuel_cost": 1,
+   "wear": 0,
+   "x": 24,
+   "z": -22
+  },
+  {
+   "id": "pump-yard",
+   "item": 4,
+   "yield_qty": 2,
+   "max_stock": 40,
+   "regrow": 5,
+   "fuel_cost": 0,
+   "wear": 0,
+   "x": -6,
+   "z": 30
+  },
+  {
+   "id": "slate-cut",
+   "item": 2,
+   "yield_qty": 3,
+   "max_stock": 45,
+   "regrow": 4,
+   "fuel_cost": 2,
+   "wear": 3,
+   "x": 46,
+   "z": 22
+  },
+  {
+   "id": "old-iron-pit",
+   "item": 1,
+   "yield_qty": 3,
+   "max_stock": 40,
+   "regrow": 3,
+   "fuel_cost": 2,
+   "wear": 4,
+   "x": -48,
+   "z": 26
+  },
+  {
+   "id": "mine-field",
+   "item": 1,
+   "yield_qty": 7,
+   "max_stock": 35,
+   "regrow": 2,
+   "fuel_cost": 3,
+   "wear": 14,
+   "x": 8,
+   "z": -56
+  }
+ ],
+ "start_coins": 15000,
+ "start_fuel": 12,
+ "max_durability": 100,
+ "cargo_capacity": 24,
+ "gather_cooldown_ms": 3000,
+ "travel_ms": 8000,
+ "max_trade_qty": 50,
+ "repair_points_per_iron": 20,
+ "repair_cents_per_point": 10,
+ "cents_per_near": 100000,
+ "quest_period_ticks": 12,
+ "quest_gathers": 3,
+ "quest_reward_qty": 4,
+ "blueprints": [
+  {
+   "id": "shed",
+   "name": "Shed",
+   "sections": [
+    {
+     "needs": [
+      6,
+      0,
+      0,
+      0,
+      0
+     ],
+     "labor": 800
+    },
+    {
+     "needs": [
+      4,
+      0,
+      0,
+      4,
+      0
+     ],
+     "labor": 1000
+    }
+   ]
+  },
+  {
+   "id": "house",
+   "name": "House",
+   "sections": [
+    {
+     "needs": [
+      4,
+      0,
+      0,
+      8,
+      0
+     ],
+     "labor": 1500
+    },
+    {
+     "needs": [
+      8,
+      2,
+      0,
+      0,
+      0
+     ],
+     "labor": 1800
+    },
+    {
+     "needs": [
+      0,
+      2,
+      8,
+      0,
+      0
+     ],
+     "labor": 2200
+    }
+   ]
+  },
+  {
+   "id": "tower",
+   "name": "Signal tower",
+   "sections": [
+    {
+     "needs": [
+      0,
+      0,
+      8,
+      6,
+      0
+     ],
+     "labor": 2500
+    },
+    {
+     "needs": [
+      6,
+      8,
+      0,
+      0,
+      0
+     ],
+     "labor": 3000
+    },
+    {
+     "needs": [
+      0,
+      10,
+      6,
+      0,
+      0
+     ],
+     "labor": 3500
+    },
+    {
+     "needs": [
+      0,
+      12,
+      8,
+      0,
+      0
+     ],
+     "labor": 4500
+    }
+   ]
+  }
+ ],
+ "fuel_item": 4,
+ "iron_item": 1
+}

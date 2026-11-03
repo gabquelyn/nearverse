@@ -1,0 +1,54 @@
+# Item types. Every entry is one NEP-245 token id in the single game contract.
+# Prices are in cents: 100 cents = 1 coin.
+items:
+  - { id: wood,  name: Wood,  base_price: 800 }
+  - { id: iron,  name: Iron,  base_price: 2000 }
+  - { id: slate, name: Slate, base_price: 1400 }
+  - { id: clay,  name: Clay,  base_price: 1000 }
+  - { id: fuel,  name: Fuel,  base_price: 600 }
+
+# Gathering spots. The richest nodes cost the most wear because they sit near hazards.
+nodes:
+  - { id: birch-grove,  item: wood,  yield: 3, max_stock: 60, regrow: 6, fuel_cost: 1, wear: 0, x: -26, z: -18 }
+  - { id: clay-pit,     item: clay,  yield: 3, max_stock: 60, regrow: 6, fuel_cost: 1, wear: 0, x: 24,  z: -22 }
+  - { id: pump-yard,    item: fuel,  yield: 2, max_stock: 40, regrow: 5, fuel_cost: 0, wear: 0, x: -6,  z: 30 }
+  - { id: slate-cut,    item: slate, yield: 3, max_stock: 45, regrow: 4, fuel_cost: 2, wear: 3, x: 46,  z: 22 }
+  - { id: old-iron-pit, item: iron,  yield: 3, max_stock: 40, regrow: 3, fuel_cost: 2, wear: 4, x: -48, z: 26 }
+  - { id: mine-field,   item: iron,  yield: 7, max_stock: 35, regrow: 2, fuel_cost: 3, wear: 14, x: 8,  z: -56 }
+
+player:
+  start_coins: 15000
+  start_fuel: 12
+  max_durability: 100
+  cargo_capacity: 24         # units, fuel excluded
+  gather_cooldown_ms: 3000
+  travel_ms: 8000            # minimum time between trading with two different merchants
+  max_trade_qty: 50
+  repair_points_per_iron: 20 # one iron restores this many points
+  repair_cents_per_point: 10
+  cents_per_near: 100000     # deposit rate
+
+quests:
+  period_ticks: 12
+  gathers_required: 3
+  reward_qty: 4
+
+blueprints:
+  - id: shed
+    name: Shed
+    sections:
+      - { needs: { wood: 6 }, labor: 800 }
+      - { needs: { wood: 4, clay: 4 }, labor: 1000 }
+  - id: house
+    name: House
+    sections:
+      - { needs: { clay: 8, wood: 4 }, labor: 1500 }
+      - { needs: { wood: 8, iron: 2 }, labor: 1800 }
+      - { needs: { slate: 8, iron: 2 }, labor: 2200 }
+  - id: tower
+    name: Signal tower
+    sections:
+      - { needs: { slate: 8, clay: 6 }, labor: 2500 }
+      - { needs: { iron: 8, wood: 6 }, labor: 3000 }
+      - { needs: { iron: 10, slate: 6 }, labor: 3500 }
+      - { needs: { iron: 12, slate: 8 }, labor: 4500 }

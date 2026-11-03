@@ -1,0 +1,33 @@
+{
+  "name": "nearverse",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "web"
+  ],
+  "scripts": {
+    "gen": "tsx scripts/gen-contract-config.ts",
+    "fixtures": "tsx scripts/gen-fixtures.ts",
+    "test": "bash scripts/test-all.sh",
+    "smoke:wasm": "tsx scripts/wasm-smoke.ts",
+    "test:contract": "cargo test --locked --manifest-path contracts/nearverse/Cargo.toml",
+    "build:contract": "bash scripts/build-contract.sh",
+    "dev": "npm run gen && npm run dev -w web",
+    "build": "npm run gen && npm run build -w web",
+    "deploy:testnet": "tsx --env-file-if-exists=.env scripts/deploy-testnet.ts",
+    "ghosts": "tsx --env-file-if-exists=.env scripts/ghost-traders.ts",
+    "smoke:testnet": "tsx --env-file-if-exists=.env scripts/smoke-testnet.ts",
+    "test:all": "bash scripts/test-all.sh"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "yaml": "^2.5.0",
+    "near-kit": "0.20.2",
+    "binaryen": "132.0.0",
+    "@types/node": "^22"
+  }
+}

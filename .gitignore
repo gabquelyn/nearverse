@@ -1,0 +1,16 @@
+node_modules
+.next
+target
+.env
+.env.*
+!.env.example
+.env.local
+.ghost-keys.json
+*.log
+out
+test-results
+submission*.json
+.agents
+.claude
+*.tsbuildinfo
+playwright-report

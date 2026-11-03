@@ -1,0 +1,9 @@
+import rulesJson from "./generated/rules.json";
+import type { Config } from "./types";
+export const rules = rulesJson as unknown as Config;
+export * from "./types";
+export * from "./price";
+export * from "./tick";
+export * from "./actions";
+export * from "./explain";
+export * from "./simulate";

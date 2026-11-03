@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+**/target
+**/*.tsbuildinfo
+out
+.git
+.agents
+.claude
+.env
+.env.*
+!.env.example
+**/.env.local
+.ghost-keys.json
+test-results
+playwright-report

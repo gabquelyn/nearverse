@@ -1,0 +1,62 @@
+# `docker compose up --build` starts the web game. Everything else is a one-off command:
+#   docker compose run --build --rm test       all tests
+#   docker compose run --build --rm deploy     build and deploy the contract to testnet
+# Settings come from .env (optional for tests and practice mode).
+x-env: &env
+  env_file:
+    - path: .env
+      required: false
+
+x-ops: &ops
+  <<: *env
+  build: { context: ., target: ops }
+  profiles: [ops]
+
+services:
+  web:
+    <<: *env
+    build: { context: ., target: web }
+    ports: ["${WEB_PORT:-3000}:3000"]
+    restart: unless-stopped
+
+  test:
+    <<: *ops
+    command: npm run test:all
+
+  e2e:
+    build: { context: ., dockerfile: tests/e2e/Dockerfile }
+    profiles: [ops]
+    environment:
+      BASE_URL: http://web:3000
+    depends_on:
+      web: { condition: service_healthy }
+
+  deploy:
+    <<: *ops
+    command: npm run deploy:testnet
+
+  smoke:
+    <<: *ops
+    command: npm run smoke:testnet
+
+  ghosts:
+    <<: *ops
+    command: npm run ghosts
+    environment:
+      NEARVERSE_GHOST_KEY_FILE: /data/ghost-keys.json
+    volumes: [ghost-data:/data]
+
+  dev:
+    <<: *env
+    build: { context: ., target: source }
+    profiles: [dev]
+    command: npm run dev
+    ports: ["${WEB_PORT:-3000}:3000"]
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/web/node_modules
+      - /app/web/.next
+
+volumes:
+  ghost-data:
