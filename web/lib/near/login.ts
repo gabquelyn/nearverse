@@ -1,6 +1,6 @@
 // NEAR Auth (Google, Apple, email, passkeys) on testnet, adding a restricted session key.
 // STATUS: follows the published docs and SDK source, but has not yet run against real testnet. /signin reports each step.
-import { CONTRACT, SESSION_METHODS, implicitAccountId, saveSession } from "./client";
+import { CONTRACT, SESSION_METHODS, implicitAccountId, loadSession, saveSession } from "./client";
 import { generateKey } from "near-kit";
 import { publicConfig } from "./config";
 
@@ -10,7 +10,7 @@ const PENDING = "nearverse.pendingKey.v1";
 
 export const pendingKind = (): string | null => { try { const p = JSON.parse(localStorage.getItem(PENDING) ?? "null"); return p ? (p.kind ?? "key") : null; } catch { return null; } };
 
-async function setup() {
+async function load() {
   const [{ FastAuthClient, FastAuthSignature }, { JavascriptProvider }, nearApi] = await Promise.all([
     import("@fast-auth-near/browser-sdk"), import("@fast-auth-near/javascript-provider"), import("near-api-js"),
   ]);
@@ -19,6 +19,14 @@ async function setup() {
   const client = new FastAuthClient(provider as never, connection as never, { fastAuthContractId: "fast-auth.testnet", mpcContractId: "v1.signer-prod.testnet" } as never);
   return { client, provider, nearApi, connection, FastAuthSignature };
 }
+// One client per page. It keeps the signed-in user in memory, so a second client would see nobody signed in.
+let ready: ReturnType<typeof load> | undefined;
+const setup = () => (ready ??= load());
+
+// The SDK starts the redirect, then reads the user, who isn't known yet if this page load has no sign-in. The page is leaving, so that isn't a failure.
+const leaving = (start: Promise<unknown>) => start.catch((e: Error) => { if (e.message !== "USER_NOT_LOGGED_IN") throw e; });
+const leaveForApproval = (provider: Awaited<ReturnType<typeof setup>>["provider"], transaction: unknown) =>
+  leaving((provider.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: location.origin }));
 
 export async function login(log: (s: string) => void) {
   const { client, provider } = await setup();
@@ -29,7 +37,7 @@ export async function login(log: (s: string) => void) {
   }
   // A full-page redirect, because browsers often block popups opened after any waiting. The shared testnet login rejects /signin as a return address, so it returns to the home page, which forwards to /signin.
   log("Going to the sign-in page.");
-  await (client.login as (o: unknown) => Promise<unknown>)({ redirectUri: location.origin });
+  await leaving((client.login as (o: unknown) => Promise<unknown>)({ redirectUri: location.origin }));
   return null;
 }
 
@@ -58,15 +66,16 @@ function buildBuyCredits(nearApi: Awaited<ReturnType<typeof setup>>["nearApi"], 
 
 /** Buying credits attaches NEAR, which a game key can't do, so a signed-in player approves it once per purchase. */
 export async function requestBuyCredits(nearAmount: number, log: (s: string) => void) {
-  const { client, nearApi, connection } = await setup();
-  const signer = await client.getSigner();
-  const pub = (await signer.getPublicKey()).toString(), accountId = implicitAccountId(pub);
+  const { provider, nearApi, connection } = await setup();
+  const accountId = loadSession()?.accountId;
+  if (!accountId) throw new Error("Sign in first.");
+  const pub = `ed25519:${nearApi.utils.serialize.base_encode(Uint8Array.from(accountId.match(/../g)!.map((h) => parseInt(h, 16))))}`; // an implicit account's name is its key
   const keyInfo = await (connection.provider.query as (a: unknown) => Promise<{ nonce: number | bigint; block_hash: string }>)({ request_type: "view_access_key", finality: "final", account_id: accountId, public_key: pub });
   const yocto = BigInt(Math.round(nearAmount * 1e6)) * 10n ** 18n, nonce = BigInt(keyInfo.nonce) + 1n;
   const transaction = buildBuyCredits(nearApi, accountId, pub, yocto, nonce, nearApi.utils.serialize.base_decode(keyInfo.block_hash));
   localStorage.setItem(PENDING, JSON.stringify({ kind: "credits", accountId, pub, nonce: nonce.toString(), blockHash: keyInfo.block_hash, yocto: yocto.toString() }));
   log("Requesting one approval to buy credits.");
-  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: location.origin });
+  await leaveForApproval(provider, transaction);
 }
 
 /** A key that was just added takes a few seconds to appear in final state, and RPC nodes can lag behind that. */
@@ -84,17 +93,15 @@ async function waitForKey(provider: unknown, accountId: string, publicKey: strin
 
 /** Step 3: asks for the one approval. This usually redirects away and comes back to /signin. */
 export async function requestSessionKey(accountId: string, pub: string, log: (s: string) => void) {
-  const { client, nearApi, connection } = await setup();
-  const provider = connection.provider;
-  const keyInfo = await waitForKey(provider, accountId, pub);
+  const { provider, nearApi, connection } = await setup();
+  const keyInfo = await waitForKey(connection.provider, accountId, pub);
   const nonce = BigInt(keyInfo.nonce) + 1n;
   const session = generateKey();
   const blockHash = nearApi.utils.serialize.base_decode(keyInfo.block_hash);
   const transaction = buildAddKey(nearApi, accountId, pub, session.publicKey.toString(), nonce, blockHash);
   localStorage.setItem(PENDING, JSON.stringify({ accountId, pub, nonce: nonce.toString(), blockHash: keyInfo.block_hash, sessionPub: session.publicKey.toString(), sessionSecret: session.secretKey }));
   log("Requesting one approval to add the game key.");
-  const signer = await client.getSigner();
-  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: location.origin });
+  await leaveForApproval(provider, transaction);
 }
 
 export const clearPending = () => { try { localStorage.removeItem(PENDING); } catch { /* nothing stored */ } };
