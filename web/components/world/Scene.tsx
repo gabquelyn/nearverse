@@ -12,6 +12,7 @@ import { Grass, Trees, Weather, useTrees } from "./Foliage";
 import { Truck } from "./Truck";
 import { Benches, Lamps, LotSpot, Mines, NodeSpot, Obstacles, Plot, Scatter, Stall, TitleCrates, windowMat } from "./Props";
 import { Near } from "./Instances";
+import { OtherCars } from "./OtherCars";
 import { Waypoint } from "./Waypoint";
 import { FocusTracker, Tracks, WindLines } from "./effects";
 import { sfx } from "./sound";
@@ -221,6 +222,7 @@ export default function Scene() {
       <DayNight />
       {fonts && <World />}
       <Waypoint />
+      <OtherCars />
       <FocusTracker />
       {fonts && <><Tracks /><WindLines /></>}
       <FollowCamera />

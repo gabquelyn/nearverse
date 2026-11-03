@@ -214,6 +214,10 @@ test("a phone steers from the vehicle's view with a right-hand stick, and asks f
   await expect(profile).toBeInViewport({ ratio: 1 });
   await page.getByRole("button", { name: "Show details" }).tap();
   await expect(profile).toBeInViewport({ ratio: 1 });
+  await page.getByRole("button", { name: "Market" }).tap();
+  await expect(page.getByTestId("live-market")).toBeVisible();
+  await page.mouse.click(100, 150);
+  await expect(page.getByTestId("live-market")).toBeHidden();
   await profile.tap();
   await expect(page).toHaveURL(/\/profile/);
   await ctx.close();
@@ -234,4 +238,53 @@ test("on a keyboard, left and right follow the vehicle and the camera stays behi
   await page.keyboard.down("KeyW"); await page.keyboard.down("KeyA");
   await expect.poll(async () => gap((await state()).yaw, Math.PI), { timeout: 20_000 }).toBeGreaterThan(0.2);
   await page.keyboard.up("KeyA"); await page.keyboard.up("KeyW");
+});
+
+test("pressing outside closes panels and details, and the game explains its first loop", async ({ page }) => {
+  await page.goto("/play");
+  await ready(page);
+  await expect(page.getByTestId("coach")).toContainText("Find your first load");
+  await page.getByRole("button", { name: "Point me to one" }).click();
+  await expect(page.getByTestId("map")).toContainText("A hidden spot");
+  await page.getByRole("button", { name: "Market" }).click();
+  await expect(page.getByTestId("live-market")).toContainText("Merchant cash");
+  await move(page, -539.2, 339.5);
+  await expect(page.getByRole("region", { name: "Hoarder stall" })).toBeVisible({ timeout: 20_000 });
+  await page.mouse.click(500, 500);
+  await expect(page.getByTestId("live-market")).toBeHidden();
+  await expect(page.getByRole("region", { name: "Hoarder stall" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Show details" })).toBeVisible();
+  await page.waitForTimeout(800);
+  await expect(page.getByRole("region", { name: "Hoarder stall" })).toBeHidden();
+  await move(page, 0, 0);
+  await expect.poll(() => page.evaluate(() => (window as never as { __nearverse: { truck: { pos: { x: number } } } }).__nearverse.truck.pos.x > -50), { timeout: 20_000 }).toBe(true);
+  await page.waitForTimeout(1500); // the zone clears on the next check
+  await move(page, -539.2, 339.5);
+  await expect(page.getByRole("region", { name: "Hoarder stall" })).toBeVisible({ timeout: 20_000 });
+});
+
+test("other players and labeled ghost traders appear as they report in", async ({ page }) => {
+  await page.goto("/play");
+  await ready(page);
+  const inWorld = () => page.evaluate(() => (window as never as { __nearverse: { others: Map<string, unknown> } }).__nearverse.others.size);
+  await page.evaluate(() => {
+    const h = (window as never as { __nearverse: { ingest(n: string, d: unknown): void } }).__nearverse;
+    h.ingest("pos", { id: "a", n: "Driver 9f27", x: 6, z: 6, y: 1, v: 3, k: 1 });
+    h.ingest("trip", { id: "g", n: "Ghost 1 (simulated)", k: 0, fx: -8, fz: 8, tx: -8, tz: 30, at: Date.now(), ms: 8000 });
+    h.ingest("pos", { id: "bad", x: "nope" });
+  });
+  expect(await inWorld()).toBe(2);
+  await expect.poll(inWorld, { timeout: 40_000 }).toBe(1); // a player who stops reporting leaves; the ghost's trip stays
+});
+
+test("the game says plainly when moves are slow, the connection drops, or the key runs out", async ({ page }) => {
+  await page.goto("/play");
+  await ready(page);
+  const set = (state: object) => page.evaluate((v) => (window as never as { __nearverse: { game: { setState(s: object): void } } }).__nearverse.game.setState(v), state);
+  await set({ slow: true });
+  await expect(page.getByText("Still confirming your last move.")).toBeVisible();
+  await set({ slow: false, offline: true });
+  await expect(page.getByText("Connection lost. Reconnecting.")).toBeVisible();
+  await set({ offline: false, keyExpired: true });
+  await expect(page.getByRole("button", { name: "Approve a new one" })).toBeVisible();
 });

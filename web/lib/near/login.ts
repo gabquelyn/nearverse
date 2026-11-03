@@ -127,6 +127,12 @@ export async function requestExportKey(accountId: string) {
   await leaveForApproval(provider, transaction);
 }
 
+/** A game key's gas allowance can't be raised, so renewing adds a fresh key after one approval. */
+export async function requestRenewKey(accountId: string) {
+  const { nearApi } = await setup();
+  await requestSessionKey(accountId, implicitPublicKey(nearApi, accountId), () => {});
+}
+
 export const clearPending = () => { try { localStorage.removeItem(PENDING); } catch { /* nothing stored */ } };
 export const hasPending = () => { try { return Boolean(localStorage.getItem(PENDING)); } catch { return false; } };
 

@@ -145,6 +145,18 @@ canvas:focus { outline: none; }
 .exportbox { flex-basis: 100%; background: var(--surface-2); border-radius: 8px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px; } .exportbox > h3, .exportbox > p, .exportbox > .secret { flex-basis: 100%; margin: 0; }
 .btn.danger { background: var(--danger); color: #fff; box-shadow: none; }
 
+/* Live market, coach and status */
+.livepanel { position: absolute; right: 12px; bottom: 54px; width: min(420px, calc(100vw - 24px)); max-height: calc(100vh - 90px); overflow: auto; background: rgba(20, 46, 56, .97); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; z-index: 9; white-space: normal; }
+.livemarket { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+.livemarket h3 { font-size: 15px; margin-bottom: 6px; color: var(--accent); } .livemarket ul, .livemarket ol { margin: 0; padding-left: 18px; font-size: 14px; } .livemarket p { margin: 0; font-size: 14px; }
+.cashrow { display: grid; grid-template-columns: 1fr auto; font-size: 14px; margin-bottom: 7px; } .cashrow .gauge { grid-column: 1 / -1; width: 100%; }
+.coach { position: absolute; left: 12px; bottom: 76px; width: min(430px, calc(100vw - 24px)); display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; background: rgba(14, 34, 41, .94); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 12px; font-size: 14px; z-index: 6; } .coach span { flex: 1 1 220px; }
+.statusbar { position: absolute; left: 50%; top: 48px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 8px; padding: 5px 12px; font-size: 14px; z-index: 11; white-space: nowrap; } .statusbar.warn { background: #6f3d10; }
+.online { align-self: center; background: rgba(14, 34, 41, .88); border-radius: 6px; padding: 3px 8px; font-size: 13px; font-weight: 700; color: var(--good); } .online.bad { color: #ffb4a6; }
+.toast .btn { margin-left: 10px; }
+.tip-wrap.open .tip { display: block; }
+.pin.car { width: 6px; height: 6px; border-radius: 50%; background: #fff; transform: translate(-50%, -50%); pointer-events: none; } .pin.car.ghost { background: var(--accent); }
+
 /* Phone: full-screen controls */
 .touch, .turn, .phone-only { display: none; }
 @media (pointer: coarse) {
@@ -158,6 +170,9 @@ canvas:focus { outline: none; }
   .pad .gas { width: 92px; height: 92px; font-size: 17px; background: rgba(79, 214, 163, .55); }
   .pad .load { width: 76px; height: 76px; background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   .modebar { display: none; }
+  .tip-wrap.open .tip { position: fixed; left: 50%; right: auto; top: 8px; bottom: auto; transform: translateX(-50%); z-index: 70; }
+  .livepanel { top: 46px; bottom: 8px; left: 50%; right: auto; transform: translateX(-50%); width: min(50vw, 400px); max-height: none; }
+  .coach { left: 50%; bottom: 8px; transform: translateX(-50%); width: min(46vw, 400px); font-size: 13px; padding: 6px 9px; }
   .phone-only { display: inline-block; }
   .hudbar { white-space: nowrap; }
   .hudbar { right: auto; left: 50%; bottom: auto; top: 8px; transform: translateX(-50%); }

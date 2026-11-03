@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { rules as c } from "@nearverse/economy";
 import { PRACTICE_ID, useGame } from "@/lib/state/game";
+import { others as liveCars, type OtherCar } from "@/lib/realtime";
 import { DRIVE_RADIUS, REGIONS, biomeAt, biomeName, coast, truck } from "../world/world";
 
 const SPAN = 1140; // world units from the map's centre to its edge
@@ -37,6 +38,8 @@ function paintMap() {
 export function TopMap() {
   const [open, setOpen] = useState(true);
   const [src, setSrc] = useState("");
+  const [cars, setCars] = useState<OtherCar[]>([]);
+  useEffect(() => { const id = setInterval(() => setCars(liveCars.size ? [...liveCars.values()].map((o) => ({ ...o })) : []), 1000); return () => clearInterval(id); }, []);
   const here = useRef<HTMLSpanElement>(null), dot = useRef<HTMLSpanElement>(null), needle = useRef<HTMLSpanElement>(null), dist = useRef<HTMLElement>(null);
   const waypoint = useGame((s) => s.waypoint), setWaypoint = useGame((s) => s.setWaypoint);
   const me = useGame((s) => s.session?.accountId ?? PRACTICE_ID);
@@ -83,6 +86,7 @@ export function TopMap() {
             {others.map((i) => { const p = toPct(c.lots[i].x, c.lots[i].z); return <button key={i} className="pin other" style={{ left: `${p.left}%`, top: `${p.top}%` }} title={`${c.lots[i].name}: a player's stall`} aria-label={`Route to ${c.lots[i].name}, a player's stall`} onClick={() => setWaypoint({ x: c.lots[i].x, z: c.lots[i].z, label: c.lots[i].name })} />; })}
             {mine.map((i) => { const p = toPct(c.lots[i].x, c.lots[i].z); return <button key={i} className="pin stall" style={{ left: `${p.left}%`, top: `${p.top}%` }} title={`${c.lots[i].name}: your stall`} aria-label={`Route to ${c.lots[i].name}, your stall`} onClick={() => setWaypoint({ x: c.lots[i].x, z: c.lots[i].z, label: c.lots[i].name })} />; })}
             {waypoint && <span className="pin target" style={{ left: `${toPct(waypoint.x, waypoint.z).left}%`, top: `${toPct(waypoint.x, waypoint.z).top}%` }} />}
+            {cars.map((o) => { const p = toPct(o.x, o.z); return <span key={o.id} className={`pin car ${o.kind}`} style={{ left: `${p.left}%`, top: `${p.top}%` }} title={o.name} />; })}
             <span ref={dot} className="truckdot small" />
           </div>
           <div className="maplegend"><span><i className="pin merchant" />Merchant</span><span><i className="pin other" />Player</span><span><i className="pin stall" />Yours</span></div>

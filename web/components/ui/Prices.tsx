@@ -1,13 +1,17 @@
 "use client";
 import { rules as c, explainPrice, coins, bid, ask } from "@nearverse/economy";
+import { useState } from "react";
 import { useGame } from "@/lib/state/game";
+import { useOutside } from "@/lib/useOutside";
 
 function Price({ merchant, item, side }: { merchant: number; item: number; side: "bid" | "ask" }) {
   const market = useGame((s) => s.market);
   const e = explainPrice(c, market, merchant, item, side);
+  const [open, setOpen] = useState(false);
+  useOutside(open, ".tip-wrap", () => setOpen(false));
   return (
-    <span className="tip-wrap">
-      <button className="tip-btn" aria-label={e.sentence}>{coins(e.price)}</button>
+    <span className={`tip-wrap ${open ? "open" : ""}`}>
+      <button className="tip-btn" aria-label={e.sentence} aria-expanded={open} onClick={() => setOpen((o) => !o)}>{coins(e.price)}</button>
       <span className="tip" role="tooltip"><b>{e.sentence}</b>{e.lines.map((l) => <span key={l} style={{ display: "block" }}>{l}</span>)}</span>
     </span>
   );

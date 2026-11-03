@@ -25,7 +25,7 @@ near account export-account nearverse-game.testnet
 near account export-account nearverse-treasury.testnet
 ```
 
-Top up both from the [testnet faucet](https://docs.near.org/getting-started/faucet). The game account needs about 10 NEAR for the contract's storage and player records. The treasury spends 0.25 NEAR per new player plus gas.
+Top up both from the [testnet faucet](https://docs.near.org/getting-started/faucet) or [near-faucet.io](https://near-faucet.io/), which takes named accounts such as these. The game account needs about 10 NEAR for the contract's storage and player records. The treasury spends 0.25 NEAR per new player plus gas.
 
 ## 2. Fill in your settings
 
@@ -88,6 +88,7 @@ To put it online, deploy the same image to any container host, or use Vercel wit
 | Variable | Value |
 | --- | --- |
 | `GAME_CONTRACT` | Your contract account |
+| `ABLY_API_KEY` | Optional. Shows other cars (step 8) |
 | `NEAR_NETWORK` | `testnet` |
 | `NEAR_RPC_URL` | `https://test.rpc.fastnear.com` |
 | `NEARVERSE_TREASURY_ACCOUNT` | Your treasury account |
@@ -110,7 +111,8 @@ Run the game with HTTPS when it is online, because sign-in depends on it.
 | A callback or redirect URL error on the sign-in page | The shared testnet login doesn't accept your address | Use `http://localhost:3000`. A hosted domain is rejected until the NEAR Auth team adds it, because this login is shared and its allowed list isn't ours to change. Ask them to allow your site's address. Their [application form](https://docs.auth.near.org/home/apply) covers mainnet. Guest play doesn't use this login |
 | `Test funds are not set up` | Treasury settings are missing | Check step 2, then restart the web service |
 | `The MPC sign call returned no signature` | The approval signing step failed | Copy the log from `/signin`. This step is unproven, and the fallback is a relayer that pays gas |
-| `You already took your test NEAR` | The profile faucet gives 1 NEAR per account every 10 minutes | Wait for the time shown on the button. The treasury pays this, so keep it topped up |
+| `You already took your test NEAR` | The profile faucet gives 0.2 NEAR per account every 10 minutes | Wait for the time shown on the button |
+| `The faucet is paused for now` | The treasury is below 3 NEAR, which is kept for new players and signing | Refill `nearverse-treasury.testnet` from near-faucet.io |
 | `Test funds were just claimed` | The limit of one claim per 10 minutes applies | Wait, or fund the shown account from the faucet |
 
 ## 6. Buy credits with NEAR
@@ -131,16 +133,29 @@ near contract call-function as-transaction nearverse-game.testnet withdraw_reven
 
 Check the balance first with `near contract call-function as-read-only nearverse-game.testnet revenue json-args {} network-config testnet now`.
 
-## 8. Optional: keep the market moving
+## 8. Keep the market moving, and show other cars
+
+Other cars need a free [Ably](https://ably.com) account. Create an app, copy an API key, and add it to `.env` and to Vercel's environment variables, then redeploy:
 
 ```bash
-docker compose run --build --rm ghosts
+ABLY_API_KEY=
 ```
 
-This runs labeled `ghost-N.<your account>` traders with real testnet transactions. Keep it running on a machine that stays on, since it won't run on Vercel.
+The key stays on the server. Browsers get a short-lived token from `/api/realtime`, which can only share positions. Without a key the game plays as normal, with no other cars.
+
+Start the labeled `ghost-N.<your account>` traders. They make real testnet transactions from a machine that stays on, since they won't run on Vercel:
+
+```bash
+docker compose --profile ops up -d --build ghosts
+docker compose --profile ops ps ghosts
+docker compose --profile ops logs -f ghosts
+```
+
+`ps` shows `healthy` while they've reported in during the last 3 minutes, and they restart by themselves. Each makes about one trade a minute, which spends gas. They top themselves up from the deployer account with 0.3 NEAR when low, and stop topping up when the deployer falls below 2 NEAR. Stop them with `docker compose --profile ops stop ghosts`.
+
+Ably's free package allowed 6 million messages a month when this was written. A moving player sends about two a second, and each delivery to another player counts too, so leave it off when you aren't testing or judging.
 
 ## Before judging
 
-- Keep the game and treasury accounts funded through at least Nov 18, ideally Nov 25.
-- Add your contract account to the README's status section.
+- Keep the game, treasury and deployer accounts funded through at least Nov 18, ideally Nov 25. Start the ghost traders before judging opens on Nov 16 and check `ps`.
 - Make sure the repository is public before 2026-11-14 23:59 UTC.

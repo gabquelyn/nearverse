@@ -1,6 +1,7 @@
 # `docker compose up --build` starts the web game. Everything else is a one-off command:
 #   docker compose run --build --rm test       all tests
 #   docker compose run --build --rm deploy     build and deploy the contract to testnet
+#   docker compose --profile ops up -d --build ghosts     keep the simulated traders running
 # Settings come from .env (optional for tests and practice mode).
 x-env: &env
   env_file:
@@ -33,18 +34,25 @@ services:
 
   deploy:
     <<: *ops
-    command: npm run deploy:testnet
+    command: npx tsx scripts/deploy-testnet.ts
 
   smoke:
     <<: *ops
-    command: npm run smoke:testnet
+    command: npx tsx scripts/smoke-testnet.ts
 
   ghosts:
     <<: *ops
-    command: npm run ghosts
+    command: npx tsx scripts/ghost-traders.ts
     environment:
       NEARVERSE_GHOST_KEY_FILE: /data/ghost-keys.json
+      NEARVERSE_GHOST_STATUS_FILE: /data/ghost-status.json
     volumes: [ghost-data:/data]
+    restart: unless-stopped
+    # Healthy while traders reported in during the last 3 minutes. See it with: docker compose --profile ops ps ghosts
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=JSON.parse(require('fs').readFileSync('/data/ghost-status.json'));process.exit(Date.now()-s.at<180000?0:1)"]
+      interval: 60s
+      start_period: 180s
 
   dev:
     <<: *env

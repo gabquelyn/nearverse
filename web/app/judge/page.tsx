@@ -5,6 +5,7 @@ import { useGame, worth } from "@/lib/state/game";
 import { MerchantTable, Blueprints } from "@/components/ui/Prices";
 import { WeekChart, CashChart, HOURS } from "@/components/ui/WeekChart";
 import { Nav } from "@/components/ui/Nav";
+import { LiveMarket } from "@/components/ui/LiveMarket";
 import { Shop } from "@/components/ui/Shop";
 import { LotPanel } from "@/components/ui/StallPanel";
 import { explorerTx } from "@/lib/near/client";
@@ -72,6 +73,8 @@ export default function Judge() {
       <p style={{ maxWidth: "70ch", marginTop: 0 }}>Every game action as a plain button, with no driving. {g.mode === "practice" ? "This server has no contract set, so you're in practice mode: the same rules, in this browser only." : "These actions are real testnet transactions, signed without a popup."}</p>
       {g.toast && <div className={`toast ${g.toast.bad ? "bad" : ""}`} role="status" style={{ position: "fixed" }}>{g.toast.text}</div>}
       <FastForward />
+      <h2>Live market</h2>
+      <div className="card"><LiveMarket /></div>
       <h2>Play by buttons</h2>
       <div className="row" style={{ marginBottom: 12 }}>
         <button className="btn" disabled={g.player.started} onClick={() => g.startDriving()}>{g.player.started ? "Game started" : "Start game"}</button>

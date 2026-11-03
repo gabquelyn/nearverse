@@ -2,6 +2,7 @@
 // Guests own a plain key, so they can see it. A signed-in wallet has no key to reveal, so it adds a new recovery key instead.
 import { useState } from "react";
 import { useGame } from "@/lib/state/game";
+import { useOutside } from "@/lib/useOutside";
 
 export function Secret({ label, value }: { label: string; value: string }) {
   const say = useGame((s) => s.say);
@@ -14,6 +15,7 @@ export function Secret({ label, value }: { label: string; value: string }) {
 export function WalletExport() {
   const session = useGame((s) => s.session), say = useGame((s) => s.say);
   const [open, setOpen] = useState(false), [shown, setShown] = useState(false), [busy, setBusy] = useState(false);
+  useOutside(open, ".exportbox", () => { setOpen(false); setShown(false); });
   if (!session) return null;
   if (!open) return <button className="btn ghost" onClick={() => setOpen(true)}>Export wallet</button>;
   const close = () => { setOpen(false); setShown(false); };

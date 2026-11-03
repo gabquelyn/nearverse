@@ -1,8 +1,9 @@
-// Testnet drip: 1 NEAR per account every 10 minutes, paid by the treasury. Limits live in memory, so a restart resets them.
+// Testnet drip: 0.2 NEAR per account every 10 minutes, paid by the treasury. Limits live in memory, so a restart resets them.
 import { NextResponse } from "next/server";
 import { Near } from "near-kit";
 
-const YOCTO = "1000000000000000000000000";
+const YOCTO = "200000000000000000000000";
+const TREASURY_FLOOR = 3; // NEAR kept back for new players and sign-in signing
 const WINDOW = 10 * 60_000;
 const HOURLY_CAP = 12; // stops a burst of made-up accounts emptying the treasury
 const seen = new Map<string, number>();
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
   ids.forEach((id) => seen.set(id, now)); recent.push(now);
   try {
     const near = new Near({ network: "testnet", rpcUrl: process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com", privateKey: key as `ed25519:${string}`, defaultSignerId: account });
+    if (Number(await near.getBalance(account)) < TREASURY_FLOOR) {
+      ids.forEach((id) => seen.delete(id)); recent.pop();
+      return NextResponse.json({ error: "The faucet is paused for now. You can still play and trade." }, { status: 503 });
+    }
     await near.send(accountId, BigInt(YOCTO));
     return NextResponse.json({ accountId, nextAt: now + WINDOW });
   } catch (e) {

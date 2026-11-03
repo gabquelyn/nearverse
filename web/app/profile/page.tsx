@@ -32,14 +32,14 @@ function Wallet({ accountId }: { accountId: string }) {
     setBusy(true);
     const out = await dripNear(accountId).catch(() => ({ error: "Test funds are unavailable right now.", nextAt: undefined }));
     if (out.nextAt) { setNextAt(out.nextAt); setNow(Date.now()); try { localStorage.setItem(dripKey(accountId), String(out.nextAt)); } catch { /* not remembered */ } }
-    if (out.error) say(out.error, true); else { say("1 test NEAR sent."); setTimeout(refresh, 2500); }
+    if (out.error) say(out.error, true); else { say("0.2 test NEAR sent."); setTimeout(refresh, 2500); }
     setBusy(false);
   };
   return (
     <div className="wallet">
       <div><small>NEAR balance</small><b data-testid="near-balance">{balance === undefined ? "..." : balance ?? "0"}</b></div>
-      <button className="btn" disabled={busy || wait > 0} onClick={drip}>{busy ? "Sending" : wait > 0 ? `Next in ${waitText(wait)}` : "Get 1 test NEAR"}</button>
-      <small className="muted">One free test NEAR every 10 minutes.</small>
+      <button className="btn" disabled={busy || wait > 0} onClick={drip}>{busy ? "Sending" : wait > 0 ? `Next in ${waitText(wait)}` : "Get 0.2 test NEAR"}</button>
+      <small className="muted">Free test NEAR every 10 minutes.</small>
     </div>
   );
 }

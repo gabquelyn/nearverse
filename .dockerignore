@@ -11,5 +11,6 @@ out
 !.env.example
 **/.env.local
 .ghost-keys.json
+.ghost-status.json
 test-results
 playwright-report

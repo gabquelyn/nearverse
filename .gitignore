@@ -6,6 +6,7 @@ target
 !.env.example
 .env.local
 .ghost-keys.json
+.ghost-status.json
 *.log
 out
 test-results

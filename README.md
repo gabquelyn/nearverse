@@ -6,7 +6,7 @@ A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` trac
 
 ## How NEAR is used
 
-- **NEP-245 multi token:** one contract (`contracts/nearverse`) holds wood, iron, slate, clay and fuel. Gathering mints, selling burns, and all standard `mt_*` transfer and view methods are present. Approvals are not implemented.
+- **NEP-245 multi token:** one contract (`contracts/nearverse`) holds wood, iron, slate and clay. Fuel is not a token: it is bought with credits. Gathering mints, selling burns, and all standard `mt_*` transfer and view methods are present. Approvals are not implemented.
 - **Credits are the game's revenue:** `buy_credits` takes attached NEAR at 1 NEAR = 1000 credits, and the contract keeps it. Only the owner can withdraw it, through `withdraw_revenue`. Credits pay for fuel, repairs, vehicles and stall locations, and no stall sells fuel or repairs.
 - **Player-owned markets:** a stall location costs credits, then the owner builds it from materials, bought or found. Owners stock it and earn coins in its till when others buy. They can list it for sale or sell it back to the city. Withdrawing coins as NEAR is a future plan, not built yet.
 - **Vehicles priced from their stats:** the contract computes each price in credits from capacity, endurance, fuel use, flair and size, using weights in `config/items.yaml`.
@@ -22,11 +22,26 @@ A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` trac
 | Contract with mocked runtime | Tested (`cargo test`) |
 | Compiled wasm | Tested in Node against a mock of the host functions (`npm run smoke:wasm`). Gas not measured |
 | Web game in practice mode, judge view, fast-forward | Tested in a browser against the web container |
-| Deployed contract on real testnet | **Not yet run.** See step B below |
-| Guest play, ghost traders on testnet | **Not yet run** |
+| Deployed contract on real testnet | Run by the author with the commands below |
+| Guest play, ghost traders on testnet | Run by the author |
 | NEAR Auth sign-in adding a game key (`/signin`) | **Works on `http://localhost:3000`** against testnet. **Rejected on the hosted demo** (see Known limits). Guest play is the fallback |
 
-Contract account on testnet: *not deployed yet*. See DEPLOY.md.
+| Other cars over Ably | The token route and drawing are tested with injected positions. Add ABLY_API_KEY keys for live cars |
+
+Contract account on testnet: `nearverse-game.testnet`. Hosted demo: https://nearverse-murex.vercel.app
+
+## Two minutes on the hosted demo
+
+Nothing to install. Google or email sign-in isn't available here (see Known limits), so this uses a guest wallet. Each step names the requirement it shows.
+
+1. Open https://nearverse-murex.vercel.app/judge. See the **Live market** panel with merchant cash, recent trades and top players (NPCs with wallets).
+2. Press **Run a week**, then **Flood the market with iron**. See the iron line drop as a week plays out in a minute (fast-forward). This runs in the browser and sends no transactions.
+3. Hover or tap a price. See the reasoning, such as stock against target and the merchant's margin, built from `config/merchants.rules.yaml` (rules in one file, reasoning in a tooltip).
+4. Press **Start game**, then a **Timber stand** button under *Play by buttons*. See it under Activity with a transaction link, with no popup or gas prompt (no prompts in the game loop).
+5. Open that link, or call `mt_balance_of` on `nearverse-game.testnet` for your account with `token_id` `wood`. See the wood as a NEP-245 balance (one contract for every item).
+6. Open https://nearverse-murex.vercel.app and press **Play as a guest**. Drive with WASD or arrows, or the stick and Gas on a phone. Other players and labeled ghost traders appear as cars when the server has an Ably key and traders are running.
+
+To see social or email sign-in, run the app locally on port 3000 with a funded treasury: see [DEPLOY.md](DEPLOY.md).
 
 ## Run it
 
@@ -40,7 +55,7 @@ Docker is the only requirement: Docker Engine with Compose 2.24 or newer. Rust, 
 | `docker build --target contract-wasm --output out .` | Writes the contract to `out/nearverse.wasm` |
 | `docker compose run --build --rm deploy` | Builds and deploys the contract to testnet |
 | `docker compose run --build --rm smoke` | Runs the game loop against the deployed contract |
-| `docker compose run --build --rm ghosts` | Runs labeled simulated traders on testnet |
+| `docker compose --profile ops up -d --build ghosts` | Keeps labeled simulated traders running on testnet. `docker compose --profile ops ps ghosts` shows whether they are healthy |
 | `docker compose --profile dev up --build dev` | Runs the web app with live reload from your source files |
 | `docker compose --profile ops down` | Stops everything |
 
@@ -50,7 +65,7 @@ Use `WEB_PORT=8080 docker compose up --build` if port 3000 is taken.
 
 1. Run `docker compose up --build`. Wait for the container to report healthy. Open http://localhost:3000/api/health and see `"mode":"practice"`.
 2. Open http://localhost:3000/judge. See a "Judge view" heading and a practice mode note.
-3. Press **Skip to the end**. See a week of prices across five materials, merchant cash, and a list of what merchants learned.
+3. Press **Skip to the end**. See a week of prices across four materials, merchant cash, and a list of what merchants learned.
 4. Press **Run a week**, then **Flood the market with iron** while it plays. See the iron line drop.
 5. Under *Play by buttons*, press the first **Timber stand** button. See "Gathered 3 wood" under Activity.
 6. In the price table, hover a price. See its reasoning, such as "Wood 7.20: stock on target (+0%), spread (−10%)."
@@ -81,7 +96,9 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 - Resource positions are hidden from the map, not secret: this is open source, so they can be read from `packages/economy/generated/rules.json`, and a script could gather without driving.
 - `leaderboard` scans up to 200 players. Approvals in NEP-245 aren't implemented.
 - Phones get a right-hand thumb stick that steers from the vehicle's point of view, plus Gas, in landscape. Android switches by itself after a tap. iPhones ask you to turn the phone, because Safari doesn't let pages lock the screen.
-- The profile page has a faucet of 1 test NEAR per account every 10 minutes, paid by the treasury. Its limits live in server memory, so a restart resets them.
+- The profile page has a faucet of 0.2 test NEAR per account every 10 minutes, paid by the treasury. It pauses when the treasury falls below 3 NEAR, and its limits live in server memory, so a restart resets them.
+- Other cars are visual only. Their positions travel over Ably and never touch the contract, so a faked position can only draw a car in the wrong place, and you drive through them.
+- A signed-in player approves each credit purchase, because the game key can't spend NEAR. A game key's gas allowance is fixed, so when it runs out the game asks for one approval to add a new key.
 - Export wallet shows a guest's private key. A sign-in wallet has no key to reveal, so export adds a new full-access key from a fresh seed phrase.
 - Guest play keeps a throwaway full-access key in the browser for a faucet-funded testnet account. It isn't suitable for real value.
 
@@ -91,6 +108,6 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 
 ## Third-party code and AI disclosure
 
-Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
+Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
 
 License: MIT.
