@@ -27,9 +27,9 @@ export async function login(log: (s: string) => void) {
     const pub = (await signer.getPublicKey()).toString();
     return { accountId: implicitAccountId(pub), pub };
   }
-  // A full-page redirect, because browsers often block popups opened after any waiting. It returns to /signin.
+  // A full-page redirect, because browsers often block popups opened after any waiting. The shared testnet login rejects /signin as a return address, so it returns to the home page, which forwards to /signin.
   log("Going to the sign-in page.");
-  await (client.login as (o: unknown) => Promise<unknown>)({ redirectUri: `${location.origin}/signin` });
+  await (client.login as (o: unknown) => Promise<unknown>)({ redirectUri: location.origin });
   return null;
 }
 
@@ -66,14 +66,27 @@ export async function requestBuyCredits(nearAmount: number, log: (s: string) => 
   const transaction = buildBuyCredits(nearApi, accountId, pub, yocto, nonce, nearApi.utils.serialize.base_decode(keyInfo.block_hash));
   localStorage.setItem(PENDING, JSON.stringify({ kind: "credits", accountId, pub, nonce: nonce.toString(), blockHash: keyInfo.block_hash, yocto: yocto.toString() }));
   log("Requesting one approval to buy credits.");
-  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: `${location.origin}/signin` });
+  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: location.origin });
+}
+
+/** A key that was just added takes a few seconds to appear in final state, and RPC nodes can lag behind that. */
+async function waitForKey(provider: unknown, accountId: string, publicKey: string) {
+  const query = (provider as { query: (a: unknown) => Promise<{ nonce: number | bigint; block_hash: string }> }).query.bind(provider);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await query({ request_type: "view_access_key", finality: "final", account_id: accountId, public_key: publicKey });
+    } catch (error) {
+      if (attempt === 15) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
 }
 
 /** Step 3: asks for the one approval. This usually redirects away and comes back to /signin. */
 export async function requestSessionKey(accountId: string, pub: string, log: (s: string) => void) {
   const { client, nearApi, connection } = await setup();
   const provider = connection.provider;
-  const keyInfo = await (provider.query as (a: unknown) => Promise<{ nonce: number | bigint; block_hash: string }>)({ request_type: "view_access_key", finality: "final", account_id: accountId, public_key: pub });
+  const keyInfo = await waitForKey(provider, accountId, pub);
   const nonce = BigInt(keyInfo.nonce) + 1n;
   const session = generateKey();
   const blockHash = nearApi.utils.serialize.base_decode(keyInfo.block_hash);
@@ -81,7 +94,7 @@ export async function requestSessionKey(accountId: string, pub: string, log: (s:
   localStorage.setItem(PENDING, JSON.stringify({ accountId, pub, nonce: nonce.toString(), blockHash: keyInfo.block_hash, sessionPub: session.publicKey.toString(), sessionSecret: session.secretKey }));
   log("Requesting one approval to add the game key.");
   const signer = await client.getSigner();
-  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: `${location.origin}/signin` });
+  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: location.origin });
 }
 
 export const clearPending = () => { try { localStorage.removeItem(PENDING); } catch { /* nothing stored */ } };
@@ -91,7 +104,7 @@ export const hasPending = () => { try { return Boolean(localStorage.getItem(PEND
 export async function finishSessionKey(log: (s: string) => void) {
   const pending = JSON.parse(localStorage.getItem(PENDING) ?? "null");
   if (!pending) throw new Error("No pending approval. Start from step 1.");
-  const { client, provider, nearApi, FastAuthSignature } = await setup();
+  const { client, provider, nearApi, connection, FastAuthSignature } = await setup();
   await provider.isLoggedIn(); // reads the approval out of the return address
   const signer = await client.getSigner();
   const { signatureRequest } = (await signer.getSignatureRequest()) as { signatureRequest: unknown };
@@ -106,6 +119,7 @@ export async function finishSessionKey(log: (s: string) => void) {
     : buildAddKey(nearApi, pending.accountId, pending.pub, pending.sessionPub, BigInt(pending.nonce), blockHash);
   await signer.sendTransaction(transaction as never, FastAuthSignature.fromBase64(body.signatureBase64) as never, "ed25519" as never);
   if (pending.kind === "credits") { localStorage.removeItem(PENDING); log("Credits bought."); return pending.accountId as string; }
+  await waitForKey(connection.provider, pending.accountId, pending.sessionPub); // the game's first move needs this key
   saveSession({ accountId: pending.accountId, secretKey: pending.sessionSecret, kind: "login" });
   localStorage.removeItem(PENDING);
   log("Session key added. Every game action from now on signs silently.");

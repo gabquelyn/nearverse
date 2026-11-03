@@ -17,7 +17,9 @@ export default function SignIn() {
 
   // Coming back from sign-in or the approval page: carry on without another click.
   useEffect(() => {
-    if (started.current || !new URLSearchParams(location.search).has("code")) return;
+    const reply = new URLSearchParams(location.search);
+    if (reply.has("error")) { log("Stopped: " + (reply.get("error_description") || reply.get("error"))); return; }
+    if (started.current || !reply.has("code")) return;
     started.current = true;
     setBusy(true);
     if (!auth.hasPending()) { signIn(); return; }

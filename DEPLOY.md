@@ -107,7 +107,7 @@ Run the game with HTTPS when it is online, because sign-in depends on it.
 
 | Message | Meaning | What to do |
 | --- | --- | --- |
-| A callback or redirect URL error on the sign-in page | The shared testnet login doesn't accept your address | Try `http://localhost:3000` first. For your own domain, ask NEAR Auth at their [application page](https://docs.auth.near.org/home/apply) |
+| A callback or redirect URL error on the sign-in page | The shared testnet login doesn't accept your address | Use `http://localhost:3000`. A hosted domain may be rejected, because this login is shared and its allowed list isn't ours to change. Ask the NEAR Auth team, as their [application form](https://docs.auth.near.org/home/apply) covers mainnet. Guest play doesn't use this login |
 | `Test funds are not set up` | Treasury settings are missing | Check step 2, then restart the web service |
 | `The MPC sign call returned no signature` | The approval signing step failed | Copy the log from `/signin`. This step is unproven, and the fallback is a relayer that pays gas |
 | `Test funds were just claimed` | The limit of one claim per 10 minutes applies | Wait, or fund the shown account from the faucet |
