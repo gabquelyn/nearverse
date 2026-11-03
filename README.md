@@ -88,8 +88,4 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 
 `Dockerfile`, `compose.yaml` every build, test and deploy command. `config/` rules. `contracts/nearverse/` Rust contract. `packages/economy/` pure TypeScript rules, simulation and tooltips. `web/` Next.js app (`/` landing, `/play`, `/judge`, `/profile`, `/spike`). `scripts/` generation, deploy, smoke tests, ghost traders. `tests/e2e/` browser tests.
 
-## Third-party code and AI disclosure
-
-Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
-
 License: MIT.
