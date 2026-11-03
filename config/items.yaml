@@ -5,28 +5,71 @@ items:
   - { id: iron,  name: Iron,  base_price: 2000 }
   - { id: slate, name: Slate, base_price: 1400 }
   - { id: clay,  name: Clay,  base_price: 1000 }
-  - { id: fuel,  name: Fuel,  base_price: 600 }
 
-# Gathering spots. The richest nodes cost the most wear because they sit near hazards.
-nodes:
-  - { id: birch-grove,  item: wood,  yield: 3, max_stock: 60, regrow: 6, fuel_cost: 1, wear: 0, x: -26, z: -18 }
-  - { id: clay-pit,     item: clay,  yield: 3, max_stock: 60, regrow: 6, fuel_cost: 1, wear: 0, x: 24,  z: -22 }
-  - { id: pump-yard,    item: fuel,  yield: 2, max_stock: 40, regrow: 5, fuel_cost: 0, wear: 0, x: -6,  z: 30 }
-  - { id: slate-cut,    item: slate, yield: 3, max_stock: 45, regrow: 4, fuel_cost: 2, wear: 3, x: 46,  z: 22 }
-  - { id: old-iron-pit, item: iron,  yield: 3, max_stock: 40, regrow: 3, fuel_cost: 2, wear: 4, x: -48, z: 26 }
-  - { id: mine-field,   item: iron,  yield: 7, max_stock: 35, regrow: 2, fuel_cost: 3, wear: 14, x: 8,  z: -56 }
+# Hidden resources. Spots are not on the map, so finding them is the game. They are generated from these
+# settings by scripts/gen-contract-config.ts. The further out and the richer a spot, the more obstacles guard it.
+resources:
+  seed: 20261114
+  starter_spots: [{ item: wood, x: 95, z: -110 }, { item: clay, x: -120, z: -85 }, { item: iron, x: 60, z: 140 }]
+  regions:
+    - { name: Forest,     x: -420, z: 300,  spread: 420, count: 16, items: [wood, wood, clay, iron] }
+    - { name: Snowfields, x: 30,   z: 770,  spread: 300, count: 12, items: [iron, wood, slate] }
+    - { name: Desert,     x: -620, z: -430, spread: 300, count: 12, items: [clay, clay, slate, iron] }
+    - { name: City,       x: 630,  z: -230, spread: 260, count: 10, items: [slate, iron, iron] }
+    - { name: Wilds,      x: 120,  z: -760, spread: 240, count: 8,  items: [iron, slate, clay, wood] }
+
+# Credits are bought with NEAR, which the game keeps. Fuel, repairs, vehicles and stall locations cost credits.
+credits:
+  credits_per_near: 1000
+  start_credits: 500
+  start_fuel: 60
+  credits_per_fuel: 1
+  credits_per_repair: 1
+  meters_per_fuel: 40        # how far one unit of fuel takes the starter truck
+
+# Every vehicle's price, in credits, comes from this formula, and the contract computes it itself:
+#   price = capacity x price_per_capacity + endurance x price_per_endurance
+#         + percent of fuel saved x price_per_fuel_percent + flair x price_per_flair + size x price_per_size
+# Burning more fuel than the starter (fuel_bps above 10000) lowers the price.
+vehicle_pricing:
+  price_per_capacity: 30
+  price_per_endurance: 4
+  price_per_fuel_percent: 8
+  price_per_flair: 300
+  price_per_size: 80
+
+# capacity: truck bed units. endurance: health. fuel_bps: 10000 = normal fuel use. tank: fuel it holds.
+# flair: looks, 0 to 3. size: 1 to 5, a bigger body is a bigger target. The first vehicle is free.
+vehicles:
+  - { id: pickup,   name: Pickup,      blurb: The truck everyone starts with.,               capacity: 24, endurance: 100, fuel_bps: 10000, tank: 100, flair: 0, size: 2, paint: "#c8372b" }
+  - { id: scout,    name: Scout,       blurb: Small and thrifty. Sips fuel but carries little., capacity: 16, endurance: 90,  fuel_bps: 5000, tank: 70,  flair: 1, size: 1, paint: "#e0a437" }
+  - { id: hauler,   name: Hauler,      blurb: A long bed for big loads. Thirsty.,            capacity: 42, endurance: 130, fuel_bps: 14000, tank: 140, flair: 0, size: 4, paint: "#2f6db0" }
+  - { id: bulwark,  name: Bulwark,     blurb: Armored for hazard routes.,                    capacity: 30, endurance: 240, fuel_bps: 12000, tank: 130, flair: 1, size: 4, paint: "#4a6b58" }
+  - { id: rally,    name: Rally,       blurb: Light bar, racing paint and good fuel use.,    capacity: 26, endurance: 120, fuel_bps: 7000, tank: 110,  flair: 3, size: 2, paint: "#d9368b" }
+  - { id: titan,    name: Titan,       blurb: Carries the most and takes the most.,          capacity: 60, endurance: 300, fuel_bps: 15000, tank: 180, flair: 2, size: 5, paint: "#23272f" }
+
+# Locations for stalls. Buy one with credits, then bring the materials it needs, bought or found. Either counts.
+stall_lots:
+  - { id: lot-brook,    name: Brook Corner,   x: 230,  z: 70,   price: 300,  needs: { wood: 10, clay: 6 } }
+  - { id: lot-orchard,  name: Orchard Gate,   x: -310, z: 150,  price: 300,  needs: { wood: 14, clay: 4 } }
+  - { id: lot-crossing, name: Old Crossing,   x: -200, z: -310, price: 350,  needs: { clay: 12, wood: 8 } }
+  - { id: lot-mill,     name: Mill Road,      x: 170,  z: 330,  price: 350,  needs: { wood: 16 } }
+  - { id: lot-hollow,   name: Fern Hollow,    x: -600, z: 420,  price: 450,  needs: { wood: 18, iron: 4 } }
+  - { id: lot-pass,     name: Northern Pass,  x: 70,   z: 500,  price: 500,  needs: { wood: 12, iron: 6 } }
+  - { id: lot-lodge,    name: Snow Lodge,     x: -130, z: 810,  price: 600,  needs: { wood: 20, iron: 8 } }
+  - { id: lot-summit,   name: Summit Post,    x: 230,  z: 840,  price: 750,  needs: { iron: 12, slate: 10 } }
+  - { id: lot-oasis,    name: Oasis Bazaar,   x: -560, z: -500, price: 650,  needs: { clay: 18, wood: 6 } }
+  - { id: lot-dunes,    name: Dune Market,    x: -840, z: -130, price: 700,  needs: { clay: 14, slate: 8 } }
+  - { id: lot-canyon,   name: Canyon Stop,    x: -260, z: -830, price: 700,  needs: { iron: 8, clay: 16 } }
+  - { id: lot-plaza,    name: City Plaza,     x: 650,  z: -120, price: 1200, needs: { slate: 16, iron: 10 } }
+  - { id: lot-docks,    name: Harbor Docks,   x: 860,  z: -330, price: 1100, needs: { iron: 16, wood: 10 } }
+  - { id: lot-terminal, name: Rail Terminal,  x: 400,  z: -400, price: 950,  needs: { slate: 10, iron: 8, wood: 6 } }
 
 player:
   start_coins: 15000
-  start_fuel: 12
-  max_durability: 100
-  cargo_capacity: 24         # units, fuel excluded
   gather_cooldown_ms: 3000
   travel_ms: 8000            # minimum time between trading with two different merchants
   max_trade_qty: 50
-  repair_points_per_iron: 20 # one iron restores this many points
-  repair_cents_per_point: 10
-  cents_per_near: 100000     # deposit rate
 
 quests:
   period_ticks: 12

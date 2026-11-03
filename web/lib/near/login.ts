@@ -1,12 +1,14 @@
 // NEAR Auth (Google, Apple, email, passkeys) on testnet, adding a restricted session key.
-// STATUS: follows the published docs but has not yet run against real testnet. /spike runs it step by step.
+// STATUS: follows the published docs and SDK source, but has not yet run against real testnet. /signin reports each step.
 import { CONTRACT, SESSION_METHODS, implicitAccountId, saveSession } from "./client";
 import { generateKey } from "near-kit";
 import { publicConfig } from "./config";
 
 const CLIENT_ID = publicConfig().fastAuthClientId || "np8paqIpMWmNbzT4xAvOOapZBjsOpptl"; // shared testnet client from the NEAR Auth docs
-const RPC = publicConfig().rpcUrl || "https://rpc.testnet.near.org";
+const RPC = publicConfig().rpcUrl || "https://test.rpc.fastnear.com";
 const PENDING = "nearverse.pendingKey.v1";
+
+export const pendingKind = (): string | null => { try { const p = JSON.parse(localStorage.getItem(PENDING) ?? "null"); return p ? (p.kind ?? "key") : null; } catch { return null; } };
 
 async function setup() {
   const [{ FastAuthClient, FastAuthSignature }, { JavascriptProvider }, nearApi] = await Promise.all([
@@ -19,14 +21,21 @@ async function setup() {
 }
 
 export async function login(log: (s: string) => void) {
-  const { client } = await setup();
-  log("Opening the login window.");
-  await (client.login as (o: unknown) => Promise<unknown>)({});
-  const signer = await client.getSigner();
-  const pub = (await signer.getPublicKey()).toString();
-  const accountId = implicitAccountId(pub);
-  log(`Logged in. Your key is ${pub}. Your account is ${accountId}.`);
-  return { accountId, pub };
+  const { client, provider } = await setup();
+  if (await provider.isLoggedIn()) {
+    const signer = await client.getSigner();
+    const pub = (await signer.getPublicKey()).toString();
+    return { accountId: implicitAccountId(pub), pub };
+  }
+  // A full-page redirect, because browsers often block popups opened after any waiting. It returns to /signin.
+  log("Going to the sign-in page.");
+  await (client.login as (o: unknown) => Promise<unknown>)({ redirectUri: `${location.origin}/signin` });
+  return null;
+}
+
+export async function accountExists(accountId: string) {
+  const { connection } = await setup();
+  try { await (connection.provider.query as (a: unknown) => Promise<unknown>)({ request_type: "view_account", finality: "final", account_id: accountId }); return true; } catch { return false; }
 }
 
 export async function fund(accountId: string, log: (s: string) => void) {
@@ -43,7 +52,24 @@ function buildAddKey(nearApi: Awaited<ReturnType<typeof setup>>["nearApi"], acco
   ], blockHash);
 }
 
-/** Step 3: asks for the one approval. This usually redirects away and comes back to /spike. */
+function buildBuyCredits(nearApi: Awaited<ReturnType<typeof setup>>["nearApi"], accountId: string, pub: string, yocto: bigint, nonce: bigint, blockHash: Uint8Array) {
+  return nearApi.transactions.createTransaction(accountId, nearApi.utils.PublicKey.from(pub), CONTRACT, nonce, [nearApi.transactions.functionCall("buy_credits", new Uint8Array(), 60000000000000n, yocto)], blockHash);
+}
+
+/** Buying credits attaches NEAR, which a game key can't do, so a signed-in player approves it once per purchase. */
+export async function requestBuyCredits(nearAmount: number, log: (s: string) => void) {
+  const { client, nearApi, connection } = await setup();
+  const signer = await client.getSigner();
+  const pub = (await signer.getPublicKey()).toString(), accountId = implicitAccountId(pub);
+  const keyInfo = await (connection.provider.query as (a: unknown) => Promise<{ nonce: number | bigint; block_hash: string }>)({ request_type: "view_access_key", finality: "final", account_id: accountId, public_key: pub });
+  const yocto = BigInt(Math.round(nearAmount * 1e6)) * 10n ** 18n, nonce = BigInt(keyInfo.nonce) + 1n;
+  const transaction = buildBuyCredits(nearApi, accountId, pub, yocto, nonce, nearApi.utils.serialize.base_decode(keyInfo.block_hash));
+  localStorage.setItem(PENDING, JSON.stringify({ kind: "credits", accountId, pub, nonce: nonce.toString(), blockHash: keyInfo.block_hash, yocto: yocto.toString() }));
+  log("Requesting one approval to buy credits.");
+  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: `${location.origin}/signin` });
+}
+
+/** Step 3: asks for the one approval. This usually redirects away and comes back to /signin. */
 export async function requestSessionKey(accountId: string, pub: string, log: (s: string) => void) {
   const { client, nearApi, connection } = await setup();
   const provider = connection.provider;
@@ -55,25 +81,31 @@ export async function requestSessionKey(accountId: string, pub: string, log: (s:
   localStorage.setItem(PENDING, JSON.stringify({ accountId, pub, nonce: nonce.toString(), blockHash: keyInfo.block_hash, sessionPub: session.publicKey.toString(), sessionSecret: session.secretKey }));
   log("Requesting one approval to add the game key.");
   const signer = await client.getSigner();
-  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: `${location.origin}/spike` });
+  await (signer.requestTransactionSignature as (o: unknown) => Promise<unknown>)({ transaction, redirectUri: `${location.origin}/signin` });
 }
 
+export const clearPending = () => { try { localStorage.removeItem(PENDING); } catch { /* nothing stored */ } };
 export const hasPending = () => { try { return Boolean(localStorage.getItem(PENDING)); } catch { return false; } };
 
 /** Step 4: after approval, relays the MPC sign call, attaches the signature and broadcasts AddKey. */
 export async function finishSessionKey(log: (s: string) => void) {
   const pending = JSON.parse(localStorage.getItem(PENDING) ?? "null");
   if (!pending) throw new Error("No pending approval. Start from step 1.");
-  const { client, nearApi, FastAuthSignature } = await setup();
+  const { client, provider, nearApi, FastAuthSignature } = await setup();
+  await provider.isLoggedIn(); // reads the approval out of the return address
   const signer = await client.getSigner();
   const { signatureRequest } = (await signer.getSignatureRequest()) as { signatureRequest: unknown };
-  const action = (await (signer.createSignAction as (r: unknown) => Promise<{ functionCall: { methodName: string; args: Uint8Array; gas: bigint; deposit: bigint } }>)(signatureRequest)).functionCall;
+  const action = (await (signer.createSignAction as (r: unknown, o: unknown) => Promise<{ functionCall: { methodName: string; args: Uint8Array; gas: bigint; deposit: bigint } }>)(signatureRequest, { deposit: 1n })).functionCall;
   log("Approved. Asking the MPC network to sign.");
   const res = await fetch("/api/relay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ methodName: action.methodName, argsBase64: btoa(String.fromCharCode(...action.args)), gas: action.gas.toString(), deposit: action.deposit.toString() }) });
   const body = await res.json();
   if (!res.ok || !body.signatureBase64) throw new Error(body.error ?? "The MPC sign call returned no signature.");
-  const transaction = buildAddKey(nearApi, pending.accountId, pending.pub, pending.sessionPub, BigInt(pending.nonce), nearApi.utils.serialize.base_decode(pending.blockHash));
+  const blockHash = nearApi.utils.serialize.base_decode(pending.blockHash);
+  const transaction = pending.kind === "credits"
+    ? buildBuyCredits(nearApi, pending.accountId, pending.pub, BigInt(pending.yocto), BigInt(pending.nonce), blockHash)
+    : buildAddKey(nearApi, pending.accountId, pending.pub, pending.sessionPub, BigInt(pending.nonce), blockHash);
   await signer.sendTransaction(transaction as never, FastAuthSignature.fromBase64(body.signatureBase64) as never, "ed25519" as never);
+  if (pending.kind === "credits") { localStorage.removeItem(PENDING); log("Credits bought."); return pending.accountId as string; }
   saveSession({ accountId: pending.accountId, secretKey: pending.sessionSecret, kind: "login" });
   localStorage.removeItem(PENDING);
   log("Session key added. Every game action from now on signs silently.");

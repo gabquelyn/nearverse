@@ -82,3 +82,8 @@ export function quoteBuy(c: Config, mk: Market, merchant: number, item: number, 
   for (let i = 0; i < qty; i++) { total += askAt(c, merchant, item, s.target[item], stock); stock -= 1; }
   return total;
 }
+
+/** Player stalls price from their own stock against a shared target. */
+export const stallPrice = (c: Config, item: number, stock: number) => stockPrice(c, c.items[item].base_price, c.stall_target, stock, c.stall_k_quarters);
+export const stallBidAt = (c: Config, item: number, spread: number, stock: number) => Math.floor((stallPrice(c, item, stock) * (10000 - spread)) / 10000);
+export const stallAskAt = (c: Config, item: number, spread: number, stock: number) => Math.floor((stallPrice(c, item, stock) * (10000 + spread)) / 10000);

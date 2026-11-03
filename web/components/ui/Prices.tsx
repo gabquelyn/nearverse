@@ -14,7 +14,7 @@ function Price({ merchant, item, side }: { merchant: number; item: number; side:
 }
 
 export function MerchantTable({ merchant, plain = false }: { merchant: number; plain?: boolean }) {
-  const { market, player, act } = useGame();
+  const market = useGame((x) => x.market), player = useGame((x) => x.player), act = useGame((x) => x.act);
   const s = market.merchants[merchant], rules = c.merchants[merchant];
   void bid; void ask;
   return (
@@ -46,7 +46,7 @@ export function MerchantTable({ merchant, plain = false }: { merchant: number; p
 }
 
 export function Blueprints() {
-  const { player, act } = useGame();
+  const player = useGame((x) => x.player), act = useGame((x) => x.act);
   return (
     <div>
       {c.blueprints.map((b, i) => {

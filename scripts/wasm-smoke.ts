@@ -68,7 +68,7 @@ const check = (name: string, cond: boolean) => { if (!cond) throw new Error("FAI
 const exports_ = WebAssembly.Module.exports(wasm).map((e) => e.name);
 for (const m of ["mt_transfer", "mt_batch_transfer", "mt_transfer_call", "mt_batch_transfer_call", "mt_token", "mt_balance_of", "mt_batch_balance_of", "mt_supply", "mt_batch_supply", "mt_resolve_transfer"])
   check("exports " + m, exports_.includes(m));
-call("new", { config: JSON.parse(rules) }, "game.testnet", 0n, 0n);
+call("new", { config: JSON.parse(rules), owner_id: "owner.testnet" }, "game.testnet", 0n, 0n);
 check("init stored state", store.size > 0);
 call("start_game", {});
 check("start_game grants coins", call("get_player", { account_id: "a.testnet" }).coins === JSON.parse(rules).start_coins);
@@ -78,10 +78,19 @@ check("balance view", call("mt_balance_of", { account_id: "a.testnet", token_id:
 const q = call("quote", { merchant: 0, item: 0 });
 const paid = call("sell", { merchant: 0, item: 0, qty: 3, min_total: 1 }, "a.testnet", 0n, 110_000n);
 check("sell pays and burns", paid > 0 && paid <= q.bid * 3 && logs.some((l) => l.includes("mt_burn")));
-expectFail("PRICE_MOVED", () => call("sell", { merchant: 0, item: 4, qty: 1, min_total: 1000000000 }, "a.testnet", 0n, 110_000n));
-expectFail("OVER_DEPOSIT_CAP", () => call("withdraw", { cents: 1 }, "a.testnet", 1n));
+call("gather", { node: 0 }, "a.testnet", 0n, 200_000n);
+expectFail("PRICE_MOVED", () => call("sell", { merchant: 0, item: 0, qty: 1, min_total: 1000000000 }, "a.testnet", 0n, 210_000n));
+expectFail("NOT_OWNER", () => call("withdraw_revenue", { amount: "1" }, "a.testnet", 1n));
 check("error codes reach the client", true);
 const later = call("get_market", {}, "a.testnet", 0n, 3_600_000n);
 check("views catch up on time", later.tick === 6);
+const c0 = JSON.parse(rules);
+const freeLot = c0.lots.findIndex((l: { seeded: boolean }) => !l.seeded);
+expectFail("NOT_YOUR_STALL", () => call("build_stall", { lot: freeLot }));
+expectFail("NOT_ENOUGH_CREDITS", () => call("buy_vehicle", { vehicle: 1 }));
+call("buy_credits", {}, "a.testnet", 10n ** 24n);
+check("NEAR buys credits and the game keeps it", call("revenue", {}) === String(10n ** 24n));
+call("refuel", { units: 1 });
+check("vehicle price from the contract", call("vehicle_price", { vehicle: 1 }) > 0);
 check("board lists player", call("leaderboard", {}).length === 1);
 console.log(`\nWasm smoke passed: ${(readFileSync(root + "out/nearverse.wasm").length / 1024).toFixed(0)} KB, ${WebAssembly.Module.imports(wasm).length} host imports.`);

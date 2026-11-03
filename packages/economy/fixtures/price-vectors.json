@@ -1,1 +1,3603 @@
-[{"merchant":1,"item":2,"tick":87,"target":341,"stock":602,"bid":575,"ask":616},{"merchant":1,"item":1,"tick":236,"target":250,"stock":778,"bid":675,"ask":724},{"merchant":0,"item":4,"tick":98,"target":299,"stock":276,"bid":561,"ask":686},{"merchant":1,"item":3,"tick":235,"target":245,"stock":3,"bid":2895,"ask":3105},{"merchant":2,"item":0,"tick":133,"target":237,"stock":28,"bid":2368,"ask":2544},{"merchant":0,"item":0,"tick":13,"target":314,"stock":477,"bid":584,"ask":713},{"merchant":0,"item":4,"tick":159,"target":196,"stock":728,"bid":279,"ask":342},{"merchant":1,"item":0,"tick":298,"target":21,"stock":500,"bid":270,"ask":289},{"merchant":0,"item":3,"tick":369,"target":84,"stock":273,"bid":498,"ask":609},{"merchant":2,"item":2,"tick":146,"target":82,"stock":255,"bid":483,"ask":519},{"merchant":0,"item":3,"tick":463,"target":273,"stock":623,"bid":594,"ask":727},{"merchant":0,"item":4,"tick":68,"target":173,"stock":848,"bid":243,"ask":298},{"merchant":0,"item":0,"tick":305,"target":145,"stock":433,"bid":415,"ask":508},{"merchant":2,"item":0,"tick":139,"target":288,"stock":841,"bid":276,"ask":296},{"merchant":2,"item":0,"tick":60,"target":209,"stock":739,"bid":276,"ask":296},{"merchant":2,"item":2,"tick":289,"target":367,"stock":390,"bid":1299,"ask":1396},{"merchant":1,"item":2,"tick":147,"target":130,"stock":656,"bid":472,"ask":507},{"merchant":1,"item":4,"tick":445,"target":279,"stock":894,"bid":202,"ask":217},{"merchant":1,"item":2,"tick":348,"target":119,"stock":90,"bid":2053,"ask":2202},{"merchant":0,"item":3,"tick":237,"target":362,"stock":84,"bid":1867,"ask":2282},{"merchant":2,"item":0,"tick":354,"target":390,"stock":160,"bid":1924,"ask":2067},{"merchant":2,"item":1,"tick":327,"target":166,"stock":147,"bid":2122,"ask":2393},{"merchant":1,"item":1,"tick":163,"target":252,"stock":798,"bid":675,"ask":724},{"merchant":2,"item":1,"tick":184,"target":53,"stock":777,"bid":690,"ask":742},{"merchant":0,"item":3,"tick":454,"target":255,"stock":788,"bid":511,"ask":624},{"merchant":0,"item":3,"tick":23,"target":196,"stock":165,"bid":980,"ask":1197},{"merchant":2,"item":3,"tick":168,"target":117,"stock":247,"bid":466,"ask":501},{"merchant":0,"item":1,"tick":494,"target":398,"stock":515,"bid":1582,"ask":1933},{"merchant":0,"item":0,"tick":197,"target":225,"stock":263,"bid":665,"ask":812},{"merchant":1,"item":2,"tick":168,"target":275,"stock":358,"bid":909,"ask":974},{"merchant":2,"item":1,"tick":273,"target":199,"stock":549,"bid":714,"ask":767},{"merchant":1,"item":1,"tick":160,"target":131,"stock":268,"bid":675,"ask":724},{"merchant":2,"item":1,"tick":157,"target":68,"stock":625,"bid":690,"ask":742},{"merchant":0,"item":1,"tick":103,"target":17,"stock":519,"bid":630,"ask":770},{"merchant":1,"item":1,"tick":405,"target":285,"stock":821,"bid":675,"ask":724},{"merchant":1,"item":0,"tick":420,"target":348,"stock":473,"bid":486,"ask":521},{"merchant":2,"item":2,"tick":403,"target":59,"stock":556,"bid":483,"ask":519},{"merchant":0,"item":1,"tick":245,"target":219,"stock":886,"bid":894,"ask":1093},{"merchant":2,"item":4,"tick":34,"target":298,"stock":48,"bid":1692,"ask":1908},{"merchant":0,"item":2,"tick":495,"target":271,"stock":684,"bid":792,"ask":969},{"merchant":2,"item":3,"tick":299,"target":335,"stock":767,"bid":429,"ask":462},{"merchant":1,"item":2,"tick":174,"target":352,"stock":612,"bid":588,"ask":631},{"merchant":2,"item":3,"tick":75,"target":132,"stock":760,"bid":344,"ask":371},{"merchant":1,"item":0,"tick":363,"target":35,"stock":582,"bid":270,"ask":289},{"merchant":2,"item":4,"tick":72,"target":187,"stock":636,"bid":197,"ask":222},{"merchant":0,"item":0,"tick":220,"target":20,"stock":261,"bid":252,"ask":308},{"merchant":1,"item":3,"tick":97,"target":318,"stock":706,"bid":337,"ask":362},{"merchant":1,"item":2,"tick":229,"target":178,"stock":422,"bid":472,"ask":507},{"merchant":1,"item":1,"tick":252,"target":124,"stock":132,"bid":1756,"ask":1883},{"merchant":0,"item":2,"tick":218,"target":220,"stock":582,"bid":774,"ask":946},{"merchant":0,"item":0,"tick":34,"target":60,"stock":848,"bid":252,"ask":308},{"merchant":2,"item":2,"tick":410,"target":201,"stock":88,"bid":3154,"ask":3388},{"merchant":0,"item":1,"tick":282,"target":92,"stock":632,"bid":686,"ask":839},{"merchant":0,"item":4,"tick":398,"target":301,"stock":595,"bid":383,"ask":468},{"merchant":1,"item":4,"tick":39,"target":211,"stock":159,"bid":884,"ask":949},{"merchant":0,"item":0,"tick":334,"target":106,"stock":604,"bid":301,"ask":368},{"merchant":1,"item":4,"tick":168,"target":9,"stock":357,"bid":202,"ask":217},{"merchant":0,"item":4,"tick":472,"target":215,"stock":184,"bid":583,"ask":712},{"merchant":2,"item":1,"tick":467,"target":208,"stock":774,"bid":658,"ask":742},{"merchant":2,"item":2,"tick":247,"target":324,"stock":280,"bid":1521,"ask":1716},{"merchant":2,"item":2,"tick":273,"target":275,"stock":498,"bid":762,"ask":819},{"merchant":2,"item":4,"tick":315,"target":307,"stock":277,"bid":624,"ask":703},{"merchant":2,"item":4,"tick":158,"target":155,"stock":790,"bid":197,"ask":222},{"merchant":2,"item":2,"tick":418,"target":136,"stock":479,"bid":483,"ask":519},{"merchant":1,"item":4,"tick":143,"target":277,"stock":135,"bid":1701,"ask":1824},{"merchant":2,"item":2,"tick":385,"target":110,"stock":567,"bid":483,"ask":519},{"merchant":2,"item":3,"tick":451,"target":75,"stock":762,"bid":344,"ask":371},{"merchant":1,"item":2,"tick":446,"target":30,"stock":449,"bid":472,"ask":507},{"merchant":2,"item":2,"tick":358,"target":178,"stock":554,"bid":460,"ask":519},{"merchant":1,"item":0,"tick":60,"target":68,"stock":87,"bid":532,"ask":571},{"merchant":1,"item":4,"tick":42,"target":336,"stock":615,"bid":233,"ask":250},{"merchant":0,"item":1,"tick":428,"target":281,"stock":242,"bid":1939,"ask":2370},{"merchant":1,"item":4,"tick":49,"target":356,"stock":310,"bid":712,"ask":763},{"merchant":1,"item":1,"tick":130,"target":193,"stock":250,"bid":1308,"ask":1403},{"merchant":2,"item":2,"tick":54,"target":196,"stock":532,"bid":507,"ask":545},{"merchant":2,"item":3,"tick":29,"target":368,"stock":104,"bid":2961,"ask":3180},{"merchant":0,"item":1,"tick":495,"target":97,"stock":206,"bid":1234,"ask":1509},{"merchant":1,"item":4,"tick":16,"target":137,"stock":584,"bid":202,"ask":217},{"merchant":2,"item":3,"tick":392,"target":151,"stock":183,"bid":814,"ask":874},{"merchant":1,"item":0,"tick":215,"target":33,"stock":695,"bid":270,"ask":289},{"merchant":2,"item":3,"tick":87,"target":198,"stock":856,"bid":344,"ask":371},{"merchant":0,"item":2,"tick":385,"target":270,"stock":185,"bid":1521,"ask":1860},{"merchant":0,"item":0,"tick":277,"target":264,"stock":542,"bid":502,"ask":613},{"merchant":0,"item":4,"tick":24,"target":209,"stock":670,"bid":301,"ask":368},{"merchant":2,"item":2,"tick":163,"target":114,"stock":42,"bid":3748,"ask":4026},{"merchant":2,"item":3,"tick":227,"target":101,"stock":776,"bid":344,"ask":371},{"merchant":0,"item":3,"tick":426,"target":204,"stock":169,"bid":988,"ask":1207},{"merchant":0,"item":0,"tick":235,"target":398,"stock":190,"bid":1041,"ask":1272},{"merchant":1,"item":3,"tick":79,"target":194,"stock":606,"bid":337,"ask":362},{"merchant":2,"item":4,"tick":259,"target":139,"stock":184,"bid":425,"ask":480},{"merchant":2,"item":2,"tick":249,"target":195,"stock":226,"bid":1134,"ask":1279},{"merchant":0,"item":4,"tick":125,"target":146,"stock":383,"bid":333,"ask":407},{"merchant":1,"item":0,"tick":450,"target":267,"stock":58,"bid":2316,"ask":2484},{"merchant":2,"item":3,"tick":293,"target":325,"stock":48,"bid":2961,"ask":3180},{"merchant":1,"item":2,"tick":225,"target":205,"stock":427,"bid":472,"ask":507},{"merchant":1,"item":0,"tick":345,"target":284,"stock":3,"bid":2316,"ask":2484},{"merchant":0,"item":1,"tick":139,"target":291,"stock":838,"bid":1060,"ask":1295},{"merchant":1,"item":4,"tick":283,"target":185,"stock":41,"bid":1737,"ask":1863},{"merchant":1,"item":2,"tick":60,"target":188,"stock":678,"bid":472,"ask":507},{"merchant":2,"item":2,"tick":239,"target":379,"stock":749,"bid":665,"ask":750},{"merchant":0,"item":4,"tick":243,"target":25,"stock":464,"bid":189,"ask":231},{"merchant":2,"item":2,"tick":332,"target":245,"stock":766,"bid":460,"ask":519},{"merchant":2,"item":4,"tick":478,"target":387,"stock":730,"bid":298,"ask":337},{"merchant":2,"item":0,"tick":17,"target":36,"stock":893,"bid":276,"ask":296},{"merchant":1,"item":4,"tick":163,"target":272,"stock":698,"bid":202,"ask":217},{"merchant":2,"item":2,"tick":125,"target":370,"stock":590,"bid":824,"ask":929},{"merchant":0,"item":1,"tick":69,"target":290,"stock":45,"bid":4569,"ask":5584},{"merchant":0,"item":3,"tick":487,"target":150,"stock":571,"bid":460,"ask":563},{"merchant":1,"item":3,"tick":342,"target":296,"stock":14,"bid":2895,"ask":3105},{"merchant":2,"item":1,"tick":233,"target":237,"stock":809,"bid":658,"ask":742},{"merchant":1,"item":4,"tick":232,"target":253,"stock":283,"bid":489,"ask":524},{"merchant":1,"item":4,"tick":37,"target":70,"stock":535,"bid":202,"ask":217},{"merchant":1,"item":3,"tick":417,"target":174,"stock":536,"bid":337,"ask":362},{"merchant":1,"item":2,"tick":90,"target":68,"stock":878,"bid":472,"ask":507},{"merchant":2,"item":3,"tick":315,"target":227,"stock":491,"bid":455,"ask":489},{"merchant":2,"item":3,"tick":47,"target":1,"stock":54,"bid":344,"ask":371},{"merchant":2,"item":0,"tick":28,"target":14,"stock":471,"bid":276,"ask":296},{"merchant":2,"item":3,"tick":412,"target":1,"stock":365,"bid":344,"ask":371},{"merchant":1,"item":0,"tick":24,"target":298,"stock":587,"bid":278,"ask":299},{"merchant":1,"item":2,"tick":207,"target":341,"stock":522,"bid":713,"ask":764},{"merchant":1,"item":2,"tick":67,"target":237,"stock":175,"bid":2128,"ask":2283},{"merchant":2,"item":3,"tick":471,"target":113,"stock":830,"bid":344,"ask":371},{"merchant":1,"item":2,"tick":489,"target":136,"stock":599,"bid":472,"ask":507},{"merchant":2,"item":3,"tick":254,"target":138,"stock":818,"bid":344,"ask":371},{"merchant":2,"item":1,"tick":491,"target":61,"stock":287,"bid":690,"ask":742},{"merchant":1,"item":4,"tick":301,"target":9,"stock":586,"bid":202,"ask":217},{"merchant":2,"item":1,"tick":472,"target":386,"stock":201,"bid":3790,"ask":4070},{"merchant":0,"item":2,"tick":143,"target":156,"stock":195,"bid":1126,"ask":1377},{"merchant":2,"item":3,"tick":182,"target":127,"stock":459,"bid":344,"ask":371},{"merchant":1,"item":0,"tick":329,"target":229,"stock":809,"bid":270,"ask":289},{"merchant":1,"item":4,"tick":221,"target":235,"stock":768,"bid":202,"ask":217},{"merchant":1,"item":2,"tick":312,"target":236,"stock":594,"bid":472,"ask":507},{"merchant":1,"item":0,"tick":191,"target":3,"stock":639,"bid":270,"ask":289},{"merchant":0,"item":0,"tick":140,"target":51,"stock":584,"bid":252,"ask":308},{"merchant":0,"item":2,"tick":354,"target":280,"stock":122,"bid":1908,"ask":2332},{"merchant":0,"item":1,"tick":174,"target":249,"stock":306,"bid":1623,"ask":1984},{"merchant":1,"item":2,"tick":99,"target":327,"stock":75,"bid":4053,"ask":4347},{"merchant":1,"item":4,"tick":232,"target":344,"stock":857,"bid":202,"ask":217},{"merchant":0,"item":3,"tick":470,"target":245,"stock":676,"bid":541,"ask":662},{"merchant":1,"item":1,"tick":286,"target":65,"stock":811,"bid":675,"ask":724},{"merchant":0,"item":0,"tick":267,"target":343,"stock":85,"bid":1446,"ask":1767},{"merchant":1,"item":2,"tick":337,"target":391,"stock":473,"bid":1015,"ask":1088},{"merchant":1,"item":4,"tick":112,"target":354,"stock":79,"bid":1737,"ask":1863},{"merchant":2,"item":1,"tick":220,"target":282,"stock":482,"bid":1099,"ask":1240},{"merchant":0,"item":1,"tick":435,"target":135,"stock":580,"bid":867,"ask":1060},{"merchant":2,"item":1,"tick":258,"target":236,"stock":443,"bid":1050,"ask":1128},{"merchant":2,"item":2,"tick":110,"target":164,"stock":897,"bid":460,"ask":519},{"merchant":1,"item":0,"tick":60,"target":62,"stock":43,"bid":1336,"ask":1433},{"merchant":1,"item":3,"tick":189,"target":211,"stock":406,"bid":360,"ask":387},{"merchant":2,"item":3,"tick":374,"target":176,"stock":313,"bid":554,"ask":595},{"merchant":0,"item":2,"tick":422,"target":106,"stock":101,"bid":1290,"ask":1577},{"merchant":1,"item":0,"tick":376,"target":380,"stock":39,"bid":2316,"ask":2484},{"merchant":1,"item":0,"tick":94,"target":248,"stock":788,"bid":270,"ask":289},{"merchant":2,"item":1,"tick":208,"target":389,"stock":405,"bid":1895,"ask":2035},{"merchant":0,"item":1,"tick":240,"target":21,"stock":344,"bid":630,"ask":770},{"merchant":1,"item":0,"tick":114,"target":385,"stock":689,"bid":322,"ask":345},{"merchant":0,"item":0,"tick":487,"target":276,"stock":713,"bid":447,"ask":546},{"merchant":2,"item":4,"tick":254,"target":99,"stock":635,"bid":197,"ask":222},{"merchant":2,"item":1,"tick":454,"target":1,"stock":757,"bid":658,"ask":742},{"merchant":2,"item":1,"tick":476,"target":55,"stock":9,"bid":5922,"ask":6360},{"merchant":2,"item":3,"tick":344,"target":37,"stock":571,"bid":344,"ask":371},{"merchant":2,"item":0,"tick":262,"target":339,"stock":203,"bid":1316,"ask":1415},{"merchant":1,"item":0,"tick":495,"target":110,"stock":810,"bid":270,"ask":289},{"merchant":1,"item":1,"tick":19,"target":14,"stock":729,"bid":675,"ask":724},{"merchant":2,"item":1,"tick":384,"target":381,"stock":854,"bid":879,"ask":945},{"merchant":0,"item":1,"tick":318,"target":113,"stock":62,"bid":2430,"ask":2970},{"merchant":1,"item":3,"tick":31,"target":264,"stock":531,"bid":337,"ask":362},{"merchant":2,"item":3,"tick":404,"target":250,"stock":375,"bid":657,"ask":705},{"merchant":0,"item":2,"tick":99,"target":42,"stock":844,"bid":441,"ask":539},{"merchant":0,"item":3,"tick":213,"target":244,"stock":502,"bid":627,"ask":766},{"merchant":1,"item":1,"tick":40,"target":172,"stock":651,"bid":675,"ask":724},{"merchant":1,"item":3,"tick":427,"target":260,"stock":790,"bid":337,"ask":362},{"merchant":1,"item":3,"tick":326,"target":59,"stock":413,"bid":337,"ask":362},{"merchant":1,"item":0,"tick":216,"target":392,"stock":829,"bid":270,"ask":289},{"merchant":2,"item":4,"tick":432,"target":39,"stock":446,"bid":197,"ask":222},{"merchant":0,"item":2,"tick":361,"target":320,"stock":309,"bid":1281,"ask":1566},{"merchant":1,"item":4,"tick":370,"target":25,"stock":853,"bid":202,"ask":217},{"merchant":1,"item":1,"tick":134,"target":108,"stock":331,"bid":675,"ask":724},{"merchant":0,"item":0,"tick":128,"target":284,"stock":139,"bid":1028,"ask":1257},{"merchant":0,"item":3,"tick":274,"target":36,"stock":660,"bid":315,"ask":385},{"merchant":1,"item":1,"tick":150,"target":258,"stock":532,"bid":675,"ask":724},{"merchant":2,"item":4,"tick":240,"target":296,"stock":599,"bid":278,"ask":313},{"merchant":1,"item":2,"tick":205,"target":393,"stock":268,"bid":2398,"ask":2573},{"merchant":1,"item":1,"tick":94,"target":272,"stock":318,"bid":1526,"ask":1637},{"merchant":1,"item":3,"tick":435,"target":225,"stock":889,"bid":337,"ask":362},{"merchant":2,"item":2,"tick":427,"target":204,"stock":349,"bid":806,"ask":867},{"merchant":0,"item":0,"tick":64,"target":243,"stock":16,"bid":2160,"ask":2640},{"merchant":2,"item":0,"tick":191,"target":96,"stock":155,"bid":487,"ask":524},{"merchant":2,"item":2,"tick":405,"target":287,"stock":772,"bid":513,"ask":551},{"merchant":0,"item":4,"tick":29,"target":147,"stock":230,"bid":431,"ask":526},{"merchant":2,"item":3,"tick":126,"target":357,"stock":440,"bid":799,"ask":859},{"merchant":1,"item":3,"tick":398,"target":110,"stock":803,"bid":337,"ask":362},{"merchant":1,"item":3,"tick":203,"target":205,"stock":821,"bid":337,"ask":362},{"merchant":2,"item":4,"tick":359,"target":35,"stock":788,"bid":197,"ask":222},{"merchant":2,"item":1,"tick":196,"target":48,"stock":755,"bid":690,"ask":742},{"merchant":1,"item":4,"tick":267,"target":164,"stock":330,"bid":202,"ask":217},{"merchant":0,"item":1,"tick":283,"target":387,"stock":864,"bid":1204,"ask":1471},{"merchant":1,"item":0,"tick":143,"target":35,"stock":789,"bid":270,"ask":289},{"merchant":0,"item":4,"tick":152,"target":265,"stock":222,"bid":589,"ask":720},{"merchant":0,"item":1,"tick":321,"target":359,"stock":889,"bid":1143,"ask":1397},{"merchant":1,"item":3,"tick":230,"target":71,"stock":519,"bid":337,"ask":362},{"merchant":1,"item":1,"tick":244,"target":196,"stock":428,"bid":675,"ask":724},{"merchant":1,"item":1,"tick":309,"target":274,"stock":729,"bid":675,"ask":724},{"merchant":0,"item":1,"tick":49,"target":70,"stock":786,"bid":630,"ask":770},{"merchant":1,"item":3,"tick":249,"target":112,"stock":26,"bid":2895,"ask":3105},{"merchant":0,"item":3,"tick":309,"target":191,"stock":212,"bid":854,"ask":1043},{"merchant":1,"item":2,"tick":85,"target":336,"stock":881,"bid":472,"ask":507},{"merchant":0,"item":4,"tick":40,"target":316,"stock":471,"bid":441,"ask":540},{"merchant":0,"item":1,"tick":65,"target":323,"stock":416,"bid":1585,"ask":1938},{"merchant":0,"item":3,"tick":482,"target":293,"stock":660,"bid":599,"ask":732},{"merchant":1,"item":4,"tick":427,"target":365,"stock":633,"bid":252,"ask":271},{"merchant":1,"item":0,"tick":311,"target":24,"stock":455,"bid":270,"ask":289},{"merchant":0,"item":4,"tick":488,"target":388,"stock":650,"bid":416,"ask":509},{"merchant":0,"item":3,"tick":258,"target":29,"stock":270,"bid":315,"ask":385},{"merchant":1,"item":4,"tick":405,"target":305,"stock":673,"bid":202,"ask":217},{"merchant":2,"item":4,"tick":452,"target":344,"stock":540,"bid":359,"ask":404},{"merchant":1,"item":2,"tick":100,"target":17,"stock":331,"bid":472,"ask":507},{"merchant":2,"item":1,"tick":389,"target":271,"stock":199,"bid":2687,"ask":2886},{"merchant":0,"item":0,"tick":471,"target":59,"stock":170,"bid":423,"ask":518},{"merchant":2,"item":1,"tick":372,"target":133,"stock":808,"bid":690,"ask":742},{"merchant":0,"item":1,"tick":449,"target":69,"stock":522,"bid":654,"ask":799},{"merchant":2,"item":4,"tick":359,"target":336,"stock":625,"bid":302,"ask":341},{"merchant":0,"item":1,"tick":479,"target":165,"stock":204,"bid":1618,"ask":1977},{"merchant":0,"item":2,"tick":453,"target":329,"stock":303,"bid":1312,"ask":1603},{"merchant":2,"item":3,"tick":254,"target":74,"stock":178,"bid":408,"ask":439},{"merchant":2,"item":2,"tick":20,"target":333,"stock":57,"bid":3948,"ask":4452},{"merchant":1,"item":1,"tick":436,"target":53,"stock":566,"bid":675,"ask":724},{"merchant":0,"item":0,"tick":121,"target":14,"stock":174,"bid":252,"ask":308},{"merchant":2,"item":4,"tick":166,"target":159,"stock":447,"bid":200,"ask":225},{"merchant":1,"item":1,"tick":236,"target":106,"stock":619,"bid":675,"ask":724},{"merchant":1,"item":4,"tick":447,"target":215,"stock":56,"bid":1737,"ask":1863},{"merchant":1,"item":3,"tick":274,"target":47,"stock":131,"bid":337,"ask":362},{"merchant":2,"item":1,"tick":240,"target":94,"stock":197,"bid":896,"ask":1011},{"merchant":1,"item":1,"tick":35,"target":210,"stock":403,"bid":725,"ask":778},{"merchant":1,"item":3,"tick":141,"target":54,"stock":21,"bid":2895,"ask":3105},{"merchant":0,"item":2,"tick":315,"target":369,"stock":790,"bid":860,"ask":1051},{"merchant":1,"item":3,"tick":99,"target":88,"stock":825,"bid":337,"ask":362},{"merchant":2,"item":4,"tick":171,"target":207,"stock":551,"bid":211,"ask":238},{"merchant":1,"item":2,"tick":113,"target":102,"stock":441,"bid":472,"ask":507},{"merchant":1,"item":2,"tick":168,"target":55,"stock":446,"bid":472,"ask":507},{"merchant":0,"item":1,"tick":390,"target":128,"stock":218,"bid":1378,"ask":1685},{"merchant":0,"item":2,"tick":228,"target":330,"stock":595,"bid":937,"ask":1146},{"merchant":0,"item":2,"tick":413,"target":51,"stock":167,"bid":695,"ask":850},{"merchant":0,"item":2,"tick":285,"target":163,"stock":692,"bid":611,"ask":746},{"merchant":1,"item":4,"tick":119,"target":249,"stock":350,"bid":347,"ask":372},{"merchant":2,"item":4,"tick":400,"target":374,"stock":692,"bid":304,"ask":343},{"merchant":1,"item":0,"tick":455,"target":74,"stock":109,"bid":431,"ask":462},{"merchant":2,"item":2,"tick":302,"target":220,"stock":261,"bid":1164,"ask":1250},{"merchant":2,"item":1,"tick":437,"target":167,"stock":895,"bid":658,"ask":742},{"merchant":2,"item":0,"tick":117,"target":211,"stock":827,"bid":276,"ask":296},{"merchant":0,"item":0,"tick":417,"target":171,"stock":252,"bid":593,"ask":724},{"merchant":2,"item":3,"tick":168,"target":23,"stock":840,"bid":344,"ask":371},{"merchant":1,"item":1,"tick":365,"target":194,"stock":715,"bid":675,"ask":724},{"merchant":2,"item":1,"tick":246,"target":73,"stock":92,"bid":1490,"ask":1681},{"merchant":0,"item":3,"tick":464,"target":222,"stock":541,"bid":576,"ask":704},{"merchant":1,"item":3,"tick":27,"target":115,"stock":142,"bid":702,"ask":753},{"merchant":0,"item":3,"tick":38,"target":26,"stock":39,"bid":734,"ask":897},{"merchant":0,"item":2,"tick":369,"target":181,"stock":87,"bid":1817,"ask":2220},{"merchant":2,"item":2,"tick":42,"target":189,"stock":338,"bid":771,"ask":828},{"merchant":2,"item":2,"tick":39,"target":34,"stock":144,"bid":483,"ask":519},{"merchant":0,"item":0,"tick":191,"target":292,"stock":644,"bid":484,"ask":591},{"merchant":0,"item":2,"tick":82,"target":302,"stock":104,"bid":2146,"ask":2623},{"merchant":1,"item":4,"tick":50,"target":162,"stock":60,"bid":1737,"ask":1863},{"merchant":2,"item":2,"tick":210,"target":400,"stock":416,"bid":1328,"ask":1426},{"merchant":1,"item":0,"tick":89,"target":319,"stock":603,"bid":296,"ask":317},{"merchant":2,"item":4,"tick":138,"target":244,"stock":386,"bid":356,"ask":401},{"merchant":2,"item":1,"tick":463,"target":75,"stock":597,"bid":658,"ask":742},{"merchant":1,"item":4,"tick":180,"target":72,"stock":815,"bid":202,"ask":217},{"merchant":1,"item":1,"tick":486,"target":146,"stock":459,"bid":675,"ask":724},{"merchant":2,"item":2,"tick":47,"target":18,"stock":136,"bid":483,"ask":519},{"merchant":2,"item":2,"tick":373,"target":12,"stock":687,"bid":483,"ask":519},{"merchant":2,"item":2,"tick":440,"target":262,"stock":657,"bid":524,"ask":591},{"merchant":0,"item":3,"tick":484,"target":173,"stock":460,"bid":551,"ask":674},{"merchant":2,"item":2,"tick":78,"target":76,"stock":406,"bid":483,"ask":519},{"merchant":2,"item":4,"tick":135,"target":228,"stock":859,"bid":197,"ask":222},{"merchant":0,"item":3,"tick":78,"target":225,"stock":89,"bid":1430,"ask":1747},{"merchant":1,"item":0,"tick":266,"target":399,"stock":865,"bid":270,"ask":289},{"merchant":0,"item":2,"tick":140,"target":181,"stock":225,"bid":1129,"ask":1380},{"merchant":0,"item":0,"tick":235,"target":396,"stock":121,"bid":1302,"ask":1591},{"merchant":0,"item":0,"tick":268,"target":371,"stock":385,"bid":706,"ask":863},{"merchant":1,"item":4,"tick":274,"target":163,"stock":669,"bid":202,"ask":217},{"merchant":1,"item":0,"tick":461,"target":119,"stock":106,"bid":917,"ask":984},{"merchant":2,"item":3,"tick":152,"target":204,"stock":239,"bid":841,"ask":904},{"merchant":1,"item":3,"tick":467,"target":74,"stock":848,"bid":337,"ask":362},{"merchant":0,"item":1,"tick":113,"target":350,"stock":486,"bid":1527,"ask":1866},{"merchant":0,"item":4,"tick":92,"target":382,"stock":684,"bid":403,"ask":492},{"merchant":0,"item":1,"tick":496,"target":84,"stock":240,"bid":1064,"ask":1301},{"merchant":0,"item":1,"tick":98,"target":53,"stock":168,"bid":1010,"ask":1235},{"merchant":0,"item":4,"tick":363,"target":104,"stock":288,"bid":324,"ask":396},{"merchant":0,"item":4,"tick":65,"target":211,"stock":627,"bid":313,"ask":382},{"merchant":2,"item":2,"tick":326,"target":62,"stock":713,"bid":460,"ask":519},{"merchant":0,"item":0,"tick":347,"target":36,"stock":894,"bid":252,"ask":308},{"merchant":1,"item":3,"tick":58,"target":68,"stock":282,"bid":337,"ask":362},{"merchant":2,"item":1,"tick":229,"target":122,"stock":626,"bid":658,"ask":742},{"merchant":1,"item":0,"tick":355,"target":249,"stock":542,"bid":270,"ask":289},{"merchant":2,"item":0,"tick":346,"target":129,"stock":430,"bid":276,"ask":296},{"merchant":0,"item":4,"tick":297,"target":242,"stock":694,"bid":318,"ask":389},{"merchant":1,"item":4,"tick":364,"target":76,"stock":6,"bid":1737,"ask":1863},{"merchant":0,"item":4,"tick":1,"target":344,"stock":462,"bid":465,"ask":568},{"merchant":2,"item":4,"tick":470,"target":82,"stock":66,"bid":700,"ask":789},{"merchant":1,"item":0,"tick":168,"target":266,"stock":351,"bid":508,"ask":545},{"merchant":0,"item":4,"tick":440,"target":359,"stock":31,"bid":1620,"ask":1980},{"merchant":1,"item":1,"tick":250,"target":303,"stock":841,"bid":675,"ask":724},{"merchant":2,"item":0,"tick":362,"target":335,"stock":879,"bid":299,"ask":322},{"merchant":0,"item":4,"tick":278,"target":357,"stock":454,"bid":478,"ask":585},{"merchant":0,"item":0,"tick":14,"target":335,"stock":867,"bid":447,"ask":546},{"merchant":2,"item":3,"tick":69,"target":206,"stock":610,"bid":344,"ask":371},{"merchant":1,"item":1,"tick":52,"target":256,"stock":152,"bid":4218,"ask":4523},{"merchant":0,"item":2,"tick":404,"target":58,"stock":314,"bid":540,"ask":661},{"merchant":0,"item":3,"tick":463,"target":12,"stock":99,"bid":315,"ask":385},{"merchant":0,"item":3,"tick":126,"target":97,"stock":225,"bid":590,"ask":721},{"merchant":1,"item":2,"tick":343,"target":395,"stock":603,"bid":716,"ask":767},{"merchant":1,"item":3,"tick":315,"target":188,"stock":69,"bid":2895,"ask":3105},{"merchant":2,"item":0,"tick":402,"target":20,"stock":827,"bid":276,"ask":296},{"merchant":0,"item":0,"tick":243,"target":221,"stock":601,"bid":436,"ask":533},{"merchant":2,"item":0,"tick":68,"target":333,"stock":392,"bid":669,"ask":719},{"merchant":2,"item":4,"tick":315,"target":273,"stock":645,"bid":237,"ask":268},{"merchant":1,"item":0,"tick":120,"target":113,"stock":730,"bid":270,"ask":289},{"merchant":2,"item":3,"tick":446,"target":266,"stock":148,"bid":1772,"ask":1904},{"merchant":1,"item":4,"tick":435,"target":304,"stock":219,"bid":946,"ask":1015},{"merchant":1,"item":0,"tick":449,"target":78,"stock":573,"bid":270,"ask":289},{"merchant":0,"item":2,"tick":34,"target":129,"stock":564,"bid":602,"ask":735},{"merchant":0,"item":2,"tick":95,"target":39,"stock":114,"bid":736,"ask":899},{"merchant":2,"item":0,"tick":222,"target":69,"stock":672,"bid":276,"ask":296},{"merchant":0,"item":0,"tick":360,"target":241,"stock":597,"bid":457,"ask":558},{"merchant":0,"item":3,"tick":396,"target":324,"stock":120,"bid":1478,"ask":1807},{"merchant":0,"item":2,"tick":158,"target":147,"stock":540,"bid":657,"ask":803},{"merchant":0,"item":2,"tick":236,"target":165,"stock":651,"bid":633,"ask":774},{"merchant":2,"item":3,"tick":463,"target":318,"stock":487,"bid":642,"ask":691},{"merchant":1,"item":0,"tick":18,"target":353,"stock":813,"bid":270,"ask":289},{"merchant":1,"item":4,"tick":226,"target":176,"stock":491,"bid":202,"ask":217},{"merchant":0,"item":2,"tick":137,"target":137,"stock":809,"bid":518,"ask":633},{"merchant":0,"item":4,"tick":357,"target":216,"stock":168,"bid":612,"ask":748},{"merchant":0,"item":3,"tick":208,"target":248,"stock":830,"bid":491,"ask":600},{"merchant":0,"item":1,"tick":398,"target":128,"stock":674,"bid":783,"ask":958},{"merchant":1,"item":4,"tick":286,"target":102,"stock":39,"bid":1737,"ask":1863},{"merchant":2,"item":2,"tick":326,"target":266,"stock":738,"bid":473,"ask":534},{"merchant":2,"item":2,"tick":431,"target":156,"stock":241,"bid":893,"ask":960},{"merchant":0,"item":1,"tick":376,"target":291,"stock":44,"bid":4628,"ask":5657},{"merchant":2,"item":2,"tick":199,"target":199,"stock":103,"bid":2668,"ask":2866},{"merchant":0,"item":4,"tick":408,"target":398,"stock":236,"bid":701,"ask":856},{"merchant":0,"item":4,"tick":9,"target":291,"stock":580,"bid":381,"ask":466},{"merchant":2,"item":0,"tick":101,"target":24,"stock":153,"bid":276,"ask":296},{"merchant":2,"item":4,"tick":8,"target":101,"stock":43,"bid":1324,"ask":1493},{"merchant":2,"item":3,"tick":190,"target":352,"stock":847,"bid":408,"ask":439},{"merchant":2,"item":4,"tick":391,"target":269,"stock":165,"bid":919,"ask":1036},{"merchant":0,"item":2,"tick":273,"target":222,"stock":275,"bid":1131,"ask":1382},{"merchant":0,"item":2,"tick":411,"target":68,"stock":666,"bid":441,"ask":539},{"merchant":2,"item":3,"tick":277,"target":211,"stock":562,"bid":369,"ask":397},{"merchant":1,"item":0,"tick":158,"target":83,"stock":111,"bid":498,"ask":535},{"merchant":0,"item":1,"tick":198,"target":43,"stock":809,"bid":630,"ask":770},{"merchant":1,"item":3,"tick":435,"target":188,"stock":764,"bid":337,"ask":362},{"merchant":0,"item":4,"tick":97,"target":379,"stock":761,"bid":380,"ask":465},{"merchant":1,"item":1,"tick":254,"target":197,"stock":600,"bid":675,"ask":724},{"merchant":0,"item":3,"tick":67,"target":155,"stock":403,"bid":558,"ask":682},{"merchant":0,"item":0,"tick":487,"target":177,"stock":106,"bid":929,"ask":1136},{"merchant":0,"item":1,"tick":333,"target":232,"stock":44,"bid":4132,"ask":5051},{"merchant":0,"item":0,"tick":327,"target":102,"stock":649,"bid":285,"ask":348},{"merchant":2,"item":1,"tick":67,"target":144,"stock":445,"bid":690,"ask":742},{"merchant":2,"item":1,"tick":146,"target":42,"stock":114,"bid":725,"ask":780},{"merchant":0,"item":2,"tick":112,"target":287,"stock":201,"bid":1504,"ask":1839},{"merchant":1,"item":1,"tick":91,"target":365,"stock":331,"bid":2233,"ask":2396},{"merchant":0,"item":1,"tick":494,"target":302,"stock":271,"bid":1899,"ask":2322},{"merchant":0,"item":2,"tick":316,"target":334,"stock":613,"bid":929,"ask":1136},{"merchant":1,"item":4,"tick":305,"target":13,"stock":580,"bid":202,"ask":217},{"merchant":2,"item":4,"tick":112,"target":362,"stock":813,"bid":250,"ask":283},{"merchant":2,"item":1,"tick":40,"target":112,"stock":206,"bid":1072,"ask":1152},{"merchant":2,"item":2,"tick":224,"target":54,"stock":619,"bid":460,"ask":519},{"merchant":0,"item":4,"tick":411,"target":243,"stock":165,"bid":655,"ask":800},{"merchant":2,"item":2,"tick":77,"target":224,"stock":389,"bid":795,"ask":854},{"merchant":0,"item":2,"tick":280,"target":35,"stock":538,"bid":441,"ask":539},{"merchant":0,"item":3,"tick":465,"target":127,"stock":112,"bid":957,"ask":1170},{"merchant":0,"item":1,"tick":386,"target":52,"stock":240,"bid":837,"ask":1023},{"merchant":0,"item":3,"tick":283,"target":374,"stock":857,"bid":594,"ask":726},{"merchant":0,"item":3,"tick":6,"target":95,"stock":495,"bid":394,"ask":481},{"merchant":0,"item":2,"tick":23,"target":300,"stock":863,"bid":742,"ask":907},{"merchant":1,"item":0,"tick":51,"target":40,"stock":583,"bid":270,"ask":289},{"merchant":1,"item":0,"tick":241,"target":282,"stock":415,"bid":432,"ask":463},{"merchant":2,"item":4,"tick":94,"target":304,"stock":501,"bid":342,"ask":385},{"merchant":2,"item":4,"tick":275,"target":159,"stock":613,"bid":197,"ask":222},{"merchant":0,"item":1,"tick":491,"target":194,"stock":890,"bid":839,"ask":1026},{"merchant":1,"item":2,"tick":45,"target":294,"stock":4,"bid":4053,"ask":4347},{"merchant":0,"item":0,"tick":447,"target":351,"stock":472,"bid":620,"ask":757},{"merchant":1,"item":1,"tick":219,"target":310,"stock":12,"bid":5790,"ask":6210},{"merchant":0,"item":4,"tick":315,"target":191,"stock":19,"bid":1620,"ask":1980},{"merchant":1,"item":1,"tick":263,"target":54,"stock":731,"bid":675,"ask":724},{"merchant":2,"item":4,"tick":4,"target":142,"stock":745,"bid":197,"ask":222},{"merchant":2,"item":0,"tick":76,"target":369,"stock":269,"bid":1081,"ask":1162},{"merchant":2,"item":2,"tick":465,"target":131,"stock":796,"bid":460,"ask":519},{"merchant":1,"item":3,"tick":304,"target":208,"stock":569,"bid":337,"ask":362},{"merchant":0,"item":2,"tick":339,"target":126,"stock":70,"bid":1690,"ask":2065},{"merchant":2,"item":0,"tick":69,"target":92,"stock":688,"bid":276,"ask":296},{"merchant":2,"item":4,"tick":490,"target":153,"stock":223,"bid":386,"ask":435},{"merchant":1,"item":4,"tick":92,"target":15,"stock":298,"bid":202,"ask":217},{"merchant":1,"item":0,"tick":255,"target":354,"stock":500,"bid":459,"ask":492},{"merchant":1,"item":3,"tick":347,"target":216,"stock":787,"bid":337,"ask":362},{"merchant":1,"item":2,"tick":242,"target":160,"stock":64,"bid":4053,"ask":4347},{"merchant":2,"item":2,"tick":273,"target":390,"stock":757,"bid":711,"ask":764},{"merchant":2,"item":3,"tick":127,"target":339,"stock":59,"bid":2961,"ask":3180},{"merchant":1,"item":2,"tick":427,"target":278,"stock":418,"bid":732,"ask":785}]
+[
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 87,
+    "target": 341,
+    "stock": 602,
+    "bid": 822,
+    "ask": 881
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 236,
+    "target": 250,
+    "stock": 778,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 98,
+    "target": 299,
+    "stock": 276,
+    "bid": 936,
+    "ask": 1144
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 235,
+    "target": 245,
+    "stock": 3,
+    "bid": 4053,
+    "ask": 4347
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 133,
+    "target": 237,
+    "stock": 28,
+    "bid": 2368,
+    "ask": 2544
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 13,
+    "target": 314,
+    "stock": 477,
+    "bid": 584,
+    "ask": 713
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 159,
+    "target": 196,
+    "stock": 728,
+    "bid": 466,
+    "ask": 569
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 298,
+    "target": 21,
+    "stock": 500,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 369,
+    "target": 84,
+    "stock": 273,
+    "bid": 698,
+    "ask": 853
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 146,
+    "target": 82,
+    "stock": 255,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 463,
+    "target": 273,
+    "stock": 623,
+    "bid": 833,
+    "ask": 1018
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 68,
+    "target": 173,
+    "stock": 848,
+    "bid": 405,
+    "ask": 496
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 305,
+    "target": 145,
+    "stock": 433,
+    "bid": 415,
+    "ask": 508
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 139,
+    "target": 288,
+    "stock": 841,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 60,
+    "target": 209,
+    "stock": 739,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 289,
+    "target": 367,
+    "stock": 390,
+    "bid": 1299,
+    "ask": 1396
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 147,
+    "target": 130,
+    "stock": 656,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 445,
+    "target": 279,
+    "stock": 894,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 348,
+    "target": 119,
+    "stock": 90,
+    "bid": 2053,
+    "ask": 2202
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 237,
+    "target": 362,
+    "stock": 84,
+    "bid": 1867,
+    "ask": 2282
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 354,
+    "target": 390,
+    "stock": 160,
+    "bid": 1924,
+    "ask": 2067
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 327,
+    "target": 166,
+    "stock": 147,
+    "bid": 891,
+    "ask": 957
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 163,
+    "target": 252,
+    "stock": 798,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 184,
+    "target": 53,
+    "stock": 777,
+    "bid": 690,
+    "ask": 742
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 454,
+    "target": 255,
+    "stock": 788,
+    "bid": 716,
+    "ask": 875
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 23,
+    "target": 196,
+    "stock": 165,
+    "bid": 1372,
+    "ask": 1677
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 168,
+    "target": 117,
+    "stock": 247,
+    "bid": 654,
+    "ask": 702
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 494,
+    "target": 398,
+    "stock": 515,
+    "bid": 632,
+    "ask": 773
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 197,
+    "target": 225,
+    "stock": 263,
+    "bid": 665,
+    "ask": 812
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 168,
+    "target": 275,
+    "stock": 358,
+    "bid": 1298,
+    "ask": 1393
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 273,
+    "target": 199,
+    "stock": 549,
+    "bid": 714,
+    "ask": 767
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 160,
+    "target": 131,
+    "stock": 268,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 157,
+    "target": 68,
+    "stock": 625,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 103,
+    "target": 17,
+    "stock": 519,
+    "bid": 630,
+    "ask": 770
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 405,
+    "target": 285,
+    "stock": 821,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 420,
+    "target": 348,
+    "stock": 473,
+    "bid": 486,
+    "ask": 521
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 403,
+    "target": 59,
+    "stock": 556,
+    "bid": 690,
+    "ask": 742
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 245,
+    "target": 219,
+    "stock": 886,
+    "bid": 894,
+    "ask": 1093
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 34,
+    "target": 298,
+    "stock": 48,
+    "bid": 2961,
+    "ask": 3180
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 495,
+    "target": 271,
+    "stock": 684,
+    "bid": 792,
+    "ask": 969
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 299,
+    "target": 335,
+    "stock": 767,
+    "bid": 602,
+    "ask": 647
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 174,
+    "target": 352,
+    "stock": 612,
+    "bid": 841,
+    "ask": 902
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 75,
+    "target": 132,
+    "stock": 760,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 363,
+    "target": 35,
+    "stock": 582,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 72,
+    "target": 187,
+    "stock": 636,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 220,
+    "target": 20,
+    "stock": 261,
+    "bid": 252,
+    "ask": 308
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 97,
+    "target": 318,
+    "stock": 706,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 229,
+    "target": 178,
+    "stock": 422,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 252,
+    "target": 124,
+    "stock": 132,
+    "bid": 1756,
+    "ask": 1883
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 218,
+    "target": 220,
+    "stock": 582,
+    "bid": 774,
+    "ask": 946
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 34,
+    "target": 60,
+    "stock": 848,
+    "bid": 252,
+    "ask": 308
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 410,
+    "target": 201,
+    "stock": 88,
+    "bid": 4508,
+    "ask": 4842
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 282,
+    "target": 92,
+    "stock": 632,
+    "bid": 686,
+    "ask": 839
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 398,
+    "target": 301,
+    "stock": 595,
+    "bid": 639,
+    "ask": 782
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 39,
+    "target": 211,
+    "stock": 159,
+    "bid": 1474,
+    "ask": 1581
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 334,
+    "target": 106,
+    "stock": 604,
+    "bid": 301,
+    "ask": 368
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 168,
+    "target": 9,
+    "stock": 357,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 472,
+    "target": 215,
+    "stock": 184,
+    "bid": 972,
+    "ask": 1188
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 467,
+    "target": 208,
+    "stock": 774,
+    "bid": 658,
+    "ask": 742
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 247,
+    "target": 324,
+    "stock": 280,
+    "bid": 1521,
+    "ask": 1716
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 273,
+    "target": 275,
+    "stock": 498,
+    "bid": 762,
+    "ask": 819
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 315,
+    "target": 307,
+    "stock": 277,
+    "bid": 1093,
+    "ask": 1174
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 158,
+    "target": 155,
+    "stock": 790,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 418,
+    "target": 136,
+    "stock": 479,
+    "bid": 690,
+    "ask": 742
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 143,
+    "target": 277,
+    "stock": 135,
+    "bid": 2836,
+    "ask": 3041
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 385,
+    "target": 110,
+    "stock": 567,
+    "bid": 690,
+    "ask": 742
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 451,
+    "target": 75,
+    "stock": 762,
+    "bid": 460,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 446,
+    "target": 30,
+    "stock": 449,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 358,
+    "target": 178,
+    "stock": 554,
+    "bid": 658,
+    "ask": 742
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 60,
+    "target": 68,
+    "stock": 87,
+    "bid": 532,
+    "ask": 571
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 42,
+    "target": 336,
+    "stock": 615,
+    "bid": 388,
+    "ask": 417
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 428,
+    "target": 281,
+    "stock": 242,
+    "bid": 1939,
+    "ask": 2370
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 49,
+    "target": 356,
+    "stock": 310,
+    "bid": 1186,
+    "ask": 1273
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 130,
+    "target": 193,
+    "stock": 250,
+    "bid": 523,
+    "ask": 560
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 54,
+    "target": 196,
+    "stock": 532,
+    "bid": 507,
+    "ask": 545
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 29,
+    "target": 368,
+    "stock": 104,
+    "bid": 3948,
+    "ask": 4452
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 495,
+    "target": 97,
+    "stock": 206,
+    "bid": 1234,
+    "ask": 1509
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 16,
+    "target": 137,
+    "stock": 584,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 392,
+    "target": 151,
+    "stock": 183,
+    "bid": 814,
+    "ask": 874
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 215,
+    "target": 33,
+    "stock": 695,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 87,
+    "target": 198,
+    "stock": 856,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 385,
+    "target": 270,
+    "stock": 185,
+    "bid": 1521,
+    "ask": 1860
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 277,
+    "target": 264,
+    "stock": 542,
+    "bid": 502,
+    "ask": 613
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 24,
+    "target": 209,
+    "stock": 670,
+    "bid": 502,
+    "ask": 613
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 163,
+    "target": 114,
+    "stock": 42,
+    "bid": 3748,
+    "ask": 4026
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 227,
+    "target": 101,
+    "stock": 776,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 426,
+    "target": 204,
+    "stock": 169,
+    "bid": 1384,
+    "ask": 1691
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 235,
+    "target": 398,
+    "stock": 190,
+    "bid": 1041,
+    "ask": 1272
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 79,
+    "target": 194,
+    "stock": 606,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 259,
+    "target": 139,
+    "stock": 184,
+    "bid": 744,
+    "ask": 800
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 249,
+    "target": 195,
+    "stock": 226,
+    "bid": 1621,
+    "ask": 1828
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 125,
+    "target": 146,
+    "stock": 383,
+    "bid": 555,
+    "ask": 678
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 450,
+    "target": 267,
+    "stock": 58,
+    "bid": 2316,
+    "ask": 2484
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 293,
+    "target": 325,
+    "stock": 48,
+    "bid": 4145,
+    "ask": 4452
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 225,
+    "target": 205,
+    "stock": 427,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 345,
+    "target": 284,
+    "stock": 3,
+    "bid": 2316,
+    "ask": 2484
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 139,
+    "target": 291,
+    "stock": 838,
+    "bid": 1060,
+    "ask": 1295
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 283,
+    "target": 185,
+    "stock": 41,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 60,
+    "target": 188,
+    "stock": 678,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 239,
+    "target": 379,
+    "stock": 749,
+    "bid": 665,
+    "ask": 750
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 243,
+    "target": 25,
+    "stock": 464,
+    "bid": 315,
+    "ask": 385
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 332,
+    "target": 245,
+    "stock": 766,
+    "bid": 460,
+    "ask": 519
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 478,
+    "target": 387,
+    "stock": 730,
+    "bid": 522,
+    "ask": 561
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 17,
+    "target": 36,
+    "stock": 893,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 163,
+    "target": 272,
+    "stock": 698,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 125,
+    "target": 370,
+    "stock": 590,
+    "bid": 1178,
+    "ask": 1329
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 69,
+    "target": 290,
+    "stock": 45,
+    "bid": 4569,
+    "ask": 5584
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 487,
+    "target": 150,
+    "stock": 571,
+    "bid": 645,
+    "ask": 788
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 342,
+    "target": 296,
+    "stock": 14,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 233,
+    "target": 237,
+    "stock": 809,
+    "bid": 658,
+    "ask": 742
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 232,
+    "target": 253,
+    "stock": 283,
+    "bid": 815,
+    "ask": 874
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 37,
+    "target": 70,
+    "stock": 535,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 417,
+    "target": 174,
+    "stock": 536,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 90,
+    "target": 68,
+    "stock": 878,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 315,
+    "target": 227,
+    "stock": 491,
+    "bid": 638,
+    "ask": 685
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 47,
+    "target": 1,
+    "stock": 54,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 28,
+    "target": 14,
+    "stock": 471,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 412,
+    "target": 1,
+    "stock": 365,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 24,
+    "target": 298,
+    "stock": 587,
+    "bid": 278,
+    "ask": 299
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 207,
+    "target": 341,
+    "stock": 522,
+    "bid": 713,
+    "ask": 764
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 67,
+    "target": 237,
+    "stock": 175,
+    "bid": 3041,
+    "ask": 3262
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 471,
+    "target": 113,
+    "stock": 830,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 489,
+    "target": 136,
+    "stock": 599,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 254,
+    "target": 138,
+    "stock": 818,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 491,
+    "target": 61,
+    "stock": 287,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 301,
+    "target": 9,
+    "stock": 586,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 472,
+    "target": 386,
+    "stock": 201,
+    "bid": 3790,
+    "ask": 4070
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 143,
+    "target": 156,
+    "stock": 195,
+    "bid": 1126,
+    "ask": 1377
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 182,
+    "target": 127,
+    "stock": 459,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 329,
+    "target": 229,
+    "stock": 809,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 221,
+    "target": 235,
+    "stock": 768,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 312,
+    "target": 236,
+    "stock": 594,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 191,
+    "target": 3,
+    "stock": 639,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 140,
+    "target": 51,
+    "stock": 584,
+    "bid": 252,
+    "ask": 308
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 354,
+    "target": 280,
+    "stock": 122,
+    "bid": 2726,
+    "ask": 3331
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 174,
+    "target": 249,
+    "stock": 306,
+    "bid": 1623,
+    "ask": 1984
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 99,
+    "target": 327,
+    "stock": 75,
+    "bid": 5790,
+    "ask": 6210
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 232,
+    "target": 344,
+    "stock": 857,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 470,
+    "target": 245,
+    "stock": 676,
+    "bid": 757,
+    "ask": 926
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 286,
+    "target": 65,
+    "stock": 811,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 267,
+    "target": 343,
+    "stock": 85,
+    "bid": 1446,
+    "ask": 1767
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 337,
+    "target": 391,
+    "stock": 473,
+    "bid": 1015,
+    "ask": 1088
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 112,
+    "target": 354,
+    "stock": 79,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 220,
+    "target": 282,
+    "stock": 482,
+    "bid": 1099,
+    "ask": 1240
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 435,
+    "target": 135,
+    "stock": 580,
+    "bid": 867,
+    "ask": 1060
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 258,
+    "target": 236,
+    "stock": 443,
+    "bid": 420,
+    "ask": 451
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 110,
+    "target": 164,
+    "stock": 897,
+    "bid": 460,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 60,
+    "target": 62,
+    "stock": 43,
+    "bid": 1336,
+    "ask": 1433
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 189,
+    "target": 211,
+    "stock": 406,
+    "bid": 360,
+    "ask": 387
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 374,
+    "target": 176,
+    "stock": 313,
+    "bid": 776,
+    "ask": 834
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 422,
+    "target": 106,
+    "stock": 101,
+    "bid": 1290,
+    "ask": 1577
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 376,
+    "target": 380,
+    "stock": 39,
+    "bid": 2316,
+    "ask": 2484
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 94,
+    "target": 248,
+    "stock": 788,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 208,
+    "target": 389,
+    "stock": 405,
+    "bid": 757,
+    "ask": 814
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 240,
+    "target": 21,
+    "stock": 344,
+    "bid": 630,
+    "ask": 770
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 114,
+    "target": 385,
+    "stock": 689,
+    "bid": 322,
+    "ask": 345
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 487,
+    "target": 276,
+    "stock": 713,
+    "bid": 447,
+    "ask": 546
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 254,
+    "target": 99,
+    "stock": 635,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 454,
+    "target": 1,
+    "stock": 757,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 476,
+    "target": 55,
+    "stock": 9,
+    "bid": 2368,
+    "ask": 2544
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 344,
+    "target": 37,
+    "stock": 571,
+    "bid": 460,
+    "ask": 519
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 262,
+    "target": 339,
+    "stock": 203,
+    "bid": 1316,
+    "ask": 1415
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 495,
+    "target": 110,
+    "stock": 810,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 19,
+    "target": 14,
+    "stock": 729,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 384,
+    "target": 381,
+    "stock": 854,
+    "bid": 879,
+    "ask": 945
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 318,
+    "target": 113,
+    "stock": 62,
+    "bid": 2430,
+    "ask": 2970
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 31,
+    "target": 264,
+    "stock": 531,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 404,
+    "target": 250,
+    "stock": 375,
+    "bid": 920,
+    "ask": 988
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 99,
+    "target": 42,
+    "stock": 844,
+    "bid": 630,
+    "ask": 770
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 213,
+    "target": 244,
+    "stock": 502,
+    "bid": 878,
+    "ask": 1073
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 40,
+    "target": 172,
+    "stock": 651,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 427,
+    "target": 260,
+    "stock": 790,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 326,
+    "target": 59,
+    "stock": 413,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 216,
+    "target": 392,
+    "stock": 829,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 432,
+    "target": 39,
+    "stock": 446,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 361,
+    "target": 320,
+    "stock": 309,
+    "bid": 1831,
+    "ask": 2238
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 370,
+    "target": 25,
+    "stock": 853,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 134,
+    "target": 108,
+    "stock": 331,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 128,
+    "target": 284,
+    "stock": 139,
+    "bid": 1028,
+    "ask": 1257
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 274,
+    "target": 36,
+    "stock": 660,
+    "bid": 315,
+    "ask": 385
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 150,
+    "target": 258,
+    "stock": 532,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 240,
+    "target": 296,
+    "stock": 599,
+    "bid": 486,
+    "ask": 523
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 205,
+    "target": 393,
+    "stock": 268,
+    "bid": 2398,
+    "ask": 2573
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 94,
+    "target": 272,
+    "stock": 318,
+    "bid": 1526,
+    "ask": 1637
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 435,
+    "target": 225,
+    "stock": 889,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 427,
+    "target": 204,
+    "stock": 349,
+    "bid": 806,
+    "ask": 867
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 64,
+    "target": 243,
+    "stock": 16,
+    "bid": 2160,
+    "ask": 2640
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 191,
+    "target": 96,
+    "stock": 155,
+    "bid": 487,
+    "ask": 524
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 405,
+    "target": 287,
+    "stock": 772,
+    "bid": 733,
+    "ask": 787
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 29,
+    "target": 147,
+    "stock": 230,
+    "bid": 719,
+    "ask": 878
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 126,
+    "target": 357,
+    "stock": 440,
+    "bid": 799,
+    "ask": 859
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 398,
+    "target": 110,
+    "stock": 803,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 203,
+    "target": 205,
+    "stock": 821,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 359,
+    "target": 35,
+    "stock": 788,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 196,
+    "target": 48,
+    "stock": 755,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 267,
+    "target": 164,
+    "stock": 330,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 283,
+    "target": 387,
+    "stock": 864,
+    "bid": 1204,
+    "ask": 1471
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 143,
+    "target": 35,
+    "stock": 789,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 152,
+    "target": 265,
+    "stock": 222,
+    "bid": 982,
+    "ask": 1201
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 321,
+    "target": 359,
+    "stock": 889,
+    "bid": 457,
+    "ask": 558
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 230,
+    "target": 71,
+    "stock": 519,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 244,
+    "target": 196,
+    "stock": 428,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 309,
+    "target": 274,
+    "stock": 729,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 49,
+    "target": 70,
+    "stock": 786,
+    "bid": 630,
+    "ask": 770
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 249,
+    "target": 112,
+    "stock": 26,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 309,
+    "target": 191,
+    "stock": 212,
+    "bid": 854,
+    "ask": 1043
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 85,
+    "target": 336,
+    "stock": 881,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 40,
+    "target": 316,
+    "stock": 471,
+    "bid": 737,
+    "ask": 900
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 65,
+    "target": 323,
+    "stock": 416,
+    "bid": 633,
+    "ask": 774
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 482,
+    "target": 293,
+    "stock": 660,
+    "bid": 838,
+    "ask": 1025
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 427,
+    "target": 365,
+    "stock": 633,
+    "bid": 421,
+    "ask": 452
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 311,
+    "target": 24,
+    "stock": 455,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 488,
+    "target": 388,
+    "stock": 650,
+    "bid": 694,
+    "ask": 849
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 258,
+    "target": 29,
+    "stock": 270,
+    "bid": 315,
+    "ask": 385
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 405,
+    "target": 305,
+    "stock": 673,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 452,
+    "target": 344,
+    "stock": 540,
+    "bid": 627,
+    "ask": 675
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 100,
+    "target": 17,
+    "stock": 331,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 389,
+    "target": 271,
+    "stock": 199,
+    "bid": 1074,
+    "ask": 1154
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 471,
+    "target": 59,
+    "stock": 170,
+    "bid": 423,
+    "ask": 518
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 372,
+    "target": 133,
+    "stock": 808,
+    "bid": 690,
+    "ask": 742
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 449,
+    "target": 69,
+    "stock": 522,
+    "bid": 654,
+    "ask": 799
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 359,
+    "target": 336,
+    "stock": 625,
+    "bid": 529,
+    "ask": 569
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 479,
+    "target": 165,
+    "stock": 204,
+    "bid": 1618,
+    "ask": 1977
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 453,
+    "target": 329,
+    "stock": 303,
+    "bid": 1312,
+    "ask": 1603
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 254,
+    "target": 74,
+    "stock": 178,
+    "bid": 574,
+    "ask": 616
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 20,
+    "target": 333,
+    "stock": 57,
+    "bid": 5640,
+    "ask": 6360
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 436,
+    "target": 53,
+    "stock": 566,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 121,
+    "target": 14,
+    "stock": 174,
+    "bid": 252,
+    "ask": 308
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 166,
+    "target": 159,
+    "stock": 447,
+    "bid": 349,
+    "ask": 376
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 236,
+    "target": 106,
+    "stock": 619,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 447,
+    "target": 215,
+    "stock": 56,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 274,
+    "target": 47,
+    "stock": 131,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 240,
+    "target": 94,
+    "stock": 197,
+    "bid": 896,
+    "ask": 1011
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 35,
+    "target": 210,
+    "stock": 403,
+    "bid": 725,
+    "ask": 778
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 141,
+    "target": 54,
+    "stock": 21,
+    "bid": 4053,
+    "ask": 4347
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 315,
+    "target": 369,
+    "stock": 790,
+    "bid": 1229,
+    "ask": 1502
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 99,
+    "target": 88,
+    "stock": 825,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 171,
+    "target": 207,
+    "stock": 551,
+    "bid": 369,
+    "ask": 397
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 113,
+    "target": 102,
+    "stock": 441,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 168,
+    "target": 55,
+    "stock": 446,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 390,
+    "target": 128,
+    "stock": 218,
+    "bid": 1378,
+    "ask": 1685
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 228,
+    "target": 330,
+    "stock": 595,
+    "bid": 1340,
+    "ask": 1637
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 413,
+    "target": 51,
+    "stock": 167,
+    "bid": 695,
+    "ask": 850
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 285,
+    "target": 163,
+    "stock": 692,
+    "bid": 611,
+    "ask": 746
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 119,
+    "target": 249,
+    "stock": 350,
+    "bid": 579,
+    "ask": 621
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 400,
+    "target": 374,
+    "stock": 692,
+    "bid": 532,
+    "ask": 572
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 455,
+    "target": 74,
+    "stock": 109,
+    "bid": 431,
+    "ask": 462
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 302,
+    "target": 220,
+    "stock": 261,
+    "bid": 1662,
+    "ask": 1786
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 437,
+    "target": 167,
+    "stock": 895,
+    "bid": 658,
+    "ask": 742
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 117,
+    "target": 211,
+    "stock": 827,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 417,
+    "target": 171,
+    "stock": 252,
+    "bid": 593,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 168,
+    "target": 23,
+    "stock": 840,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 365,
+    "target": 194,
+    "stock": 715,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 246,
+    "target": 73,
+    "stock": 92,
+    "bid": 1490,
+    "ask": 1681
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 464,
+    "target": 222,
+    "stock": 541,
+    "bid": 576,
+    "ask": 704
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 27,
+    "target": 115,
+    "stock": 142,
+    "bid": 984,
+    "ask": 1055
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 38,
+    "target": 26,
+    "stock": 39,
+    "bid": 734,
+    "ask": 897
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 369,
+    "target": 181,
+    "stock": 87,
+    "bid": 2595,
+    "ask": 3172
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 42,
+    "target": 189,
+    "stock": 338,
+    "bid": 1102,
+    "ask": 1185
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 39,
+    "target": 34,
+    "stock": 144,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 191,
+    "target": 292,
+    "stock": 644,
+    "bid": 484,
+    "ask": 591
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 82,
+    "target": 302,
+    "stock": 104,
+    "bid": 3067,
+    "ask": 3748
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 50,
+    "target": 162,
+    "stock": 60,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 210,
+    "target": 400,
+    "stock": 416,
+    "bid": 1328,
+    "ask": 1426
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 89,
+    "target": 319,
+    "stock": 603,
+    "bid": 296,
+    "ask": 317
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 138,
+    "target": 244,
+    "stock": 386,
+    "bid": 623,
+    "ask": 669
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 463,
+    "target": 75,
+    "stock": 597,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 180,
+    "target": 72,
+    "stock": 815,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 486,
+    "target": 146,
+    "stock": 459,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 47,
+    "target": 18,
+    "stock": 136,
+    "bid": 690,
+    "ask": 742
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 373,
+    "target": 12,
+    "stock": 687,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 440,
+    "target": 262,
+    "stock": 657,
+    "bid": 749,
+    "ask": 844
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 484,
+    "target": 173,
+    "stock": 460,
+    "bid": 551,
+    "ask": 674
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 78,
+    "target": 76,
+    "stock": 406,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 135,
+    "target": 228,
+    "stock": 859,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 78,
+    "target": 225,
+    "stock": 89,
+    "bid": 2002,
+    "ask": 2447
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 266,
+    "target": 399,
+    "stock": 865,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 140,
+    "target": 181,
+    "stock": 225,
+    "bid": 1613,
+    "ask": 1972
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 235,
+    "target": 396,
+    "stock": 121,
+    "bid": 1302,
+    "ask": 1591
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 268,
+    "target": 371,
+    "stock": 385,
+    "bid": 706,
+    "ask": 863
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 274,
+    "target": 163,
+    "stock": 669,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 461,
+    "target": 119,
+    "stock": 106,
+    "bid": 917,
+    "ask": 984
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 152,
+    "target": 204,
+    "stock": 239,
+    "bid": 841,
+    "ask": 904
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 467,
+    "target": 74,
+    "stock": 848,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 113,
+    "target": 350,
+    "stock": 486,
+    "bid": 1527,
+    "ask": 1866
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 92,
+    "target": 382,
+    "stock": 684,
+    "bid": 672,
+    "ask": 821
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 496,
+    "target": 84,
+    "stock": 240,
+    "bid": 1064,
+    "ask": 1301
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 98,
+    "target": 53,
+    "stock": 168,
+    "bid": 1010,
+    "ask": 1235
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 363,
+    "target": 104,
+    "stock": 288,
+    "bid": 540,
+    "ask": 660
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 65,
+    "target": 211,
+    "stock": 627,
+    "bid": 522,
+    "ask": 638
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 326,
+    "target": 62,
+    "stock": 713,
+    "bid": 460,
+    "ask": 519
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 347,
+    "target": 36,
+    "stock": 894,
+    "bid": 252,
+    "ask": 308
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 58,
+    "target": 68,
+    "stock": 282,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 229,
+    "target": 122,
+    "stock": 626,
+    "bid": 658,
+    "ask": 742
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 355,
+    "target": 249,
+    "stock": 542,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 346,
+    "target": 129,
+    "stock": 430,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 297,
+    "target": 242,
+    "stock": 694,
+    "bid": 531,
+    "ask": 649
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 364,
+    "target": 76,
+    "stock": 6,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 1,
+    "target": 344,
+    "stock": 462,
+    "bid": 775,
+    "ask": 948
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 470,
+    "target": 82,
+    "stock": 66,
+    "bid": 1225,
+    "ask": 1316
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 168,
+    "target": 266,
+    "stock": 351,
+    "bid": 508,
+    "ask": 545
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 440,
+    "target": 359,
+    "stock": 31,
+    "bid": 2700,
+    "ask": 3300
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 250,
+    "target": 303,
+    "stock": 841,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 362,
+    "target": 335,
+    "stock": 879,
+    "bid": 299,
+    "ask": 322
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 278,
+    "target": 357,
+    "stock": 454,
+    "bid": 797,
+    "ask": 974
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 14,
+    "target": 335,
+    "stock": 867,
+    "bid": 447,
+    "ask": 546
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 69,
+    "target": 206,
+    "stock": 610,
+    "bid": 483,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 52,
+    "target": 256,
+    "stock": 152,
+    "bid": 4218,
+    "ask": 4523
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 404,
+    "target": 58,
+    "stock": 314,
+    "bid": 773,
+    "ask": 944
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 463,
+    "target": 12,
+    "stock": 99,
+    "bid": 441,
+    "ask": 539
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 126,
+    "target": 97,
+    "stock": 225,
+    "bid": 590,
+    "ask": 721
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 343,
+    "target": 395,
+    "stock": 603,
+    "bid": 716,
+    "ask": 767
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 315,
+    "target": 188,
+    "stock": 69,
+    "bid": 4053,
+    "ask": 4347
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 402,
+    "target": 20,
+    "stock": 827,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 243,
+    "target": 221,
+    "stock": 601,
+    "bid": 436,
+    "ask": 533
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 68,
+    "target": 333,
+    "stock": 392,
+    "bid": 669,
+    "ask": 719
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 315,
+    "target": 273,
+    "stock": 645,
+    "bid": 417,
+    "ask": 448
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 120,
+    "target": 113,
+    "stock": 730,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 446,
+    "target": 266,
+    "stock": 148,
+    "bid": 2365,
+    "ask": 2666
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 435,
+    "target": 304,
+    "stock": 219,
+    "bid": 1577,
+    "ask": 1692
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 449,
+    "target": 78,
+    "stock": 573,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 34,
+    "target": 129,
+    "stock": 564,
+    "bid": 602,
+    "ask": 735
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 95,
+    "target": 39,
+    "stock": 114,
+    "bid": 736,
+    "ask": 899
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 222,
+    "target": 69,
+    "stock": 672,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 360,
+    "target": 241,
+    "stock": 597,
+    "bid": 457,
+    "ask": 558
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 396,
+    "target": 324,
+    "stock": 120,
+    "bid": 2070,
+    "ask": 2530
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 158,
+    "target": 147,
+    "stock": 540,
+    "bid": 938,
+    "ask": 1147
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 236,
+    "target": 165,
+    "stock": 651,
+    "bid": 905,
+    "ask": 1106
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 463,
+    "target": 318,
+    "stock": 487,
+    "bid": 859,
+    "ask": 968
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 18,
+    "target": 353,
+    "stock": 813,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 226,
+    "target": 176,
+    "stock": 491,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 137,
+    "target": 137,
+    "stock": 809,
+    "bid": 518,
+    "ask": 633
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 357,
+    "target": 216,
+    "stock": 168,
+    "bid": 1019,
+    "ask": 1246
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 208,
+    "target": 248,
+    "stock": 830,
+    "bid": 688,
+    "ask": 841
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 398,
+    "target": 128,
+    "stock": 674,
+    "bid": 783,
+    "ask": 958
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 286,
+    "target": 102,
+    "stock": 39,
+    "bid": 2895,
+    "ask": 3105
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 326,
+    "target": 266,
+    "stock": 738,
+    "bid": 473,
+    "ask": 534
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 431,
+    "target": 156,
+    "stock": 241,
+    "bid": 1276,
+    "ask": 1371
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 376,
+    "target": 291,
+    "stock": 44,
+    "bid": 4628,
+    "ask": 5657
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 199,
+    "target": 199,
+    "stock": 103,
+    "bid": 3813,
+    "ask": 4095
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 408,
+    "target": 398,
+    "stock": 236,
+    "bid": 1168,
+    "ask": 1427
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 9,
+    "target": 291,
+    "stock": 580,
+    "bid": 637,
+    "ask": 778
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 101,
+    "target": 24,
+    "stock": 153,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 8,
+    "target": 101,
+    "stock": 43,
+    "bid": 2317,
+    "ask": 2488
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 190,
+    "target": 352,
+    "stock": 847,
+    "bid": 573,
+    "ask": 615
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 391,
+    "target": 269,
+    "stock": 165,
+    "bid": 1608,
+    "ask": 1727
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 273,
+    "target": 222,
+    "stock": 275,
+    "bid": 1131,
+    "ask": 1382
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 411,
+    "target": 68,
+    "stock": 666,
+    "bid": 630,
+    "ask": 770
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 277,
+    "target": 211,
+    "stock": 562,
+    "bid": 517,
+    "ask": 556
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 158,
+    "target": 83,
+    "stock": 111,
+    "bid": 498,
+    "ask": 535
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 198,
+    "target": 43,
+    "stock": 809,
+    "bid": 252,
+    "ask": 308
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 435,
+    "target": 188,
+    "stock": 764,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 97,
+    "target": 379,
+    "stock": 761,
+    "bid": 634,
+    "ask": 775
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 254,
+    "target": 197,
+    "stock": 600,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 67,
+    "target": 155,
+    "stock": 403,
+    "bid": 781,
+    "ask": 954
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 487,
+    "target": 177,
+    "stock": 106,
+    "bid": 929,
+    "ask": 1136
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 333,
+    "target": 232,
+    "stock": 44,
+    "bid": 1652,
+    "ask": 2019
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 327,
+    "target": 102,
+    "stock": 649,
+    "bid": 285,
+    "ask": 348
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 67,
+    "target": 144,
+    "stock": 445,
+    "bid": 690,
+    "ask": 742
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 146,
+    "target": 42,
+    "stock": 114,
+    "bid": 289,
+    "ask": 311
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 112,
+    "target": 287,
+    "stock": 201,
+    "bid": 1504,
+    "ask": 1839
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 91,
+    "target": 365,
+    "stock": 331,
+    "bid": 2233,
+    "ask": 2396
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 494,
+    "target": 302,
+    "stock": 271,
+    "bid": 759,
+    "ask": 928
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 316,
+    "target": 334,
+    "stock": 613,
+    "bid": 1328,
+    "ask": 1623
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 305,
+    "target": 13,
+    "stock": 580,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 112,
+    "target": 362,
+    "stock": 813,
+    "bid": 438,
+    "ask": 471
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 40,
+    "target": 112,
+    "stock": 206,
+    "bid": 1072,
+    "ask": 1152
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 224,
+    "target": 54,
+    "stock": 619,
+    "bid": 658,
+    "ask": 742
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 411,
+    "target": 243,
+    "stock": 165,
+    "bid": 1091,
+    "ask": 1334
+  },
+  {
+    "merchant": 2,
+    "item": 1,
+    "tick": 77,
+    "target": 224,
+    "stock": 389,
+    "bid": 1135,
+    "ask": 1220
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 280,
+    "target": 35,
+    "stock": 538,
+    "bid": 630,
+    "ask": 770
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 465,
+    "target": 127,
+    "stock": 112,
+    "bid": 1341,
+    "ask": 1639
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 386,
+    "target": 52,
+    "stock": 240,
+    "bid": 334,
+    "ask": 409
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 283,
+    "target": 374,
+    "stock": 857,
+    "bid": 831,
+    "ask": 1016
+  },
+  {
+    "merchant": 0,
+    "item": 2,
+    "tick": 6,
+    "target": 95,
+    "stock": 495,
+    "bid": 551,
+    "ask": 674
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 23,
+    "target": 300,
+    "stock": 863,
+    "bid": 1061,
+    "ask": 1296
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 51,
+    "target": 40,
+    "stock": 583,
+    "bid": 270,
+    "ask": 289
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 241,
+    "target": 282,
+    "stock": 415,
+    "bid": 432,
+    "ask": 463
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 94,
+    "target": 304,
+    "stock": 501,
+    "bid": 597,
+    "ask": 642
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 275,
+    "target": 159,
+    "stock": 613,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 491,
+    "target": 194,
+    "stock": 890,
+    "bid": 839,
+    "ask": 1026
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 45,
+    "target": 294,
+    "stock": 4,
+    "bid": 4053,
+    "ask": 4347
+  },
+  {
+    "merchant": 0,
+    "item": 0,
+    "tick": 447,
+    "target": 351,
+    "stock": 472,
+    "bid": 620,
+    "ask": 757
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 219,
+    "target": 310,
+    "stock": 12,
+    "bid": 2316,
+    "ask": 2484
+  },
+  {
+    "merchant": 0,
+    "item": 3,
+    "tick": 315,
+    "target": 191,
+    "stock": 19,
+    "bid": 2700,
+    "ask": 3300
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 263,
+    "target": 54,
+    "stock": 731,
+    "bid": 675,
+    "ask": 724
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 4,
+    "target": 142,
+    "stock": 745,
+    "bid": 344,
+    "ask": 371
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 76,
+    "target": 369,
+    "stock": 269,
+    "bid": 1081,
+    "ask": 1162
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 465,
+    "target": 131,
+    "stock": 796,
+    "bid": 460,
+    "ask": 519
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 304,
+    "target": 208,
+    "stock": 569,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 0,
+    "item": 1,
+    "tick": 339,
+    "target": 126,
+    "stock": 70,
+    "bid": 2414,
+    "ask": 2951
+  },
+  {
+    "merchant": 2,
+    "item": 0,
+    "tick": 69,
+    "target": 92,
+    "stock": 688,
+    "bid": 276,
+    "ask": 296
+  },
+  {
+    "merchant": 2,
+    "item": 3,
+    "tick": 490,
+    "target": 153,
+    "stock": 223,
+    "bid": 676,
+    "ask": 727
+  },
+  {
+    "merchant": 1,
+    "item": 3,
+    "tick": 92,
+    "target": 15,
+    "stock": 298,
+    "bid": 337,
+    "ask": 362
+  },
+  {
+    "merchant": 1,
+    "item": 0,
+    "tick": 255,
+    "target": 354,
+    "stock": 500,
+    "bid": 459,
+    "ask": 492
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 347,
+    "target": 216,
+    "stock": 787,
+    "bid": 472,
+    "ask": 507
+  },
+  {
+    "merchant": 1,
+    "item": 1,
+    "tick": 242,
+    "target": 160,
+    "stock": 64,
+    "bid": 5790,
+    "ask": 6210
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 273,
+    "target": 390,
+    "stock": 757,
+    "bid": 711,
+    "ask": 764
+  },
+  {
+    "merchant": 2,
+    "item": 2,
+    "tick": 127,
+    "target": 339,
+    "stock": 59,
+    "bid": 3948,
+    "ask": 4452
+  },
+  {
+    "merchant": 1,
+    "item": 2,
+    "tick": 427,
+    "target": 278,
+    "stock": 418,
+    "bid": 732,
+    "ask": 785
+  }
+]
+

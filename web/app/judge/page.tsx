@@ -5,6 +5,8 @@ import { useGame, worth } from "@/lib/state/game";
 import { MerchantTable, Blueprints } from "@/components/ui/Prices";
 import { WeekChart, CashChart, HOURS } from "@/components/ui/WeekChart";
 import { Nav } from "@/components/ui/Nav";
+import { Shop } from "@/components/ui/Shop";
+import { LotPanel } from "@/components/ui/StallPanel";
 import { explorerTx } from "@/lib/near/client";
 
 function FastForward() {
@@ -62,7 +64,7 @@ function FastForward() {
 
 export default function Judge() {
   const g = useGame();
-  const [merchant, setMerchant] = useState(0);
+  const [merchant, setMerchant] = useState(0), [lot, setLot] = useState(0);
   useEffect(() => { g.init().then(() => { if (useGame.getState().mode === "practice") useGame.getState().startDriving(); }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="page">
@@ -73,14 +75,17 @@ export default function Judge() {
       <h2>Play by buttons</h2>
       <div className="row" style={{ marginBottom: 12 }}>
         <button className="btn" disabled={g.player.started} onClick={() => g.startDriving()}>{g.player.started ? "Game started" : "Start game"}</button>
-        <button className="btn" onClick={() => g.act({ t: "repair" })}>Repair truck</button>
+        <button className="btn" onClick={() => g.act({ t: "damage", points: 15 })}>Crash the truck</button>
+        <button className="btn" onClick={() => g.act({ t: "repair" })}>Repair with credits</button>
+        <button className="btn" onClick={() => g.act({ t: "refuel", units: 10 })}>Refuel 10 with credits</button>
+        <button className="btn" onClick={() => g.buyCredits(1)}>{g.mode === "practice" ? "Add 1000 practice credits" : "Buy credits with 1 NEAR"}</button>
         {g.mode === "practice" && <button className="btn ghost" onClick={() => g.advanceHours(24)}>Advance market 24 hours</button>}
       </div>
-      <p style={{ margin: "0 0 12px" }} data-testid="player-summary">Coins <b>{coins(g.player.coins)}</b>, net worth <b>{coins(worth(g.player))}</b>, fuel <b>{g.player.items[c.fuel_item]}</b>, truck <b>{g.player.durability}%</b>, truck bed <b>{cargoUsed(c, g.player)}/{c.cargo_capacity}</b>. Market hour <b>{g.market.tick}</b>.</p>
+      <p style={{ margin: "0 0 12px" }} data-testid="player-summary">Credits <b>{g.player.credits}</b>, coins <b>{coins(g.player.coins)}</b>, net worth <b>{coins(worth(g.player))}</b>, fuel <b>{g.player.fuel}/{c.vehicles[g.player.vehicle].tank}</b>, truck health <b>{g.player.durability}/{c.vehicles[g.player.vehicle].endurance}</b>, truck bed <b>{cargoUsed(c, g.player)}/{c.vehicles[g.player.vehicle].capacity}</b>. Market hour <b>{g.market.tick}</b>.</p>
       <div className="grid2">
         <div>
-          <p className="mlabel" style={{ marginTop: 0 }}>Gather</p>
-          <div className="row">{c.nodes.map((n, i) => <button key={n.id} className="btn small" onClick={() => g.act({ t: "gather", node: i })}>{n.id} ({g.market.nodes[i]})</button>)}</div>
+          <p className="mlabel" style={{ marginTop: 0 }}>Gather (these spots are hidden in the game)</p>
+          <div className="row">{c.nodes.slice(0, 8).map((n, i) => <button key={n.id} className="btn small" onClick={() => g.act({ t: "gather", node: i })}>{n.name} in {n.region} ({g.market.nodes[i]})</button>)}</div>
           <p className="mlabel">Build</p><Blueprints />
           <p className="mlabel">Activity</p>
           <ul className="log" data-testid="log">{g.log.length ? g.log.slice(0, 8).map((l) => <li key={l.id} className={l.failed ? "failed" : ""}>{l.text}{l.hash ? <> (<a href={explorerTx(l.hash)} target="_blank" rel="noreferrer">view transaction</a>)</> : ""}</li>) : <li>Nothing yet. Gather a load to begin.</li>}</ul>
@@ -90,6 +95,11 @@ export default function Judge() {
           <div style={{ overflowX: "auto", paddingTop: 2 }}><MerchantTable merchant={merchant} plain /></div>
         </div>
       </div>
+      <h2>Stalls</h2>
+      <div className="row" style={{ marginBottom: 10 }} role="tablist" aria-label="Lots">{c.lots.map((l, i) => <button key={l.id} role="tab" aria-selected={lot === i} className={`btn small ${lot === i ? "" : "ghost"}`} onClick={() => setLot(i)}>{l.name}</button>)}</div>
+      <div className="card"><LotPanel lot={lot} /></div>
+      <h2>Vehicle shop</h2>
+      <Shop />
     </div>
   );
 }

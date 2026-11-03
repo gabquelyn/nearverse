@@ -4,9 +4,11 @@ use near_sdk::{env, near, AccountId, BorshStorageKey, PanicOnDefault};
 
 pub mod bank;
 pub mod engine;
+pub mod garage;
 pub mod market;
 pub mod multi_token;
 pub mod sinks;
+pub mod stalls;
 pub mod world;
 
 use engine::{Config, Market, Player};
@@ -25,6 +27,9 @@ pub struct Nearverse {
     /// Units of each item held by accounts. Merchant stock is market state, not tokens:
     /// selling to a merchant burns tokens and buying from one mints them.
     pub supply: Vec<u128>,
+    /// Receives NEAR earned from credit sales.
+    pub owner_id: AccountId,
+    pub revenue_yocto: u128,
 }
 
 #[near(serializers = [json])]
@@ -33,7 +38,7 @@ pub struct LeaderRow { pub account_id: AccountId, pub net_worth: u64, pub sectio
 #[near]
 impl Nearverse {
     #[init]
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Config, owner_id: AccountId) -> Self {
         for m in &config.merchants {
             assert!(m.premium_bps < m.spread_bps, "premium must stay below spread");
             assert!([1, 2, 3, 4, 6, 8].contains(&m.k_quarters), "unsupported k_quarters");
@@ -41,7 +46,7 @@ impl Nearverse {
         }
         let market = engine::new_market(&config);
         let supply = vec![0; config.items.len()];
-        Self { config, market, genesis_ms: env::block_timestamp_ms(), players: IterableMap::new(Key::Players), supply }
+        Self { config, market, genesis_ms: env::block_timestamp_ms(), players: IterableMap::new(Key::Players), supply, owner_id, revenue_yocto: 0 }
     }
 
     // ---------- views: apply elapsed time to a copy, never saving it ----------
@@ -71,9 +76,6 @@ impl Nearverse {
         let id = env::predecessor_account_id();
         let mut p = self.load(&id);
         ok(engine::start_game(&self.config, &mut p));
-        let fuel = self.config.fuel_item as usize;
-        let qty = self.config.start_fuel;
-        self.mint(&id, &[(fuel, qty)], "starter fuel");
         self.players.insert(id, p);
     }
 }

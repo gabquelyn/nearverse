@@ -1,6 +1,6 @@
 // Builds the tooltip text from the same inputs the contract uses.
 import type { Config, Market } from "./types";
-import { stockPrice, premiumFor, bid, ask, currentBlueprint } from "./price";
+import { stockPrice, premiumFor, bid, ask, currentBlueprint, stallPrice, stallBidAt, stallAskAt } from "./price";
 
 const pct = (bps: number) => `${bps >= 0 ? "+" : "−"}${(Math.abs(bps) / 100).toFixed(bps % 100 ? 1 : 0)}%`;
 export const coins = (cents: number) => (cents / 100).toFixed(2);
@@ -33,4 +33,18 @@ export function explainPrice(c: Config, mk: Market, merchant: number, item: numb
   }
   const price = side === "bid" ? bid(c, mk, merchant, item) : ask(c, mk, merchant, item);
   return { price, lines, sentence: `${it.name} ${coins(price)}: ${parts.join(", ")}.` };
+}
+
+export function explainStall(c: Config, mk: Market, lot: number, item: number, side: "bid" | "ask"): Explanation {
+  const s = mk.stalls[lot], it = c.items[item], stock = s.stock[item], target = c.stall_target;
+  const sp = stallPrice(c, item, stock), fx = Math.round(((sp - it.base_price) * 10000) / it.base_price);
+  const dev = Math.round(((stock - target) * 100) / target);
+  const where = dev === 0 ? "stock on target" : `stock ${Math.abs(dev)}% ${dev < 0 ? "below" : "above"} target`;
+  const spreadBps = side === "bid" ? -s.spread_bps : s.spread_bps;
+  const price = side === "bid" ? stallBidAt(c, item, s.spread_bps, stock) : stallAskAt(c, item, s.spread_bps, stock);
+  return {
+    price,
+    lines: [`Base price ${coins(it.base_price)}. Holds ${stock}, wants ${target}.`, `${where} moves it ${pct(fx)}.`, `Owner's margin: ${pct(spreadBps)}.`],
+    sentence: `${it.name} ${coins(price)}: ${where} (${pct(fx)}), owner's spread (${pct(spreadBps)}).`,
+  };
 }

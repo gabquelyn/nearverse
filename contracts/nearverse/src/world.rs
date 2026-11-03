@@ -10,8 +10,6 @@ impl Nearverse {
         let id = env::predecessor_account_id();
         let mut p = self.load(&id);
         let g = ok(engine::gather(&self.config, &mut self.market, &mut p, node as usize, env::block_timestamp_ms()));
-        let fuel = self.config.fuel_item as usize;
-        self.burn(&id, &[(fuel, g.fuel_burned)], "trip fuel");
         self.mint(&id, &[(g.item, g.qty)], "gathered");
         if let Some((item, qty)) = g.reward { self.mint(&id, &[(item, qty)], "quest reward"); }
         self.players.insert(id, p);

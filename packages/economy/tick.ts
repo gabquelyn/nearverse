@@ -6,6 +6,9 @@ export function newMarket(c: Config): Market {
     tick: 0,
     merchants: c.merchants.map((m) => ({ stock: [...m.targets], target: [...m.targets], cash: m.start_cash })),
     nodes: c.nodes.map((n) => n.max_stock),
+    stalls: c.lots.map((l) => l.seeded
+      ? { owner: c.seed_owner, built: true, stock: c.items.map(() => c.seed_stock), cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price }
+      : { owner: null, built: false, stock: c.items.map(() => 0), cash: 0, spread_bps: c.stall_spread_bps, price: 0 }),
   };
 }
 

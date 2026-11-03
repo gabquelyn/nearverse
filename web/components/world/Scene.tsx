@@ -1,289 +1,226 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Physics, RigidBody, CuboidCollider, BallCollider, CoefficientCombineRule, type RapierRigidBody } from "@react-three/rapier";
+import { CuboidCollider, Physics, RigidBody } from "@react-three/rapier";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
-import { nodeName } from "../ui/Hud";
+import { PLOT, gatherBar, keys, truck } from "./world";
+import { glowMat, lampMat, sky, updateSky } from "./daynight";
+import { Ground, Ocean, paintBiomeMap, paintGroundMap } from "./Terrain";
+import { Grass, Trees, Weather, useTrees } from "./Foliage";
+import { Truck } from "./Truck";
+import { Benches, Lamps, LotSpot, Mines, NodeSpot, Obstacles, Plot, Scatter, Stall, TitleCrates, windowMat } from "./Props";
+import { Near } from "./Instances";
+import { Waypoint } from "./Waypoint";
+import { FocusTracker, Tracks, WindLines } from "./effects";
+import { sfx } from "./sound";
+import { LEVELS, perf } from "./perf";
 
-const COLORS = { sand: "#f2b632", road: "#d9942a", ink: "#14213d", brick: "#b5341f", moss: "#2f6f43", paper: "#fff4d6", sky: "#2447c9", leaf: "#3f8f55", stone: "#a79f92" };
-const ITEM: Record<string, string> = { wood: "#bd8500", iron: "#1a63cc", slate: "#8e1f6a", clay: "#c0300f", fuel: "#009a85" };
-export const STALLS: [number, number][] = [[-16, 8], [0, 16], [16, 8]];
-const AWNING = ["#2f5fb3", "#b5341f", "#2f6f43"];
-export const PLOT: [number, number] = [0, -14];
-const ISLAND = 86;
-const START = new THREE.Vector3(0, 4, -2);
-export const truck = { pos: new THREE.Vector3(0, 2, 0), yaw: 0, speed: 0 };
-export const keys = new Set<string>();
-if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__nearverse = { truck, keys };
+export { keys };
+if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__nearverse ??= {};
 
-function textTexture(text: string, bg: string, fg: string, w = 256, h = 256, size = 180) {
-  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
-  const g = cv.getContext("2d")!; g.fillStyle = bg; g.fillRect(0, 0, w, h);
-  g.fillStyle = fg; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${size}px "Bowlby One", Impact, sans-serif`;
-  g.fillText(text, w / 2, h / 2 + size * 0.04, w - 16);
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
-}
+const skyColors = {
+  sunDay: new THREE.Color("#fff0d6"), sunLow: new THREE.Color("#ff9d5c"), moon: new THREE.Color("#8fa6e0"),
+  hemiDay: new THREE.Color("#cfe2ff"), hemiNight: new THREE.Color("#3a4c80"), groundDay: new THREE.Color("#5f5a86"), groundNight: new THREE.Color("#1a2240"),
+  fogDay: new THREE.Color("#a9d4e8"), fogLow: new THREE.Color("#f0a878"), fogNight: new THREE.Color("#0c1630"),
+};
 
-function Ground() {
+/** Moves the sun and moon and recolours the world as the shared clock runs. */
+function DayNight() {
+  const light = useRef<THREE.DirectionalLight>(null!), hemi = useRef<THREE.HemisphereLight>(null!);
+  const { scene } = useThree();
+  useEffect(() => { scene.add(light.current.target); }, [scene]);
+  const tmp = useMemo(() => new THREE.Color(), []);
+  useFrame(() => {
+    updateSky();
+    // Whole-unit steps and a slowly stepping sun stop shadows crawling and shimmering as you drive.
+    const l = light.current, up = sky.night > 0.5, a = (Math.round(sky.t * 240) / 240) * Math.PI * 2 + (up ? Math.PI : 0);
+    const sx = Math.round(truck.pos.x), sz = Math.round(truck.pos.z);
+    l.position.set(sx + Math.cos(a) * 42, Math.max(Math.abs(Math.sin(a)) * 54, 14), sz - 24);
+    l.target.position.set(sx, 0, sz);
+    const low = 1 - THREE.MathUtils.clamp(sky.sun / 0.42, 0, 1);
+    l.color.copy(skyColors.sunDay).lerp(skyColors.sunLow, low).lerp(skyColors.moon, sky.night);
+    l.intensity = THREE.MathUtils.lerp(2.9, 1.05, sky.night);
+    hemi.current.color.copy(skyColors.hemiDay).lerp(skyColors.hemiNight, sky.night);
+    hemi.current.groundColor.copy(skyColors.groundDay).lerp(skyColors.groundNight, sky.night);
+    hemi.current.intensity = THREE.MathUtils.lerp(1.05, 1.1, sky.night);
+    tmp.copy(skyColors.fogDay).lerp(skyColors.fogLow, low * (1 - sky.night)).lerp(skyColors.fogNight, sky.night);
+    if (scene.fog) (scene.fog as THREE.Fog).color.copy(tmp);
+    if (scene.background instanceof THREE.Color) scene.background.copy(tmp);
+    lampMat.emissiveIntensity = 0.2 + sky.night * 3;
+    glowMat.opacity = sky.night * 0.34;
+    windowMat.emissiveIntensity = sky.night * 1.5;
+  });
   return (
     <>
-      <RigidBody type="fixed" friction={1}><CuboidCollider args={[120, 1, 120]} position={[0, -1, 0]} /></RigidBody>
-      {Array.from({ length: 24 }, (_, i) => { const a = (i / 24) * Math.PI * 2; return <RigidBody key={i} type="fixed"><CuboidCollider args={[12, 8, 1]} position={[Math.cos(a) * ISLAND, 6, Math.sin(a) * ISLAND]} rotation={[0, -a + Math.PI / 2, 0]} /></RigidBody>; })}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[ISLAND + 2, 48]} /><meshStandardMaterial color={COLORS.sand} /></mesh>
-      <mesh position={[0, -3.1, 0]}><cylinderGeometry args={[ISLAND + 2, ISLAND - 8, 6, 48]} /><meshStandardMaterial color="#a8701c" flatShading /></mesh>
-      {c.nodes.map((n) => {
-        const len = Math.hypot(n.x, n.z);
-        return <mesh key={n.id} rotation={[-Math.PI / 2, 0, -Math.atan2(n.x, n.z)]} position={[n.x / 2, 0.02, n.z / 2]} receiveShadow><planeGeometry args={[4.6, len]} /><meshStandardMaterial color={COLORS.road} /></mesh>;
-      })}
+      <hemisphereLight ref={hemi} />
+      <directionalLight ref={light} intensity={2.6} castShadow shadow-mapSize={[1536, 1536]} shadow-bias={-0.0006} shadow-normalBias={0.05} shadow-radius={5} shadow-camera-left={-44} shadow-camera-right={44} shadow-camera-top={44} shadow-camera-bottom={-44} shadow-camera-far={150} />
     </>
-  );
-}
-
-function Truck() {
-  const body = useRef<RapierRigidBody>(null!);
-  const group = useRef<THREE.Group>(null!);
-  const wheels = useRef<THREE.Mesh[]>([]);
-  const items = useGame((s) => s.player.items);
-  const cargo = useMemo(() => {
-    const out: { color: string; p: [number, number, number] }[] = [];
-    let n = 0;
-    c.items.forEach((it, i) => { if (i === c.fuel_item) return; for (let q = 0; q < items[i]; q++) { const k = n++; if (k >= 24) continue; out.push({ color: ITEM[it.id], p: [-0.52 + (k % 3) * 0.52, 0.98 + Math.floor(k / 9) * 0.32, -1.55 + (Math.floor(k / 3) % 3) * 0.52] }); } });
-    return out;
-  }, [items]);
-  useFrame((_, dt) => {
-    const b = body.current; if (!b) return;
-    const d = Math.min(dt, 0.25);
-    const r = b.rotation(), q = new THREE.Quaternion(r.x, r.y, r.z, r.w);
-    const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
-    const v = b.linvel(); const vel = new THREE.Vector3(v.x, v.y, v.z);
-    const speed = vel.dot(fwd);
-    const t = b.translation();
-    const grounded = t.y < 1.3;
-    const up = keys.has("KeyW") || keys.has("ArrowUp"), down = keys.has("KeyS") || keys.has("ArrowDown");
-    const left = keys.has("KeyA") || keys.has("ArrowLeft"), right = keys.has("KeyD") || keys.has("ArrowRight");
-    const boost = keys.has("ShiftLeft") || keys.has("ShiftRight");
-    if (grounded) {
-      // Arcade handling: set velocity directly so it feels the same at any frame rate. Collisions still push back.
-      const side = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
-      let along = speed;
-      const limit = boost ? 32 : 20;
-      if (up && along < limit) along += (boost ? 42 : 26) * d;
-      else if (down && along > -10) along -= 24 * d;
-      else if (!up && !down) along *= Math.exp(-1.1 * d);
-      const lateral = vel.dot(side) * Math.exp(-9 * d);
-      b.setLinvel({ x: fwd.x * along + side.x * lateral, y: v.y, z: fwd.z * along + side.z * lateral }, true);
-    }
-    const steer = (left ? 1 : 0) - (right ? 1 : 0);
-    const grip = Math.min(1, Math.abs(speed) / 6) * Math.sign(speed || 1);
-    b.setAngvel({ x: 0, y: steer * 2.6 * grip, z: 0 }, true);
-    if (keys.has("KeyR") || t.y < -8) { b.setTranslation(START, true); b.setLinvel({ x: 0, y: 0, z: 0 }, true); b.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true); keys.delete("KeyR"); }
-    truck.pos.set(t.x, t.y, t.z); truck.speed = speed; truck.yaw = Math.atan2(fwd.x, fwd.z);
-    wheels.current.forEach((w, i) => { if (w) { w.rotation.x += speed * d * 2.2; if (i < 2) w.rotation.y = steer * 0.35; } });
-    if (group.current) { group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, -(up ? 0.035 : 0) + (down ? 0.035 : 0), 0.12); group.current.rotation.z = THREE.MathUtils.lerp(group.current.rotation.z, -steer * Math.min(Math.abs(speed) / 20, 1) * 0.07, 0.12); }
-  });
-  useEffect(() => {
-    // Lets automated checks place the truck without driving.
-    (window as unknown as { __nearverse: Record<string, unknown> }).__nearverse.teleport = (x: number, z: number) => { body.current?.setTranslation({ x, y: 1, z }, true); body.current?.setLinvel({ x: 0, y: 0, z: 0 }, true); truck.pos.set(x, 1, z); };
-    const down = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !keys.has("Space") && body.current && truck.pos.y < 1.3) { body.current.applyImpulse({ x: 0, y: 8 * body.current.mass(), z: 0 }, true); e.preventDefault(); }
-      if (e.code === "KeyH" && !e.repeat) honk();
-      if (/^(Arrow|Space)/.test(e.code)) e.preventDefault();
-      keys.add(e.code);
-    };
-    const up = (e: KeyboardEvent) => keys.delete(e.code);
-    window.addEventListener("keydown", down); window.addEventListener("keyup", up);
-    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); keys.clear(); };
-  }, []);
-  const Wheel = ({ p, i }: { p: [number, number, number]; i: number }) => (
-    <group position={p}><mesh ref={(m) => { if (m) wheels.current[i] = m; }} castShadow><group rotation={[0, 0, Math.PI / 2]}><mesh castShadow><cylinderGeometry args={[0.42, 0.42, 0.34, 10]} /><meshStandardMaterial color={COLORS.ink} flatShading /></mesh><mesh><boxGeometry args={[0.1, 0.36, 0.7]} /><meshStandardMaterial color={COLORS.paper} /></mesh></group></mesh></group>
-  );
-  return (
-    <RigidBody ref={body} position={[0, 7, -2]} colliders={false} mass={3} enabledRotations={[false, true, false]} linearDamping={0.15} ccd restitution={0.25} name="truck">
-      <CuboidCollider args={[0.95, 0.55, 1.9]} position={[0, 0.0, 0]} friction={0} frictionCombineRule={CoefficientCombineRule.Min} />
-      <group ref={group} position={[0, -0.55, 0]}>
-        <mesh position={[0, 0.62, 0]} castShadow><boxGeometry args={[1.8, 0.3, 3.8]} /><meshStandardMaterial color={COLORS.ink} flatShading /></mesh>
-        <mesh position={[0, 1.22, 1.05]} castShadow><boxGeometry args={[1.7, 1, 1.5]} /><meshStandardMaterial color={COLORS.brick} flatShading /></mesh>
-        <mesh position={[0, 1.42, 1.82]}><boxGeometry args={[1.45, 0.48, 0.04]} /><meshStandardMaterial color="#bfe0ff" /></mesh>
-        {[[-0.87, -0.65], [0.87, -0.65]].map(([x, z]) => <mesh key={x} position={[x, 1.02, z]} castShadow><boxGeometry args={[0.08, 0.5, 2.1]} /><meshStandardMaterial color={COLORS.brick} flatShading /></mesh>)}
-        <mesh position={[0, 1.02, -1.7]} castShadow><boxGeometry args={[1.8, 0.5, 0.08]} /><meshStandardMaterial color={COLORS.brick} flatShading /></mesh>
-        {cargo.map((b, i) => <mesh key={i} position={b.p} castShadow><boxGeometry args={[0.46, 0.3, 0.46]} /><meshStandardMaterial color={b.color} flatShading /></mesh>)}
-        <Wheel i={0} p={[-0.98, 0.42, 1.25]} /><Wheel i={1} p={[0.98, 0.42, 1.25]} /><Wheel i={2} p={[-0.98, 0.42, -1.25]} /><Wheel i={3} p={[0.98, 0.42, -1.25]} />
-      </group>
-    </RigidBody>
   );
 }
 
 function FollowCamera() {
   const { camera, size } = useThree();
-  const look = useRef(new THREE.Vector3());
+  const look = useRef(new THREE.Vector3()), lead = useRef(0), yaw = useRef(0);
   useFrame((_, dt) => {
     const portrait = size.width < size.height;
-    const target = new THREE.Vector3(truck.pos.x, 0, truck.pos.z + Math.cos(truck.yaw) * 3);
-    const off = portrait ? new THREE.Vector3(14, 30, -22) : new THREE.Vector3(13, 21, -17);
-    const k = 1 - Math.exp(-dt * 3.5);
-    camera.position.lerp(target.clone().add(off), k);
-    look.current.lerp(target, k);
+    // The lead follows smoothly, so a sudden stop at an obstacle doesn't jolt the view.
+    lead.current = THREE.MathUtils.damp(lead.current, THREE.MathUtils.clamp(truck.speed * 0.3, -3, 8), 2.2, dt);
+    yaw.current = truck.yaw;
+    const target = new THREE.Vector3(truck.pos.x + Math.sin(yaw.current) * lead.current, 0, truck.pos.z + Math.cos(yaw.current) * lead.current);
+    const off = portrait ? new THREE.Vector3(0, 40, -30) : new THREE.Vector3(0, 28, -27);
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, target.x + off.x, 5, dt);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, off.y, 5, dt);
+    camera.position.z = THREE.MathUtils.damp(camera.position.z, target.z + off.z, 5, dt);
+    look.current.x = THREE.MathUtils.damp(look.current.x, target.x, 5, dt);
+    look.current.z = THREE.MathUtils.damp(look.current.z, target.z, 5, dt);
     camera.lookAt(look.current);
   });
   return null;
 }
 
-/** The title is a wall of crates in the truck's path, so the first thing you do is knock it over. */
-function TitleCrates() {
-  const [ready, setReady] = useState(false);
-  useEffect(() => { document.fonts.load('180px "Bowlby One"').finally(() => setReady(true)); }, []);
-  const letters = "NEARVERSE".split("");
-  const tex = useMemo(() => (ready ? letters.map((l, i) => textTexture(l, i % 2 ? COLORS.brick : COLORS.ink, COLORS.paper)) : []), [ready]);
-  if (!ready) return null;
-  return <>{letters.map((_, i) => (
-    <RigidBody key={i} position={[(4 - i) * 2.25, 1.03, 6.5]} colliders="cuboid" mass={0.5} restitution={0.2} friction={0.8} linearDamping={0.2} angularDamping={0.2}>
-      <mesh castShadow rotation={[0, Math.PI, 0]}><boxGeometry args={[2, 2, 2]} /><meshStandardMaterial map={tex[i]} /></mesh>
-    </RigidBody>
-  ))}</>;
-}
-
-function Tree({ p, s = 1 }: { p: [number, number]; s?: number }) {
-  return (
-    <RigidBody type="fixed" colliders={false} position={[p[0], 0, p[1]]}><CuboidCollider args={[0.45 * s, 2, 0.45 * s]} position={[0, 2, 0]} />
-      <mesh position={[0, 1 * s, 0]} castShadow><cylinderGeometry args={[0.28 * s, 0.4 * s, 2 * s, 6]} /><meshStandardMaterial color={ITEM.wood} flatShading /></mesh>
-      <mesh position={[0, 3.2 * s, 0]} castShadow><coneGeometry args={[1.8 * s, 3.4 * s, 6]} /><meshStandardMaterial color={COLORS.leaf} flatShading /></mesh>
-    </RigidBody>
-  );
-}
-
-function Decor() {
-  const trees = useMemo(() => {
-    const out: [number, number, number][] = [];
-    let s = 11; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-    while (out.length < 46) {
-      const a = r() * Math.PI * 2, d = 34 + r() * 46, x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if (c.nodes.some((n) => { const l = Math.hypot(n.x, n.z), t = Math.max(0, Math.min(1, (x * n.x + z * n.z) / (l * l))); return Math.hypot(x - n.x * t, z - n.z * t) < 7; })) continue;
-      out.push([x, z, 0.8 + r() * 0.8]);
-    }
-    return out;
-  }, []);
-  return <>{trees.map(([x, z, k], i) => <Tree key={i} p={[x, z]} s={k} />)}</>;
-}
-
-function NodeSpot({ i }: { i: number }) {
-  const n = c.nodes[i];
-  const left = useGame((s) => s.market.nodes[i]);
-  const color = ITEM[c.items[n.item].id];
-  const heaps = Math.max(0, Math.ceil((left / n.max_stock) * 8));
-  const sign = useMemo(() => (typeof document === "undefined" ? null : textTexture(nodeName(n.id), COLORS.paper, COLORS.ink, 512, 96, 42)), [n.id]);
-  return (
-    <group position={[n.x, 0, n.z]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}><ringGeometry args={[6, 6.5, 32]} /><meshBasicMaterial color={COLORS.ink} /></mesh>
-      {Array.from({ length: heaps }, (_, k) => { const a = k * 2.399, d = 1.2 + (k % 3) * 1.2; return <mesh key={k} position={[Math.cos(a) * d, 0.5, Math.sin(a) * d]} castShadow rotation={[0, a, 0]}><dodecahedronGeometry args={[0.7, 0]} /><meshStandardMaterial color={color} flatShading /></mesh>; })}
-      <group position={[0, 0, 6.8]}><mesh position={[0, 1, 0]}><boxGeometry args={[0.2, 2, 0.2]} /><meshStandardMaterial color={COLORS.ink} /></mesh><mesh position={[0, 2.3, 0]} rotation={[0, Math.PI, 0]}><planeGeometry args={[5.2, 1]} /><meshBasicMaterial map={sign} side={THREE.DoubleSide} /></mesh></group>
-    </group>
-  );
-}
-
-function Stall({ i }: { i: number }) {
-  const [x, z] = STALLS[i];
-  const name = c.merchants[i].name;
-  const sign = useMemo(() => textTexture(name, COLORS.paper, COLORS.ink, 512, 128, 80), [name]);
-  return (
-    <group position={[x, 0, z]} rotation={[0, Math.atan2(-x, -z), 0]}>
-      <RigidBody type="fixed" colliders={false}><CuboidCollider args={[3, 1, 1]} position={[0, 1, -2.2]} /></RigidBody>
-      <mesh position={[0, 0.9, -2.2]} castShadow><boxGeometry args={[6, 1.8, 2]} /><meshStandardMaterial color={COLORS.paper} flatShading /></mesh>
-      {[-2.8, 2.8].map((px) => <mesh key={px} position={[px, 2.4, -1.4]} castShadow><boxGeometry args={[0.2, 4.8, 0.2]} /><meshStandardMaterial color={COLORS.ink} /></mesh>)}
-      <mesh position={[0, 4.6, -1.6]} rotation={[0.3, 0, 0]} castShadow><boxGeometry args={[7, 0.2, 3.6]} /><meshStandardMaterial color={AWNING[i]} flatShading /></mesh>
-      <mesh position={[0, 3.5, -0.9]}><planeGeometry args={[4.6, 1.15]} /><meshBasicMaterial map={sign} side={THREE.DoubleSide} /></mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 1]}><ringGeometry args={[5.4, 5.9, 32]} /><meshBasicMaterial color={AWNING[i]} /></mesh>
-    </group>
-  );
-}
-
-function Plot() {
-  const done = useGame((s) => s.player.blueprints);
-  const palette = c.blueprints.map((_, i) => [ITEM.wood, ITEM.clay, ITEM.slate][i % 3]);
-  return (
-    <group position={[PLOT[0], 0, PLOT[1]]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}><planeGeometry args={[20, 12]} /><meshStandardMaterial color="#c9a144" /></mesh>
-      {c.blueprints.map((b, i) => (
-        <group key={b.id} position={[(1 - i) * 6.2, 0, -1]}>
-          {Array.from({ length: done[i] }, (_, s) => {
-            const w = 4 - s * 0.45;
-            return <mesh key={s} position={[0, 0.9 + s * 1.8, 0]} castShadow><boxGeometry args={[w, 1.8, w]} /><meshStandardMaterial color={s % 2 ? COLORS.paper : palette[i]} flatShading /></mesh>;
-          })}
-          {done[i] === b.sections.length && <mesh position={[0, b.sections.length * 1.8 + 0.8, 0]} castShadow><coneGeometry args={[(4 - b.sections.length * 0.45) * 0.95, 1.8, 4]} /><meshStandardMaterial color={COLORS.brick} flatShading /></mesh>}
-          {done[i] === 0 && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}><ringGeometry args={[1.9, 2.1, 4]} /><meshBasicMaterial color={COLORS.ink} /></mesh>}
-        </group>
-      ))}
-    </group>
-  );
-}
-
-/** Mines guard the richest node. They throw the truck around, which costs you time, not on-chain state. */
-function Mines() {
-  const n = c.nodes.find((x) => x.id === "mine-field")!;
-  const spots = useMemo(() => [[-9, 7], [8, 8], [-11, -3], [11, -2], [0, 11], [-5, -10], [6, -10]].map(([x, z]) => [n.x + x, n.z + z] as [number, number]), [n]);
-  const [gone, setGone] = useState<Record<number, boolean>>({});
-  const say = useGame((s) => s.say);
-  return <>{spots.map(([x, z], i) => gone[i] ? null : (
-    <RigidBody key={i} type="fixed" colliders={false} position={[x, 0.45, z]}>
-      <BallCollider args={[0.8]} sensor onIntersectionEnter={({ other }) => {
-        const b = other.rigidBody; if (!b || other.rigidBodyObject?.name !== "truck") return;
-        const dir = new THREE.Vector3(b.translation().x - x, 0, b.translation().z - z).normalize();
-        b.applyImpulse({ x: dir.x * 20 * b.mass(), y: 11 * b.mass(), z: dir.z * 20 * b.mass() }, true);
-        say("Boom. Mines cost you time, and this field wears the truck on every load."); boom();
-        setGone((g) => ({ ...g, [i]: true })); setTimeout(() => setGone((g) => ({ ...g, [i]: false })), 12000);
-      }} />
-      <mesh castShadow><sphereGeometry args={[0.55, 8, 6]} /><meshStandardMaterial color={COLORS.ink} flatShading /></mesh>
-      <mesh position={[0, 0.5, 0]}><cylinderGeometry args={[0.05, 0.05, 0.4, 5]} /><meshBasicMaterial color={COLORS.brick} /></mesh>
-    </RigidBody>
-  ))}</>;
-}
-
-let ctx: AudioContext | null = null;
-function tone(f: number, t: number, type: OscillatorType = "square", vol = 0.05) {
-  try { ctx ??= new AudioContext(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f; g.gain.value = vol; g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + t); } catch { /* no audio */ }
-}
-const honk = () => { tone(370, 0.3); tone(466, 0.3); };
-const boom = () => tone(70, 0.5, "sawtooth", 0.14);
-
 function Zones() {
-  const { setZone, setGatherProgress, act } = useGame.getState();
-  const hold = useRef(0);
+  const hold = useRef(0), tick = useRef(0);
   useFrame((_, dt) => {
+    const { setZone, act, market, session, zone: current } = useGame.getState();
     const { x, z } = truck.pos;
-    let zone: { kind: "node" | "stall" | "plot"; index: number } | null = null;
-    c.nodes.forEach((n, i) => { if (Math.hypot(x - n.x, z - n.z) < 6.5) zone = { kind: "node", index: i }; });
-    STALLS.forEach(([sx, sz], i) => { if (Math.hypot(x - sx, z - sz) < 6) zone = { kind: "stall", index: i }; });
-    if (Math.abs(x - PLOT[0]) < 10 && Math.abs(z - PLOT[1]) < 6) zone = { kind: "plot", index: 0 };
-    setZone(zone);
-    const z2 = zone as { kind: string; index: number } | null;
-    if (z2?.kind === "node" && keys.has("KeyE")) {
+    if (tick.current++ % 4 === 0) {
+      const me = session?.accountId ?? "you";
+      let zone: { kind: "node" | "stall" | "plot" | "lot"; index: number } | null = null;
+      for (let i = 0; i < c.nodes.length; i++) if (Math.abs(x - c.nodes[i].x) < 7 && Math.abs(z - c.nodes[i].z) < 7) { zone = { kind: "node", index: i }; break; }
+      for (let i = 0; i < c.merchants.length; i++) { const m = c.merchants[i], l = Math.hypot(m.x, m.z); if (Math.hypot(x - (m.x - m.x / l), z - (m.z - m.z / l)) < 5.6) zone = { kind: "stall", index: i }; }
+      for (let i = 0; i < c.lots.length; i++) { const m = c.lots[i], st = market.stalls[i]; if (Math.abs(x - m.x) < 7 && Math.abs(z - m.z) < 7 && st?.owner && (st.built || st.owner === me)) zone = { kind: "lot", index: i }; }
+      if (Math.abs(x - PLOT[0]) < 10 && Math.abs(z - PLOT[1]) < 6) zone = { kind: "plot", index: 0 };
+      setZone(zone);
+    }
+    if (current?.kind === "node" && keys.has("KeyE")) {
       hold.current += dt;
-      setGatherProgress(Math.min(1, hold.current / 1.2));
-      if (hold.current >= 1.2) { hold.current = 0; setGatherProgress(0); if (act({ t: "gather", node: z2.index })) tone(660, 0.12, "triangle", 0.09); }
-    } else if (hold.current) { hold.current = 0; setGatherProgress(0); }
+      if (gatherBar.el) gatherBar.el.style.width = `${Math.min(100, (hold.current / 1.2) * 100)}%`;
+      if (hold.current >= 1.2) { hold.current = 0; if (gatherBar.el) gatherBar.el.style.width = "0%"; if (act({ t: "gather", node: current.index })) sfx.load(); }
+    } else if (hold.current) { hold.current = 0; if (gatherBar.el) gatherBar.el.style.width = "0%"; }
   });
   return null;
+}
+
+/** Picks a starting level, then watches the real frame rate and steps detail down, or up once, to stay smooth. */
+function startLevel() {
+  const forced = new URLSearchParams(location.search).get("quality");
+  const i = LEVELS.findIndex((l) => l.name === forced);
+  if (i >= 0) { perf.forced = true; return i; }
+  let software = false;
+  try {
+    const gl = document.createElement("canvas").getContext("webgl2");
+    const info = gl?.getExtension("WEBGL_debug_renderer_info");
+    software = !gl || /swiftshader|llvmpipe|software/i.test(info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : "");
+  } catch { software = true; }
+  return software ? 3 : 1;
+}
+
+/**
+ * Compiles every shader behind the loading screen, once the whole world has mounted.
+ * Compiling on first use is what froze the game the moment you reached a stall or hit something.
+ */
+function Warmup() {
+  const { gl, scene, camera } = useThree();
+  useEffect(() => {
+    // Asking for shader logs forces the browser to wait for the GPU, so that check stays out of production.
+    if (process.env.NODE_ENV === "production") gl.debug.checkShaderErrors = false;
+    let alive = true;
+    const finish = () => {
+      if (!alive) return;
+      // Finish each program now. Otherwise the wait happens the first time it draws, which is mid-drive.
+      for (const program of gl.info.programs ?? []) { (program as unknown as { getUniforms(): unknown }).getUniforms(); (program as unknown as { getAttributes(): unknown }).getAttributes(); }
+      // Widen the shadow view for a moment so distant objects compile their shadow shaders too.
+      let sun: THREE.DirectionalLight | null = null;
+      scene.traverse((o) => { if (o instanceof THREE.DirectionalLight) sun = o; });
+      const cam = (sun as THREE.DirectionalLight | null)?.shadow.camera;
+      const wide = (size: number) => { if (cam) { cam.left = -size; cam.right = size; cam.top = size; cam.bottom = -size; cam.far = size * 4; cam.updateProjectionMatrix(); } };
+      wide(1400);
+      gl.shadowMap.needsUpdate = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+        // Shadow shaders were only created by those frames, so finish them the same way.
+        for (const program of gl.info.programs ?? []) { (program as unknown as { getUniforms(): unknown }).getUniforms(); (program as unknown as { getAttributes(): unknown }).getAttributes(); }
+        wide(44); if (cam) { cam.far = 150; cam.updateProjectionMatrix(); }
+        perf.warming = false; if (alive) useGame.getState().setWorldReady();
+      })));
+    };
+    const start = requestAnimationFrame(() => requestAnimationFrame(() => { gl.compileAsync(scene, camera).then(finish, finish); }));
+    return () => { alive = false; cancelAnimationFrame(start); };
+  }, [gl, scene, camera]);
+  return null;
+}
+
+function Governor() {
+  const { gl, setDpr } = useThree();
+  const clock = useRef({ frames: 0, time: 0, total: 0, raised: false, dropped: false, skip: 40 });
+  useEffect(() => {
+    perf.level = startLevel();
+    setDpr(Math.min(LEVELS[perf.level].dpr, window.devicePixelRatio || 1));
+    gl.shadowMap.autoUpdate = false; gl.shadowMap.needsUpdate = true;
+
+    const hook = (window as unknown as { __nearverse: Record<string, unknown> }).__nearverse;
+    hook.perf = perf; hook.setTime = (t: number | null) => { sky.override = t; };
+  }, [gl, setDpr]);
+  useFrame((_, dt) => {
+    const k = clock.current;
+    k.total++;
+    if (perf.warming || k.total % LEVELS[perf.level].shadowEvery === 0) gl.shadowMap.needsUpdate = true;
+    if (k.skip > 0) { k.skip--; return; } // ignore start-up hitches
+    k.frames++; k.time += Math.min(dt, 1);
+    if (k.time < 1.5) return;
+    perf.fps = Math.round(k.frames / k.time);
+    const slow = perf.fps < 42, roomy = perf.fps >= 58;
+    k.frames = 0; k.time = 0;
+    if (perf.forced) return;
+    const set = (n: number) => { perf.level = n; setDpr(Math.min(LEVELS[n].dpr, window.devicePixelRatio || 1)); k.skip = 30; };
+    if (slow && perf.level < LEVELS.length - 1) { k.dropped = true; set(perf.level + 1); }
+    else if (roomy && !k.dropped && !k.raised && perf.level > 0) { k.raised = true; set(perf.level - 1); }
+  });
+  return null;
+}
+
+function World() {
+  const map = useMemo(() => paintGroundMap(), []);
+  const biome = useMemo(() => paintBiomeMap(), []);
+  const trees = useTrees();
+  return (
+    <>
+      <Ground map={map} biome={biome} />
+      <Ocean />
+      <Grass map={map} biome={biome} />
+      <Weather />
+      <Physics gravity={[0, -24, 0]} timeStep="vary">
+        <RigidBody type="fixed" friction={1}><CuboidCollider args={[1300, 1, 1300]} position={[0, -1, 0]} /></RigidBody>
+        <Truck />
+        <Near x={0} z={0} radius={120}><TitleCrates /><Scatter /><Lamps /><Benches /><Plot /></Near>
+        {c.merchants.map((_, i) => <Stall key={i} i={i} />)}
+        {c.lots.map((_, i) => <LotSpot key={i} i={i} />)}
+        {c.nodes.map((n, i) => <Near key={i} x={n.x} z={n.z}><NodeSpot i={i} /></Near>)}
+        <Trees trees={trees} />
+        <Obstacles />
+        <Mines />
+        <Warmup />
+      </Physics>
+    </>
+  );
 }
 
 export default function Scene() {
   const [fonts, setFonts] = useState(false);
   useEffect(() => { document.fonts.load('80px "Bowlby One"').finally(() => setFonts(true)); }, []);
   return (
-    <Canvas shadows camera={{ position: [13, 24, -24], fov: 42 }} dpr={[1, 1.8]} gl={{ antialias: true, preserveDrawingBuffer: true }}>
-      <color attach="background" args={[COLORS.sky]} />
-      <hemisphereLight args={["#ffffff", "#c98a1e", 1.25]} />
-      <directionalLight position={[-30, 50, -24]} intensity={2.4} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-110} shadow-camera-right={110} shadow-camera-top={110} shadow-camera-bottom={-110} shadow-camera-far={180} />
-      <Physics gravity={[0, -24, 0]} timeStep={1 / 60}>
-        <Ground />
-        <Truck />
-        {fonts && <><TitleCrates />{STALLS.map((_, i) => <Stall key={i} i={i} />)}{c.nodes.map((_, i) => <NodeSpot key={i} i={i} />)}</>}
-        <Decor />
-        <Mines />
-        <Plot />
-      </Physics>
+    <Canvas shadows={{ type: THREE.PCFShadowMap }} camera={{ position: [0, 28, -30], fov: 34, far: 1400 }} dpr={1} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.02 }}>
+      <color attach="background" args={["#a9d4e8"]} />
+      <fog attach="fog" args={["#a9d4e8", 90, 420]} />
+      <DayNight />
+      {fonts && <World />}
+      <Waypoint />
+      <FocusTracker />
+      {fonts && <><Tracks /><WindLines /></>}
       <FollowCamera />
       <Zones />
+      <Governor />
     </Canvas>
   );
 }

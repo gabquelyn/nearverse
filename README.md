@@ -1,29 +1,32 @@
 # Nearverse
 
-A drivable 3D trading game for the NEAR Hackathon `games` track. You drive a truck around an island, gather materials, sell them to merchants whose prices follow supply, and spend the proceeds building on your plot.
+A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` track. You drive across a huge island of forest, snowfields, desert and city, through day and night, hunting for resources that aren't on the map. You sell them to merchants whose prices follow supply or from a stall of your own, and pay for fuel, repairs, vehicles and stall locations with credits bought with NEAR.
 
 **Problem it addresses:** most on-chain games are a token with a game attached, and players have to deal with wallets, gas and popups. Here the game comes first. After one sign-in, every action is signed silently, and the economy runs on rules anyone can read in one file.
 
 ## How NEAR is used
 
 - **NEP-245 multi token:** one contract (`contracts/nearverse`) holds wood, iron, slate, clay and fuel. Gathering mints, selling burns, and all standard `mt_*` transfer and view methods are present. Approvals are not implemented.
+- **Credits are the game's revenue:** `buy_credits` takes attached NEAR at 1 NEAR = 1000 credits, and the contract keeps it. Only the owner can withdraw it, through `withdraw_revenue`. Credits pay for fuel, repairs, vehicles and stall locations, and no stall sells fuel or repairs.
+- **Player-owned markets:** a stall location costs credits, then the owner builds it from materials, bought or found. Owners stock it and earn coins in its till when others buy. They can list it for sale or sell it back to the city. Withdrawing coins as NEAR is a future plan, not built yet.
+- **Vehicles priced from their stats:** the contract computes each price in credits from capacity, endurance, fuel use, flair and size, using weights in `config/items.yaml`.
 - **NPCs with wallets:** merchants hold stock and cash in contract state. A merchant out of cash stops buying.
 - **An economy that changes without a patch:** each contract call applies elapsed time. Stock drifts, events fire, and merchants change their target stock from their own trading history.
-- **Function-call keys:** game methods work with a key that can't attach NEAR, while `withdraw` and `mt_transfer` require 1 yocto, so that key can't move value.
+- **Function-call keys:** game methods work with a key that can't attach NEAR. `buy_credits`, `withdraw_revenue` and `mt_transfer` need a full signature, so that key can't move value.
 
 ## Status: what has and hasn't been verified
 
 | Part | Status |
 | --- | --- |
-| Economy engine, Rust contract rules | Tested. 1,500 replayed steps match exactly between TypeScript and Rust |
+| Economy engine, Rust contract rules | Tested. 2,500 replayed steps match exactly between TypeScript and Rust |
 | Contract with mocked runtime | Tested (`cargo test`) |
 | Compiled wasm | Tested in Node against a mock of the host functions (`npm run smoke:wasm`). Gas not measured |
 | Web game in practice mode, judge view, fast-forward | Tested in a browser against the web container |
 | Deployed contract on real testnet | **Not yet run.** See step B below |
 | Guest play, ghost traders on testnet | **Not yet run** |
-| NEAR Auth login adding a session key (`/spike`) | **Not yet run.** Docs don't confirm that `AddKey` can be signed. Guest play is the fallback |
+| NEAR Auth sign-in adding a game key (`/signin`) | **Not yet run.** Docs don't confirm that `AddKey` can be signed. Guest play is the fallback |
 
-Contract account on testnet: *not deployed yet*.
+Contract account on testnet: *not deployed yet*. See DEPLOY.md.
 
 ## Run it
 
@@ -49,30 +52,15 @@ Use `WEB_PORT=8080 docker compose up --build` if port 3000 is taken.
 2. Open http://localhost:3000/judge. See a "Judge view" heading and a practice mode note.
 3. Press **Skip to the end**. See a week of prices across five materials, merchant cash, and a list of what merchants learned.
 4. Press **Run a week**, then **Flood the market with iron** while it plays. See the iron line drop.
-5. Under *Play by buttons*, press **birch-grove**. See "Gathered 3 wood" under Activity.
+5. Under *Play by buttons*, press the first **Timber stand** button. See "Gathered 3 wood" under Activity.
 6. In the price table, hover a price. See its reasoning, such as "Wood 7.20: stock on target (+0%), spread (−10%)."
 7. Press **Sell** on wood. See coins rise, and hover again to see that the merchant's stock rose.
-8. Open http://localhost:3000/ and press **Start driving**. Drive with WASD or arrows. Drive into a circle by a stockpile and hold **E** to load. See cubes appear in the truck bed. Drive into a colored circle at a stall to trade.
+8. On the same page, under *Vehicle shop*, see each vehicle's stats and price. Each shows a picture and a price in credits. Under *Stalls*, pick a location, buy it with credits, and see which materials it needs.
+9. Open http://localhost:3000/ and press **Start driving**. Drive with WASD or arrows. Resources are hidden, and the closest ones are within about 150 m of home. When a prompt says you found one, hold **E** to load. See cubes appear in the truck bed. Follow roads to find merchants. Drive hard into a boulder or tree and see truck health drop, then press **Repair** at the top. The map at the top shows your location, the regions and every place you can sell, but never resources. Press **Nearest stall** or **Go home** for a route. Press **Tab** to hide all the details for a clear view. Add `?quality=low` to the address on a slow machine, or `?perf=1` to see the frame rate.
 
-### B. Deploy
+### B. Deploy and use it on testnet
 
-**Contract**
-
-1. Create and fund a testnet account at https://near-faucet.io. Run `cp .env.example .env`, then set `NEARVERSE_DEPLOYER_ACCOUNT` and `NEARVERSE_DEPLOYER_PRIVATE_KEY`.
-2. Run `docker compose run --build --rm deploy`. See "Done. Tick: 0". The command refuses non-testnet accounts, and accounts that already hold this contract.
-3. Set `GAME_CONTRACT` in `.env` to that account.
-4. Run `docker compose run --build --rm smoke`. See "Testnet smoke passed".
-
-**Web**
-
-The web image holds no settings or secrets. It reads them from the environment when it starts, so changing contract needs a restart, not a rebuild.
-
-1. Set `NEARVERSE_TREASURY_ACCOUNT` and `NEARVERSE_TREASURY_PRIVATE_KEY` in `.env`. They can be the deployer's. Only the web server reads them, and they pay test funds and NEAR Auth relays.
-2. On any Docker host, run `docker compose up -d --build web`.
-3. Or build an image for any container host with `docker build --target web -t nearverse-web .`, then provide these variables: `GAME_CONTRACT`, `NEAR_NETWORK`, `NEARVERSE_TREASURY_ACCOUNT`, `NEARVERSE_TREASURY_PRIVATE_KEY`, and optionally `NEAR_RPC_URL`, `FASTAUTH_CLIENT_ID`, `NEARVERSE_CLAIM_YOCTO`. It listens on port 3000 and answers health checks at `/api/health`.
-4. Open `/api/health` and see `"mode":"chain"`. Open `/play` and see "Playing on NEAR testnet" with no wallet prompt.
-5. Gather on `/judge`. See "view transaction" appear under Activity with no popup.
-6. Open `/spike` and follow the buttons to prove social login and the session key.
+Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, run the web app, and sign in with a social login.
 
 ## How it works
 
@@ -85,9 +73,11 @@ The web image holds no settings or secrets. It reads them from the environment w
 
 ## Known limits
 
-- **The contract can't verify driving.** A script could call `gather` without driving. The limits are on-chain: node stock, a per-player cooldown, fuel, wear and cargo space. Mines in the world only cost time.
-- **Earnings can't leave the game.** Withdrawals are capped at deposits, which removes the reason to farm with scripts. Starter coins can't be withdrawn.
+- **The contract can't verify driving.** A script could call `gather` without driving. The limits are on-chain: node stock, a per-player cooldown, fuel, wear and cargo space. `take_damage` and `burn_fuel` can only hurt the player who reports them.
+- **Credits and coins can't be withdrawn yet.** NEAR paid for credits stays with the game, which removes the reason to farm with scripts.
 - **The contract pays storage** for player records, which is fine for a testnet game but would need a fee on mainnet.
+- Crash damage, driving fuel and location are reported by the browser, so a modified client could skip those costs or build a stall without driving there.
+- Resource positions are hidden from the map, not secret: this is open source, so they can be read from `packages/economy/generated/rules.json`, and a script could gather without driving.
 - `leaderboard` scans up to 200 players. Approvals in NEP-245 aren't implemented.
 - Guest play keeps a throwaway full-access key in the browser for a faucet-funded testnet account. It isn't suitable for real value.
 
@@ -97,6 +87,6 @@ The web image holds no settings or secrets. It reads them from the environment w
 
 ## Third-party code and AI disclosure
 
-Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired in spirit by bruno-simon.com, with no code or assets taken from it.
+Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
 
 License: MIT.

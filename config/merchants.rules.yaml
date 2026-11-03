@@ -18,6 +18,8 @@ price:
 
 merchants:
   - id: hoarder
+    x: -540
+    z: 340
     name: Hoarder
     personality: Holds large stock, so prices move slowly
     k_quarters: 2           # k = 0.5
@@ -27,8 +29,10 @@ merchants:
     cash_cap: 1200000
     stipend: 1500           # coins from townsfolk each market hour, up to cash_cap
     reversion_bps: 80       # stock drifts 0.8% toward target each hour
-    targets: { wood: 300, iron: 160, slate: 200, clay: 280, fuel: 240 }
+    targets: { wood: 300, iron: 160, slate: 200, clay: 280 }
   - id: flipper
+    x: 560
+    z: -250
     name: Flipper
     personality: Tight spreads, reacts fast to stock changes
     k_quarters: 6           # k = 1.5
@@ -38,8 +42,10 @@ merchants:
     cash_cap: 500000
     stipend: 1200
     reversion_bps: 350
-    targets: { wood: 60, iron: 30, slate: 40, clay: 55, fuel: 50 }
+    targets: { wood: 60, iron: 30, slate: 40, clay: 55 }
   - id: foreman
+    x: 280
+    z: 250
     name: Foreman
     personality: Builds to blueprints and pays extra for what the current one needs
     k_quarters: 4           # k = 1
@@ -49,7 +55,7 @@ merchants:
     cash_cap: 800000
     stipend: 1000
     reversion_bps: 200
-    targets: { wood: 100, iron: 70, slate: 80, clay: 90, fuel: 40 }
+    targets: { wood: 100, iron: 70, slate: 80, clay: 90 }
 
 # Merchants learn. When stock stays outside the band, they change what they stock.
 adaptation:
@@ -71,5 +77,20 @@ events:
     - { id: iron-shortage, title: Iron shortage, text: A caravan never arrived. Merchants lost iron., item: iron, keep_bps: 5500 }
     - { id: timber-glut, title: Timber glut, text: Storm-felled trees flooded the market., item: wood, keep_bps: 15000 }
     - { id: slate-slide, title: Slate slide, text: The cut collapsed and slate is scarce., item: slate, keep_bps: 6000 }
-    - { id: fuel-rush, title: Fuel rush, text: Everyone is driving. Fuel is running low., item: fuel, keep_bps: 6500 }
     - { id: clay-flood, title: River flood, text: The river left clay everywhere., item: clay, keep_bps: 14000 }
+
+# Player-owned stalls price like merchants, from their own stock. The owner sets the spread within these limits.
+stalls:
+  k_quarters: 4
+  target_stock: 40
+  default_spread_bps: 800
+  min_spread_bps: 200
+  max_spread_bps: 2500
+  # The city will always buy an empty stall for this share of its material value.
+  city_buyback_bps: 5000
+  # Two lots begin as finished stalls of a labeled simulated owner, for sale in coins, so there is a market on day one.
+  seed_owner: ghost-builder.testnet
+  seed_lots: [lot-brook, lot-plaza]
+  seed_price: 60000
+  seed_stock: 30
+  seed_cash: 40000

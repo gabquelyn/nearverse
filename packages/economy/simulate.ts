@@ -29,7 +29,7 @@ export const cloneMarket = (m: Market): Market => JSON.parse(JSON.stringify(m));
 
 export function createSim(c: Config, from: Market, traders = 14, seed = 7): Sim {
   const mk = cloneMarket(from);
-  const ts = Array.from({ length: traders }, () => { const p = newPlayer(c); startGame(c, p); p.items[c.fuel_item] += 60; return p; });
+  const ts = Array.from({ length: traders }, () => { const p = newPlayer(c); startGame(c, p); p.fuel = 1e9; p.credits = 1e9; return p; });
   return { mk, c, rand: rng(seed), traders: ts, now: 0, history: [], playerSold: c.items.map(() => 0) };
 }
 
@@ -39,25 +39,18 @@ const tryDo = (f: () => unknown) => { try { f(); return true; } catch (e) { if (
 function act(sim: Sim, t: ReturnType<typeof newPlayer>): "trade" | "build" | null {
   const { c, mk } = sim;
   sim.now += 20_000;
-  if (t.durability < 25) tryDo(() => repair(c, mk, t));
-  if (t.items[c.fuel_item] < 4) {
-    // Fill up for free at the pump when it has fuel; otherwise pay a merchant, like a player would.
-    const pump = c.nodes.findIndex((n) => n.item === c.fuel_item);
-    if (mk.nodes[pump] > 0 && tryDo(() => gather(c, mk, t, pump, sim.now))) return null;
-    const m = Math.floor(sim.rand() * c.merchants.length);
-    tryDo(() => buy(c, mk, t, m, c.fuel_item, 3, 1e9, sim.now));
-  }
+  if (t.durability < 25) tryDo(() => repair(c, t));
   const bpIdx = t.blueprints.findIndex((done, i) => done < c.blueprints[i].sections.length);
   if (bpIdx >= 0 && tryDo(() => buildSection(c, mk, t, bpIdx))) return "build";
   // sell what is priced above base, otherwise gather
   let best = -1, bestM = 0, bestRatio = 1.0;
   t.items.forEach((q, it) => {
-    if (it === c.fuel_item || q < 3) return;
+    if (q < 3) return;
     c.merchants.forEach((_, m) => { const r = bid(c, mk, m, it) / c.items[it].base_price; if (r > bestRatio) { bestRatio = r; best = it; bestM = m; } });
   });
-  const full = t.items.reduce((a, q, i) => (i === c.fuel_item ? a : a + q), 0) > c.cargo_capacity - 8;
+  const full = t.items.reduce((a, q) => a + q, 0) > c.vehicles[t.vehicle].capacity - 8;
   if (best < 0 && full) {
-    best = t.items.indexOf(Math.max(...t.items.filter((_, i) => i !== c.fuel_item)));
+    best = t.items.indexOf(Math.max(...t.items));
     bestM = Math.floor(sim.rand() * c.merchants.length);
   }
   if (best >= 0 && t.items[best] > 0) {

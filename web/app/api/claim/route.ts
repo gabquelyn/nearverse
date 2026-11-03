@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   for (const id of [ip, accountId]) if (now - (seen.get(id) ?? 0) < WINDOW && ip !== "local") return NextResponse.json({ error: "Test funds were just claimed. Try again in 10 minutes." }, { status: 429 });
   seen.set(ip, now); seen.set(accountId, now);
   try {
-    const near = new Near({ network: "testnet", privateKey: key as `ed25519:${string}`, defaultSignerId: account });
+    const near = new Near({ network: "testnet", rpcUrl: process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com", privateKey: key as `ed25519:${string}`, defaultSignerId: account });
     const yocto = amount || "250000000000000000000000";
     await near.send(accountId, BigInt(yocto));
     return NextResponse.json({ accountId, yocto });

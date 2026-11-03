@@ -4,7 +4,7 @@ export interface PublicConfig { contract: string; network: string; rpcUrl: strin
 export const serverPublicConfig = (): PublicConfig => ({
   contract: process.env.GAME_CONTRACT || "",
   network: process.env.NEAR_NETWORK || "testnet",
-  rpcUrl: process.env.NEAR_RPC_URL || "",
+  rpcUrl: process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com",
   fastAuthClientId: process.env.FASTAUTH_CLIENT_ID || "",
 });
 
