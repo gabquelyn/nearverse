@@ -43,9 +43,13 @@ export const keyOnAccount = async (rpc: string, id: string, publicKey: string) =
 /** Best effort, so a returning player on a new device skips the username screen. If this fails, they just type their username. */
 export async function findAccount(publicKey: string, parent: string): Promise<string | null> {
   try {
-    const res = await fetch(`https://test.api.fastnear.com/v0/public_key/${encodeURIComponent(publicKey)}`);
-    if (!res.ok) return null;
-    const body = await res.json() as { account_ids?: string[] };
-    return body.account_ids?.find((a) => a.endsWith(`.${parent}`)) ?? null;
+    for (const path of ["v1/public_key", "v0/public_key"]) {
+      const res = await fetch(`https://test.api.fastnear.com/${path}/${encodeURIComponent(publicKey)}`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
+      if (!res?.ok) continue;
+      const body = await res.json().catch(() => ({})) as { account_ids?: string[] };
+      const found = body.account_ids?.find((a) => a.endsWith(`.${parent}`));
+      if (found) return found;
+    }
+    return null;
   } catch { return null; }
 }

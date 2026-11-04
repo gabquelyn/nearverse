@@ -25,7 +25,8 @@ export async function POST(req: Request) {
 
   try {
     switch (body.action) {
-      case "lookup": return NextResponse.json({ accountId: await findAccount(publicKey, parent), parent });
+      // The browser's remembered wallet is checked first, since a key index can lag. It only counts if this player's key is on it.
+      case "lookup": return NextResponse.json({ accountId: await mine(body.accountId) ? body.accountId : await findAccount(publicKey, parent), parent });
       case "start": {
         if (!validPublicKey(body.sessionPub)) return no("That game key isn't valid.");
         let id: string;

@@ -8,6 +8,35 @@ import { emailOn, emailStep, googleAction, googleButtonOn, showGoogleButton } fr
 import { StepRail, type RailStep } from "./StepRail";
 import { Secret } from "./WalletExport";
 
+// The wallet name isn't secret, and the server checks the player's key before trusting it. It survives "Forget this key".
+const WALLET = "nearverse.lastWallet";
+const rememberedWallet = () => { try { return localStorage.getItem(WALLET); } catch { return null; } };
+const rememberWallet = (id: string) => { try { localStorage.setItem(WALLET, id); } catch { /* typed again next time */ } };
+
+/** One box per digit. Typing moves on, backspace moves back, and pasting a whole code fills them all. */
+function PinField({ length, value, onChange, onDone, label, disabled }: { length: number; value: string; onChange(v: string): void; onDone(v: string): void; label: string; disabled: boolean }) {
+  const boxes = useRef<(HTMLInputElement | null)[]>([]);
+  const put = (text: string, from: number) => {
+    const digits = text.replace(/\D/g, "");
+    if (!digits) return;
+    const next = (value.slice(0, from).padEnd(from, " ") + digits).slice(0, length).trimEnd();
+    onChange(next);
+    boxes.current[Math.min(next.length, length - 1)]?.focus();
+    if (next.length === length && !next.includes(" ")) onDone(next);
+  };
+  return (
+    <div className="pinfield" role="group" aria-label={label}>
+      {Array.from({ length }, (_, i) => (
+        <input key={i} ref={(el) => { boxes.current[i] = el; }} aria-label={`Digit ${i + 1} of ${length}`} inputMode="numeric" autoComplete={i === 0 ? "one-time-code" : "off"} autoFocus={i === 0} disabled={disabled}
+          value={value[i] ?? ""} onFocus={(e) => e.target.select()}
+          onPaste={(e) => { e.preventDefault(); put(e.clipboardData.getData("text"), i); }}
+          onChange={(e) => { const typed = e.target.value; if (typed.length > 1) put(typed, i); else if (typed) put(typed, i); else onChange(value.slice(0, i) + value.slice(i + 1)); }}
+          onKeyDown={(e) => { if (e.key === "Backspace" && !value[i] && i > 0) { e.preventDefault(); onChange(value.slice(0, i - 1)); boxes.current[i - 1]?.focus(); } if (e.key === "ArrowLeft" && i > 0) boxes.current[i - 1]?.focus(); if (e.key === "ArrowRight" && i < length - 1) boxes.current[i + 1]?.focus(); }} />
+      ))}
+    </div>
+  );
+}
+
 type Stage = "signin" | "username" | "account" | "key" | "done";
 const ORDER: Stage[] = ["signin", "username", "account", "key"];
 const LABEL: Record<string, string> = { signin: "Sign in", username: "Choose a username", account: "Create your wallet", key: "Add the game key" };
@@ -26,6 +55,7 @@ export function GoogleSignIn({ action, near }: { action: "start" | "credits" | "
       setStage("key");
       const { accountId } = await googleAction<{ accountId: string }>({ credential: token.current, action: "start", sessionPub: key.publicKey.toString(), ...fields });
       saveSession({ accountId, secretKey: key.secretKey, kind: "google" });
+      rememberWallet(accountId);
       setStage("done");
       router.push("/play");
     } catch (e) { setFailed(String((e as Error).message)); setStage(fields.username ? "username" : "signin"); } finally { setBusy(false); }
@@ -35,9 +65,9 @@ export function GoogleSignIn({ action, near }: { action: "start" | "credits" | "
     e.preventDefault(); setBusy(true); setFailed(null);
     try { setChallenge((await emailStep<{ challenge: string }>({ action: "send", email })).challenge); } catch (err) { setFailed(String((err as Error).message)); } finally { setBusy(false); }
   }
-  async function checkCode(e: FormEvent) {
-    e.preventDefault(); setBusy(true); setFailed(null);
-    try { const { credential } = await emailStep<{ credential: string }>({ action: "verify", email, code, challenge }); await signedIn(credential); } catch (err) { setFailed(String((err as Error).message)); setBusy(false); }
+  async function checkCode(entered: string) {
+    setBusy(true); setFailed(null);
+    try { const { credential } = await emailStep<{ credential: string }>({ action: "verify", email, code: entered, challenge }); await signedIn(credential); } catch (err) { setFailed(String((err as Error).message)); setCode(""); setBusy(false); }
   }
 
   async function signedIn(credential: string) {
@@ -50,7 +80,7 @@ export function GoogleSignIn({ action, near }: { action: "start" | "credits" | "
         await googleAction({ credential, action, accountId, exportPub: key.publicKey.toString() });
         setSeed({ phrase, secret: key.secretKey, id: accountId ?? "" }); return;
       }
-      const found = await googleAction<{ accountId: string | null; parent: string }>({ credential, action: "lookup" });
+      const found = await googleAction<{ accountId: string | null; parent: string }>({ credential, action: "lookup", accountId: rememberedWallet() });
       setParent(found.parent);
       if (found.accountId) await start({ accountId: found.accountId }); else setStage("username");
     } catch (e) { setFailed(String((e as Error).message)); } finally { setBusy(false); }
@@ -69,9 +99,10 @@ export function GoogleSignIn({ action, near }: { action: "start" | "credits" | "
       {emailOn() && (!challenge ? <form className="emailform" onSubmit={sendCode}>
         <label htmlFor="signin-email">Email address</label>
         <div className="row"><input id="signin-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /><button className="btn" disabled={busy}>{busy ? "Sending" : "Continue with email"}</button></div>
-      </form> : <form className="emailform" onSubmit={checkCode}>
-        <label htmlFor="signin-code">Enter the 8-digit code we sent to {email}</label>
-        <div className="row"><input id="signin-code" inputMode="numeric" autoComplete="one-time-code" maxLength={8} required autoFocus value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} /><button className="btn action" disabled={busy || code.length !== 8}>{busy ? "Checking" : "Verify"}</button></div>
+      </form> : <form className="emailform" onSubmit={(e) => { e.preventDefault(); checkCode(code); }}>
+        <p className="pinlabel">Enter the 8-digit code we sent to <b>{email}</b></p>
+        <PinField length={8} value={code} onChange={setCode} onDone={checkCode} label="8-digit code" disabled={busy} />
+        <button className="btn action" disabled={busy || code.length !== 8}>{busy ? "Checking" : "Verify"}</button>
         <button type="button" className="linkish" onClick={() => { setChallenge(""); setCode(""); setFailed(null); }}>Use a different email</button>
       </form>)}
     </div>

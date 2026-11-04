@@ -184,6 +184,9 @@ canvas:focus { outline: none; }
 @media (max-width: 460px) { .emailform .row { flex-wrap: wrap; } .emailform input { flex-basis: 100%; } }
 .linkish { justify-self: start; background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; font-size: 14px; }
 
+.pinfield { display: flex; gap: 6px; } .pinfield input { flex: 1 1 0; width: 0; min-width: 0; height: 48px; padding: 0; text-align: center; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; caret-color: var(--accent); } .pinfield input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.pinlabel { margin: 0; font-size: 14px; color: var(--muted); } .pinlabel b { color: var(--text); overflow-wrap: anywhere; }
+
 /* Phone: full-screen controls */
 .touch, .turn, .phone-only { display: none; }
 @media (pointer: coarse) {
