@@ -1,0 +1,2 @@
+// The only contract methods a game key can call. They can't attach NEAR, so a game key can't move money.
+export const SESSION_METHODS = ["start_game", "gather", "sell", "buy", "repair", "refuel", "burn_fuel", "build_section", "take_damage", "merchant_invest", "merchant_collect", "buy_vehicle", "select_vehicle", "claim_lot", "build_stall", "stall_sell", "stall_buy", "stall_stock", "stall_unstock", "stall_fund", "stall_collect", "stall_spread", "stall_list", "stall_buy_listed", "stall_sell_to_city"];

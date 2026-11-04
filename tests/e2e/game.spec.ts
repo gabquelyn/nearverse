@@ -333,3 +333,29 @@ test("a broke merchant closes, and investing reopens it and earns a share", asyn
   await panel.getByRole("button", { name: /Collect/ }).click();
   await expect(panel).toContainText("Earned: 0.00");
 });
+
+test("a merchant bankrupted in the fast-forward closes, then investors reopen it", async ({ page }) => {
+  await page.goto("/judge");
+  await page.getByRole("button", { name: "Run a week" }).click();
+  await page.getByRole("button", { name: "Bankrupt the Flipper" }).click();
+  await expect(page.getByTestId("shop-news")).toContainText("the Flipper went broke and closed", { timeout: 15_000 });
+  await expect(page.getByTestId("shop-news")).toContainText("investors reopened the Flipper", { timeout: 40_000 });
+});
+
+test("sales show up on the performance chart", async ({ page }) => {
+  await page.goto("/profile");
+  await expect(page.getByTestId("sales-empty")).toBeVisible();
+  await page.goto("/judge");
+  await page.getByRole("button", { name: /^Start game$|^Game started$/ }).first().waitFor();
+  await page.getByRole("button", { name: /Timber stand/ }).first().click();
+  await page.getByRole("button", { name: "Sell one Wood", exact: true }).click();
+  await page.goto("/profile");
+  await expect(page.getByTestId("sales-chart")).toContainText("By material");
+  await expect(page.getByTestId("sales-chart")).toContainText("Wood");
+});
+
+test("the status page reports what needs attention", async ({ page }) => {
+  await page.goto("/status");
+  await expect(page.getByTestId("status")).toContainText("Ghost traders");
+  await expect(page.getByTestId("status")).toContainText("Not set");
+});

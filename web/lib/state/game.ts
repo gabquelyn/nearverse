@@ -1,6 +1,7 @@
 "use client";
 import { create } from "zustand";
 import { rules as c, activeEvent, investInMerchant, collectFromMerchant, newMarket, newPlayer, advanceTo, startGame, gather, sell, buy, repair, refuel, burnFuel, addCredits, claimLot, buildSection, takeDamage, buyVehicle, selectVehicle, buildStall, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity, stallBidAt, stallAskAt, GameError, quoteSell, quoteBuy, ask, netWorth, tickOnce, coins, type Market, type Player } from "@nearverse/economy";
+import { addSale, dropSale } from "../salesLog";
 import * as near from "../near/client";
 
 export const MESSAGES: Record<string, string> = {
@@ -151,6 +152,7 @@ export const useGame = create<State>((set, get) => ({
     if (get().ready) return;
     if (near.chainEnabled()) {
       const session = near.loadSession();
+      if (near.tookOldKey()) { location.href = "/signin"; return; }
       set({ mode: "chain", session });
       await get().poll();
       let prev: Market | null = null;
@@ -205,7 +207,12 @@ export const useGame = create<State>((set, get) => ({
       if (!existing?.started) await near.callGame(session, "start_game", {});
       await get().poll();
       return true;
-    } catch (e) { get().say(String((e as Error).message ?? e), true); return false; }
+    } catch (e) {
+      console.error("Couldn't start the game:", e);
+      if (near.errorCode(e) === "OLD_KEY") { near.saveSession(null); location.href = "/signin"; return false; }
+      get().say(`Couldn't start: ${near.errorDetail(e)}`, true);
+      return false;
+    }
   },
 
   useGuest: async () => { const session = await near.createGuest(); set({ session }); await get().startDriving(); },
@@ -267,6 +274,11 @@ export const useGame = create<State>((set, get) => ({
     const entry: LogEntry = { id: ++logId, text };
     set(text ? { market: mk, player: p, log: [entry, ...s.log].slice(0, 30) } : { market: mk, player: p });
     if (a.t !== "burn_fuel") lastOwnMove = now;
+    const saleId = ++logId;
+    if (a.t === "sell") addSale(who, { id: saleId, t: now, cents: result, item: c.items[a.item].name, buyer: c.merchants[a.merchant].name, kind: "sale" });
+    if (a.t === "stall_sell") addSale(who, { id: saleId, t: now, cents: result, item: c.items[a.item].name, buyer: c.lots[a.lot].name, kind: "sale" });
+    if (a.t === "stall_collect" && result > 0) addSale(who, { id: saleId, t: now, cents: result, item: "stall till", buyer: c.lots[a.lot].name, kind: "stall" });
+    if (a.t === "merchant_collect") addSale(who, { id: saleId, t: now, cents: result, item: "investment", buyer: c.merchants[a.merchant].name, kind: "investment" });
     if (s.mode === "practice") {
       if (a.t === "sell" || a.t === "buy") set({ activity: [{ id: ++activityId, text: a.t === "sell" ? `${a.qty} ${c.items[a.item].name.toLowerCase()} sold to the ${c.merchants[a.merchant].name}` : `${a.qty} ${c.items[a.item].name.toLowerCase()} bought from the ${c.merchants[a.merchant].name}` }, ...get().activity].slice(0, 20) });
       saveSoon(); return true;
@@ -282,8 +294,10 @@ export const useGame = create<State>((set, get) => ({
         set({ log: get().log.map((l) => (l.id === entry.id ? { ...l, hash } : l)) });
       } catch (err) {
         set({ log: get().log.map((l) => (l.id === entry.id ? { ...l, failed: true } : l)) });
+        dropSale(who, saleId);
         const code = near.errorCode(err);
-        if (code === "KEY_ALLOWANCE" && session.kind === "login") set({ keyExpired: true });
+        if (code === "OLD_KEY") { near.saveSession(null); location.href = "/signin"; return; }
+        if (code === "KEY_ALLOWANCE" && session.kind !== "guest") set({ keyExpired: true });
         else if (a.t !== "burn_fuel") get().say(MESSAGES[code] ?? MESSAGES.NETWORK, true, code === "NETWORK" ? a : undefined);
       } finally {
         clearTimeout(slow); set({ slow: false });
@@ -313,6 +327,7 @@ export const useGame = create<State>((set, get) => ({
       try { addCredits(p, credits); } catch (e) { get().say(MESSAGES[(e as GameError).code] ?? "Start the game first.", true); return; }
       set({ player: p }); saveSoon(); get().say(`Added ${credits} practice credits. No real NEAR was spent.`); return;
     }
+    if (s.session?.kind === "google") { location.href = `/signin?google=credits&near=${amount}`; return; }
     if (s.session?.kind === "login") {
       // A signed-in player's game key can't attach NEAR, so each purchase takes one approval.
       try { const auth = await import("../near/login"); await auth.requestBuyCredits(amount); } catch (e) { get().say(String((e as Error).message ?? e), true); }

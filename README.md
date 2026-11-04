@@ -26,7 +26,10 @@ A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` trac
 | Web game in practice mode, judge view, fast-forward | Tested in a browser against the web container |
 | Deployed contract on real testnet | The previous version was run by the author. This version, with investing, closures and coin upkeep, is **not yet deployed** |
 | Guest play, ghost traders on testnet | Run by the author on the previous version |
-| NEAR Auth sign-in adding a game key (`/signin`) | **Works on `http://localhost:3000`** against testnet. **Rejected on the hosted demo** (see Known limits). Guest play is the fallback |
+| NEAR Auth sign-in adding a game key (`/signin`) | **Works on `http://localhost:3000`** against testnet. Not offered on the hosted demo (see Known limits) |
+| Google sign-in, usernames | Run by the author on the hosted site |
+| Email codes, buying credits and export through this login | Tested with simulated email and NEAR responses. Not yet run for real |
+| AI ghost traders | Fallbacks tested against a stub server. Not yet run against NEAR AI |
 
 | Other cars over Ably | The token route and drawing are tested with injected positions. Not yet run against a live Ably account |
 
@@ -60,16 +63,16 @@ The price also moves with each unit in a sale, so selling 24 at once earns less 
 
 ## Two minutes on the hosted demo
 
-Nothing to install. Google or email sign-in isn't available here (see Known limits), so this uses a guest wallet. Each step names the requirement it shows.
+Nothing to install. Each step names the requirement it shows.
 
 1. Open https://nearverse-murex.vercel.app/judge. See the **Live market** panel with merchant cash, recent trades and top players (NPCs with wallets).
-2. Press **Run a week**, then **Flood the market with iron**. See the iron line drop as a week plays out in a minute (fast-forward). This runs in the browser and sends no transactions.
+2. Press **Run a week**, then **Flood the market with iron**. See the iron line drop as a week plays out in a minute (fast-forward). Press **Bankrupt the Flipper**, and under *Shops* see it close, then see investors reopen it. This runs in the browser and sends no transactions.
 3. Hover or tap a price under *Play by buttons*. See the reasoning, such as stock against target and the merchant's margin, built from `config/merchants.rules.yaml` (rules in one file, reasoning in a tooltip).
 4. Press **Start game**, then a **Timber stand** button under *Play by buttons*. See it under Activity with a transaction link, with no popup or gas prompt (no prompts in the game loop).
 5. Open that link, or call `mt_balance_of` on `nearverse-game-v2.testnet` for your account with `token_id` `wood`. See the wood as a NEP-245 balance (one contract for every item).
-6. Open https://nearverse-murex.vercel.app and press **Play as a guest**. Drive with WASD or arrows, or the stick and Gas on a phone. Other players and labeled ghost traders appear as cars when the server has an Ably key and traders are running.
+6. Open https://nearverse-murex.vercel.app/signin and sign in with Google or an email code. Choose a username, and see a wallet created with no seed phrase (social login). Or press **Play as a guest**. Drive with WASD or arrows, or the stick and Gas on a phone. Other players and labeled ghost traders appear as cars when the server has an Ably key and traders are running.
 
-To see social or email sign-in, run the app locally on port 3000 with a funded treasury: see [DEPLOY.md](DEPLOY.md).
+NEAR Auth sign-in, with Google, Apple, email or a passkey, works when you run the app on `http://localhost:3000`: see [DEPLOY.md](DEPLOY.md).
 
 ## Run it
 
@@ -84,6 +87,7 @@ Docker is the only requirement: Docker Engine with Compose 2.24 or newer. Rust, 
 | `docker compose run --build --rm deploy` | Builds and deploys the contract to testnet |
 | `docker compose run --build --rm smoke` | Runs the game loop against the deployed contract |
 | `docker compose --profile ops up -d --build ghosts` | Keeps labeled simulated traders running on testnet. `docker compose --profile ops ps ghosts` shows whether they are healthy |
+| Open `/status` on the running site | Shows account balances and whether traders are trading |
 | `docker compose --profile dev up --build dev` | Runs the web app with live reload from your source files |
 | `docker compose --profile ops down` | Stops everything |
 
@@ -116,7 +120,9 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 
 ## Known limits
 
-- **Google or email sign-in doesn't work on the hosted demo yet.** Testnet uses NEAR Auth's shared login, which only returns to addresses on its own allowed list. That list includes `http://localhost:3000` but not our Vercel address, and only the NEAR Auth team can change it, so the hosted site shows an invalid callback URL error. Judges can play as a guest on the hosted demo, or run the app locally on port 3000 to try sign-in ([DEPLOY.md](DEPLOY.md)).
+- **Google and email sign-in hold keys on the server.** The hosted demo uses its own login, because NEAR Auth's shared testnet login only accepts addresses on its own list, which includes `http://localhost:3000` and not our site. The server works out each player's key from one secret and their verified email, stores none of them, and only signs adding a game key, buying credits and exporting, each after Google or an email code confirms the player. The same address reaches the same wallet either way. But anyone with that secret could control every one of these wallets, so this suits testnet only. Real money would need NEAR Auth's production credentials on mainnet. Apple and passkeys need NEAR Auth.
+- **Merchants follow rules, and traders can use AI.** Merchants set prices from the rules file, enforced by the contract. Ghost traders are labeled simulated players with real wallets and real trades. With `NEAR_AI_API_KEY` set, a NEAR AI model picks their moves and they show why; without it, or if the model fails, they use rules. No model can change a price.
+- **Griefing that remains:** each merchant takes at most 10 investors, so 10 small investors could fill a merchant's slots, and existing investors would then be the only ones able to reopen it. Anyone can send you items, which could fill your truck bed until you sell them. The contract pays storage for every player, so mass sign-ups would drain the game account.
 - **The contract can't verify driving.** A script could call `gather` without driving. The limits are on-chain: node stock, a per-player cooldown, fuel, wear and cargo space. `take_damage` and `burn_fuel` can only hurt the player who reports them.
 - **Credits and coins can't be withdrawn yet.** NEAR paid for credits stays with the game, which removes the reason to farm with scripts.
 - **The contract pays storage** for player records, which is fine for a testnet game but would need a fee on mainnet.
@@ -125,6 +131,7 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 - `leaderboard` scans up to 200 players. Approvals in NEP-245 aren't implemented.
 - Phones get a right-hand thumb stick that steers from the vehicle's point of view, plus Gas, in landscape. Android switches by itself after a tap. iPhones ask you to turn the phone, because Safari doesn't let pages lock the screen.
 - The profile page has a faucet of 0.2 test NEAR per account every 10 minutes, paid by the treasury. It pauses when the treasury falls below 3 NEAR, and its limits live in server memory, so a restart resets them.
+- The sales chart is built from what happens in your browser, so another device starts fresh. The contract stores balances, not a sales history.
 - Other cars are visual only. Their positions travel over Ably and never touch the contract, so a faked position can only draw a car in the wrong place, and you drive through them.
 - A signed-in player approves each credit purchase, because the game key can't spend NEAR. A game key's gas allowance is fixed, so when it runs out the game asks for one approval to add a new key.
 - Rich-spot bonuses create coins, limited only by each spot's stock and the gather cooldown. A script that skips the drive could collect them too.
@@ -139,6 +146,6 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 
 ## Third-party code and AI disclosure
 
-Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
+Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
 
 License: MIT.

@@ -6,6 +6,7 @@ import { useGame, worth } from "@/lib/state/game";
 import { Nav } from "@/components/ui/Nav";
 import { Locations, MyStalls, Shop } from "@/components/ui/Shop";
 import { WalletExport } from "@/components/ui/WalletExport";
+import { SalesChart } from "@/components/ui/SalesChart";
 import { dripNear, fetchBalance, shortAccount } from "@/lib/near/client";
 
 const dripKey = (id: string) => `nearverse.nextDrip.${id}`;
@@ -84,6 +85,8 @@ export default function Profile() {
           <p className="muted">Coins are what you earn from trading and from your stall. Withdrawing coins as NEAR is planned for later.</p>
         </section>
       </div>
+      <h2>Sales performance</h2>
+      <SalesChart />
       <h2 id="shop">Vehicle shop</h2>
       <Shop />
       <h2>Your stalls</h2>

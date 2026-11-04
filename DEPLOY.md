@@ -155,6 +155,49 @@ docker compose --profile ops logs -f ghosts
 
 Ably's free package allowed 6 million messages a month when this was written. A moving player sends about two a second, and each delivery to another player counts too, so leave it off when you aren't testing or judging.
 
+## 9. Sign-in with Google on your hosted site
+
+NEAR Auth's shared testnet login won't accept your domain, so the hosted site uses your own Google login. Without these settings, sign-in stays on NEAR Auth.
+
+1. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials), create a project, set up the OAuth consent screen, then create an **OAuth client ID** of type **Web application**.
+2. Under **Authorized JavaScript origins**, add `https://nearverse-murex.vercel.app` and `http://localhost:3000`. Copy the client ID.
+3. Create the parent account that usernames sit under, and fund it from [near-faucet.io](https://near-faucet.io/). Each new player costs it 0.25 NEAR plus a little storage:
+   ```bash
+   near create-account nearverse.testnet --useFaucet
+   near account export-account nearverse.testnet
+   ```
+4. Make a long random secret with `openssl rand -hex 32`. **Back it up and never change it.** Changing it changes every player's key, and they lose access to their wallets.
+5. Add these to Vercel and to `.env`, then redeploy:
+   ```bash
+   GOOGLE_CLIENT_ID=
+   GOOGLE_LOGIN_SECRET=
+   GOOGLE_PARENT_ACCOUNT=nearverse.testnet
+   GOOGLE_PARENT_PRIVATE_KEY=
+   ```
+
+Open `/signin`, press the Google button and choose a username. Then open `/status` and check everything says OK.
+
+### Email sign-in
+
+Create a free [Brevo](https://www.brevo.com) account, verify your sender address under **Senders**, and create an API key under **SMTP & API**. Add these to Vercel and `.env`, then redeploy:
+
+```bash
+BREVO_API_KEY=
+EMAIL_FROM=the-address-you-verified@example.com
+```
+
+Players get an 8-digit code that works for 10 minutes. Without these settings, the email option doesn't appear. Codes may land in spam until your sending address builds a reputation, so test with a couple of providers.
+
+## 10. Optional: AI ghost traders
+
+Claim credit at [NEAR Builders](https://nearbuilders.org/join), generate a key at [NEAR AI Cloud](https://cloud.near.ai), then add it to `.env` on the machine running the traders and restart them:
+
+```bash
+NEAR_AI_API_KEY=
+```
+
+`NEAR_AI_MODEL` picks another model, and `NEAR_AI_DAILY_CALLS` sets the daily limit, 6000 by default. If the logs say the model answered with an error, check the model name against your dashboard. Traders use their rules whenever the model can't answer.
+
 ## Moving to a new contract
 
 The rules are saved in the contract when it's created, so changing them means a new account. Everything on the old contract stays behind, and players sign in again for a new game key. To move:

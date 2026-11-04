@@ -25,7 +25,7 @@ export interface HourSample {
 }
 
 export interface Sim {
-  mk: Market; c: Config; rand: () => number; traders: ReturnType<typeof newPlayer>[]; now: number; history: HourSample[]; playerSold: number[]
+  mk: Market; c: Config; rand: () => number; traders: ReturnType<typeof newPlayer>[]; now: number; history: HourSample[]; playerSold: number[]; closedFor: number[]
 }
 
 export const cloneMarket = (m: Market): Market => JSON.parse(JSON.stringify(m));
@@ -33,7 +33,7 @@ export const cloneMarket = (m: Market): Market => JSON.parse(JSON.stringify(m));
 export function createSim(c: Config, from: Market, traders = 14, seed = 7): Sim {
   const mk = cloneMarket(from);
   const ts = Array.from({ length: traders }, () => { const p = newPlayer(c); startGame(c, p); p.fuel = 1e9; p.credits = 1e9; return p; });
-  return { mk, c, rand: rng(seed), traders: ts, now: 0, history: [], playerSold: c.items.map(() => 0) };
+  return { mk, c, rand: rng(seed), traders: ts, now: 0, history: [], playerSold: c.items.map(() => 0), closedFor: c.merchants.map(() => 0) };
 }
 
 const tryDo = (f: () => unknown) => { try { f(); return true; } catch (e) { if (e instanceof GameError) return false; throw e; } };
@@ -68,6 +68,11 @@ function act(sim: Sim, t: ReturnType<typeof newPlayer>): "trade" | null {
   return null;
 }
 
+const REOPEN_AFTER_HOURS = 8;
+
+/** Judge button: drains a merchant's cash, so its shop closes and investors have to save it. */
+export function bankruptMerchant(sim: Sim, merchant: number) { sim.mk.merchants[merchant].cash = 0; }
+
 /** Advances one market hour. */
 export function stepHour(sim: Sim): HourSample {
   const { c, mk } = sim;
@@ -75,7 +80,9 @@ export function stepHour(sim: Sim): HourSample {
   // The richest trader reopens any closed shop, for the share of its sales.
   const reopened: number[] = [];
   c.merchants.forEach((m, i) => {
-    if (!merchantClosed(c, mk, i)) return;
+    if (!merchantClosed(c, mk, i)) { sim.closedFor[i] = 0; return; }
+    // Traders wait a few hours first, so you can see the shop sit closed.
+    if (++sim.closedFor[i] <= REOPEN_AFTER_HOURS) return;
     const who = sim.traders.reduce((best, t) => (t.coins > best.coins ? t : best), sim.traders[0]);
     const cents = Math.floor((m.start_cash * c.closed_below_bps) / 10000) * 2;
     if (who.coins >= cents && tryDo(() => investInMerchant(c, mk, who, `sim-${sim.traders.indexOf(who)}`, i, cents))) reopened.push(i);

@@ -62,7 +62,7 @@ function DayNight() {
 }
 
 function FollowCamera() {
-  const { camera, size } = useThree();
+  const { camera, size, scene } = useThree();
   const look = useRef(new THREE.Vector3()), lead = useRef(0), yaw = useRef(0);
   useFrame((_, dt) => {
     const portrait = size.width < size.height;
@@ -82,6 +82,9 @@ function FollowCamera() {
     look.current.x = THREE.MathUtils.damp(look.current.x, target.x, 5, dt);
     look.current.z = THREE.MathUtils.damp(look.current.z, target.z, 5, dt);
     camera.lookAt(look.current);
+    // The haze keeps its distance from the vehicle, so zooming out doesn't push the surroundings into it.
+    const fog = scene.fog as THREE.Fog | null;
+    if (fog) { fog.near = 90 + (view.zoom - 1) * 160; fog.far = 420 + (view.zoom - 1) * 360; }
   });
   return null;
 }

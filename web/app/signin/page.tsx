@@ -8,6 +8,8 @@ import { StepRail, type RailStep } from "@/components/ui/StepRail";
 import { Secret } from "@/components/ui/WalletExport";
 import { CONTRACT, loadSession, saveSession, shortAccount, type Session } from "@/lib/near/client";
 import * as auth from "@/lib/near/login";
+import { googleEnabled } from "@/lib/near/google";
+import { GoogleSignIn } from "@/components/ui/GoogleSignIn";
 
 const FLOWS: Record<auth.PendingKind, { title: string; steps: [auth.StepId, string][] }> = {
   key: { title: "Setting up your wallet", steps: [["signin", "Sign in"], ["wallet", "Find your NEAR wallet"], ["funds", "Add free test funds"], ["approve", "Approve the game key"], ["mpc", "Sign with the NEAR network"], ["finish", "Add the game key"]] },
@@ -28,8 +30,11 @@ export default function SignIn() {
   const [details, setDetails] = useState<Partial<Record<auth.StepId, string>>>({});
   const [exported, setExported] = useState<auth.ExportedKey | null>(null);
   const [existing, setExisting] = useState<Session | null>(null);
+  // Google where it's set up. NEAR Auth's shared login only accepts localhost, so elsewhere it would just show an error.
+  const [google, setGoogle] = useState<{ action: "start" | "credits" | "export"; near: number } | null>(null), [nearAuth, setNearAuth] = useState(true);
   const router = useRouter();
   const started = useRef(false);
+  const [nearAuthChosen, setNearAuthChosen] = useState(false);
   const flow = FLOWS[kind];
   const running = at >= 0 && !failed && !finished;
 
@@ -51,6 +56,12 @@ export default function SignIn() {
       if (pending) auth.clearPending();
       setFailed(reply.get("error_description") || reply.get("error"));
       return;
+    }
+    if (googleEnabled()) {
+      setNearAuth(location.hostname === "localhost");
+      const wanted = reply.get("google");
+      if (wanted === "credits" || wanted === "export") { setGoogle({ action: wanted, near: Number(reply.get("near")) || 0 }); return; }
+      if (!reply.has("code") && !loadSession()) setGoogle({ action: "start", near: 0 });
     }
     if (!reply.has("code")) { setExisting(loadSession()); return; }
     if (!pending) { signIn(); return; }
@@ -87,7 +98,11 @@ export default function SignIn() {
     <div className="page">
       <header><h1>Sign in</h1><Nav /></header>
       <div className="signin">
-        {exported ? <section className="card">
+        {google && !exported && at < 0 && !nearAuthChosen ? <>
+          <GoogleSignIn action={google.action} near={google.near} />
+          {google.action === "start" && nearAuth && <button className="btn ghost" style={{ marginTop: 12 }} onClick={() => setNearAuthChosen(true)}>Use NEAR Auth instead</button>}
+          {google.action === "start" && <p><Link href="/play">Play as a guest</Link></p>}
+        </> : exported ? <section className="card">
           <h2>Save your seed phrase</h2>
           <p>This shows once. Write it down and keep it private, because anyone who has it controls this wallet.</p>
           <Secret label="Seed phrase" value={exported.seedPhrase} />
@@ -107,7 +122,7 @@ export default function SignIn() {
           <p>This browser has a key for <code title={existing.accountId}>{shortAccount(existing.accountId)}</code>.</p>
           <div className="row">
             <Link className="btn action" href="/play">Go to the game</Link>
-            <button className="btn ghost" onClick={() => { saveSession(null); setExisting(null); }}>Forget this key</button>
+            <button className="btn ghost" onClick={() => { saveSession(null); setExisting(null); if (googleEnabled()) setGoogle({ action: "start", near: 0 }); }}>Forget this key</button>
           </div>
         </section> : <section className="card">
           <h2>Start with no seed phrase</h2>

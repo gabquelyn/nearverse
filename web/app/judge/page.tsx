@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { rules as c, createSim, stepHour, floodMarket, type Sim, type HourSample, coins, cargoUsed } from "@nearverse/economy";
+import { rules as c, createSim, stepHour, floodMarket, bankruptMerchant, type Sim, type HourSample, coins, cargoUsed } from "@nearverse/economy";
 import { useGame, worth } from "@/lib/state/game";
 import { MerchantTable } from "@/components/ui/Prices";
 import { WeekChart, CashChart, HOURS } from "@/components/ui/WeekChart";
@@ -31,6 +31,13 @@ function FastForward() {
   };
   const skip = () => { const s = sim.current && running ? sim.current : fresh(); stop(); while (s.history.length < HOURS) stepHour(s); setHistory([...s.history]); };
   const flood = () => { if (!sim.current || !running) return; floodMarket(sim.current, iron, 220); setFlooded((f) => [...f, sim.current!.history.length]); };
+  const bankrupt = () => { if (!sim.current || !running) return; bankruptMerchant(sim.current, 1); };
+  const shopNews: string[] = [];
+  history.forEach((h, i) => {
+    const before = history[i - 1]?.closed ?? [];
+    h.closed.filter((m) => !before.includes(m)).forEach((m) => shopNews.push(`Hour ${i + 1}: the ${c.merchants[m].name} went broke and closed.`));
+    h.reopened.forEach((m) => shopNews.push(`Hour ${i + 1}: investors reopened the ${c.merchants[m].name}.`));
+  });
   const adapted: string[] = [];
   if (sim.current && history.length) sim.current.mk.merchants.forEach((m, j) => m.target.forEach((t, i) => {
     const was = c.merchants[j].targets[i];
@@ -44,6 +51,7 @@ function FastForward() {
       <div className="row" style={{ marginBottom: 10 }}>
         <button className="btn big" onClick={run} disabled={running}>{running ? `Hour ${history.length} of ${HOURS}` : "Run a week"}</button>
         <button className="btn" onClick={flood} disabled={!running}>Flood the market with iron</button>
+        <button className="btn" onClick={bankrupt} disabled={!running}>Bankrupt the Flipper</button>
         <button className="btn ghost" onClick={skip}>Skip to the end</button>
       </div>
       {history.length > 0 || running ? (
@@ -54,6 +62,8 @@ function FastForward() {
             <CashChart history={history} />
             <p className="mlabel">This week so far</p>
             <p style={{ margin: 0 }} data-testid="sim-summary">{trades} trades{reopened ? `, ${reopened} broke shops reopened by investors` : ""}{flooded.length ? `, iron flooded in hour ${flooded.join(", ")}` : ""}.</p>
+            <p className="mlabel">Shops</p>
+            {shopNews.length ? <ul style={{ margin: 0, paddingLeft: 18 }} data-testid="shop-news">{shopNews.slice(-5).map((a) => <li key={a}>{a}</li>)}</ul> : <p style={{ margin: 0 }} data-testid="shop-news">All open.</p>}
             <p className="mlabel">What merchants learned</p>
             {adapted.length ? <ul style={{ margin: 0, paddingLeft: 18 }}>{adapted.slice(0, 5).map((a) => <li key={a}>{a}</li>)}</ul> : <p style={{ margin: 0 }}>Nothing yet. They review their stock every {c.adapt_every_ticks} hours.</p>}
           </div>

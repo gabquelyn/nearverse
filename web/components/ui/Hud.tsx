@@ -100,7 +100,7 @@ const Clock = memo(function Clock() {
 /** Says plainly when moves are slow, the connection dropped, or the game key needs renewing. */
 const Status = memo(function Status() {
   const slow = useGame((s) => s.slow), offline = useGame((s) => s.offline), expired = useGame((s) => s.keyExpired), session = useGame((s) => s.session);
-  const renew = async () => { const auth = await import("@/lib/near/login"); await auth.requestRenewKey(session!.accountId); };
+  const renew = async () => { if (session!.kind === "google") { location.href = "/signin"; return; } const auth = await import("@/lib/near/login"); await auth.requestRenewKey(session!.accountId); };
   if (expired) return <div className="statusbar warn" role="alert">Your game key has run out.<button className="btn small action" onClick={() => renew().catch(() => useGame.getState().say("Couldn't start the approval. Try again.", true))}>Approve a new one</button></div>;
   if (offline) return <div className="statusbar warn" role="alert">Connection lost. Reconnecting.</div>;
   return slow ? <div className="statusbar" role="status">Still confirming your last move.</div> : null;

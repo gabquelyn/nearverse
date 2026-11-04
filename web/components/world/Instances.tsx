@@ -24,11 +24,13 @@ export function Instances({ geometry, material, items, radius = 95, castShadow =
   }, [items]);
   // Enough room for what can be nearby at once, not the whole world.
   const capacity = useMemo(() => { let most = 0; for (const l of cells.values()) most = Math.max(most, l.length); return Math.max(1, Math.min(items.length, most * 12)); }, [cells, items.length]);
-  const last = useRef({ x: 1e9, z: 1e9 });
+  const last = useRef({ x: 1e9, z: 1e9 }), wasWarming = useRef(true);
   useFrame(({ clock }) => {
     const mesh = ref.current;
+    // A placeholder drawn only to compile the shader must not linger after loading, so refresh once when that ends.
+    if (wasWarming.current && !perf.warming) { wasWarming.current = false; last.current = { x: 1e9, z: 1e9 }; }
     if (Math.hypot(last.current.x - truck.pos.x, last.current.z - truck.pos.z) < 8) return;
-    if (lastRefreshAt === clock.elapsedTime && !perf.warming) return;
+    if (lastRefreshAt === clock.elapsedTime && !perf.warming && last.current.x !== 1e9) return;
     lastRefreshAt = clock.elapsedTime;
     last.current = { x: truck.pos.x, z: truck.pos.z };
     const cx = Math.floor(truck.pos.x / CELL), cz = Math.floor(truck.pos.z / CELL), reach = Math.ceil(radius / CELL);

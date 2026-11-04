@@ -8,16 +8,31 @@ export const CONTRACT = publicConfig().contract;
 export const NETWORK = publicConfig().network as "testnet";
 export const RPC_URL = publicConfig().rpcUrl;
 export const chainEnabled = () => Boolean(CONTRACT);
-export const SESSION_METHODS = ["start_game", "gather", "sell", "buy", "repair", "refuel", "burn_fuel", "build_section", "take_damage", "merchant_invest", "merchant_collect", "buy_vehicle", "select_vehicle", "claim_lot", "build_stall", "stall_sell", "stall_buy", "stall_stock", "stall_unstock", "stall_fund", "stall_collect", "stall_spread", "stall_list", "stall_buy_listed", "stall_sell_to_city"];
+export { SESSION_METHODS } from "./methods";
 const SESSION_KEY = "nearverse.session.v1";
 
-export interface Session { accountId: string; secretKey: string; kind: "guest" | "login" }
+export interface Session { accountId: string; secretKey: string; kind: "guest" | "login" | "google"; contract?: string }
 
 export function loadSession(): Session | null {
-  try { const s = localStorage.getItem(SESSION_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+  try {
+    const s: Session | null = JSON.parse(localStorage.getItem(SESSION_KEY) ?? "null");
+    // A signed-in player's game key only works with the contract it was made for, so a new contract needs a new key.
+    if (s && s.kind !== "guest" && s.contract !== CONTRACT) { localStorage.removeItem(SESSION_KEY); oldKeyDropped = true; return null; }
+    return s;
+  } catch { return null; }
+}
+let oldKeyDropped = false;
+/** True once, after a game key for an older contract was thrown away. */
+export const tookOldKey = () => { const was = oldKeyDropped; oldKeyDropped = false; return was; };
+/** Plain words for an error near-kit reports only as "Server error". */
+export function errorDetail(e: unknown) {
+  const err = e as { message?: string; details?: unknown; data?: unknown } | null;
+  let extra = "";
+  try { extra = JSON.stringify(err?.details ?? err?.data ?? "").replace(/[{}"\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, 160); } catch { /* the message alone will do */ }
+  return [String(err?.message ?? e), extra].filter(Boolean).join(": ");
 }
 export function saveSession(s: Session | null) {
-  try { if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s)); else localStorage.removeItem(SESSION_KEY); } catch { /* private window */ }
+  try { if (s) localStorage.setItem(SESSION_KEY, JSON.stringify({ ...s, contract: CONTRACT })); else localStorage.removeItem(SESSION_KEY); } catch { /* private window */ }
 }
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -47,6 +62,7 @@ export function errorCode(e: unknown) {
   const err = e as { message?: string; details?: unknown; data?: unknown } | null;
   let text = String(err?.message ?? e);
   try { text += JSON.stringify(err?.details ?? err?.data ?? ""); } catch { /* the message alone will do */ }
+  if (/ReceiverMismatch|MethodNameMismatch/.test(text)) return "OLD_KEY";
   if (/allowance/i.test(text)) return "KEY_ALLOWANCE"; // the game key has used up its gas allowance
   if (/NotEnoughBalance|InsufficientBalance|insufficient balance|LackBalance/i.test(text)) return "NO_BALANCE";
   return text.match(KNOWN)?.[1] ?? "NETWORK";

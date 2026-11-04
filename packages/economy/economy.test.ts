@@ -130,7 +130,9 @@ describe("broke merchants", () => {
   it("get reopened in the simulated week if traders can afford it", () => {
     const s = createSim(c, newMarket(c)); s.mk.merchants[1].cash = 1;
     s.traders.forEach((t) => { t.coins = 1e6; });
-    expect(stepHour(s).reopened).toContain(1);
+    expect(stepHour(s).closed).toContain(1);
+    let reopened = false; for (let i = 0; i < 12 && !reopened; i++) reopened = stepHour(s).reopened.includes(1);
+    expect(reopened).toBe(true); expect(s.mk.merchants[1].investors.length).toBe(1);
   });
 });
 describe("resources", () => {

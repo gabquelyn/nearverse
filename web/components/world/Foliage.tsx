@@ -59,6 +59,7 @@ export function Grass({ map, biome, count = MAX_GRASS }: { map: THREE.Texture; b
           grow *= (1.-smoothstep(.2,.5,region.b))*(1.-region.g+region.g*step(.93,fract(aRoot.x*7.3+aRoot.y*3.1))*.7)*(1.-region.r*.45);
           grow = clamp(grow*1.5, 0., 1.5);
           vec2 away = world-uTruck; float dist = length(away);
+          grow *= 1.-smoothstep(25.,36.,dist); // fades out before the patch's square edge
           float gust = sin(world.x*.22+uTime*1.3)*.5+sin(world.y*.31+uTime*1.9+world.x*.1)*.3;
           transformed *= grow;
           transformed.xz += aTip*vec2(.25,.15)*gust*grow;

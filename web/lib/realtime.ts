@@ -28,8 +28,13 @@ export function ingest(name: string, data: Record<string, unknown>, at = Date.no
     const fx = num(data.fx), fz = num(data.fz), tx = num(data.tx), tz = num(data.tz), start = num(data.at), ms = num(data.ms);
     if (fx === null || fz === null || tx === null || tz === null || start === null || ms === null) return;
     others.set(id, { id, name: label, kind: "ghost", x: fx, z: fz, yaw: Math.atan2(tx - fx, tz - fz), vehicle, speed: 0, toX: tx, toZ: tz, toYaw: 0, seen: at, trip: { fx, fz, tx, tz, at: start, ms } });
+    if (typeof data.why === "string" && data.why) onNote?.(`${label.replace(" (simulated)", "")}: ${data.why.slice(0, 90)}`);
   }
 }
+
+/** What an AI trader says about its next move. */
+let onNote: ((text: string) => void) | null = null;
+export const listenForNotes = (f: ((text: string) => void) | null) => { onNote = f; };
 
 export function forgetStale(now = Date.now()) {
   for (const [id, car] of others) if (now - car.seen > (car.kind === "ghost" ? GHOST_TIMEOUT : PLAYER_TIMEOUT)) others.delete(id);

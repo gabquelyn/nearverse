@@ -1,6 +1,7 @@
 // NEAR Auth (Google, Apple, email, passkeys) on testnet, adding a restricted session key.
 // STATUS: follows the published docs and SDK source, but has not yet run against real testnet. /signin reports each step.
-import { CONTRACT, SESSION_METHODS, implicitAccountId, loadSession, saveSession } from "./client";
+import { SESSION_METHODS } from "./methods";
+import { CONTRACT, implicitAccountId, loadSession, saveSession } from "./client";
 import { generateKey, generateSeedPhrase, parseSeedPhrase } from "near-kit";
 import { publicConfig } from "./config";
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useGame } from "@/lib/state/game";
 import { Hud } from "../ui/Hud";
-import { startRealtime } from "@/lib/realtime";
+import { listenForNotes, startRealtime } from "@/lib/realtime";
 import { truck } from "./world";
 import { TouchControls, TurnPhone } from "./TouchControls";
 import { enterLandscape } from "@/lib/landscape";
@@ -28,11 +28,13 @@ export default function Game({ landing }: { landing?: boolean }) {
   useEffect(() => { init(); }, [init]);
   useEffect(() => {
     // Connected from the first screen, so you can see others before you start. You only appear once you do.
-    return startRealtime(() => {
+    listenForNotes((text) => useGame.setState((s) => ({ activity: [{ id: Date.now() + Math.random(), text }, ...s.activity].slice(0, 20) })));
+    const stop = startRealtime(() => {
       const s = useGame.getState();
       if (!s.player.started) return null;
       return { name: s.session ? `Driver ${s.session.accountId.slice(-4)}` : "Driver", x: truck.pos.x, z: truck.pos.z, yaw: truck.yaw, speed: truck.speed, vehicle: s.player.vehicle };
     });
+    return () => { stop(); listenForNotes(null); };
   }, []);
   useEffect(() => { if (!landing && ready && !started) startDriving(); }, [landing, ready, started, startDriving]);
   const showIntro = landing && !started;

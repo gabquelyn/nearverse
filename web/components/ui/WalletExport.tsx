@@ -22,7 +22,10 @@ export function WalletExport() {
   return (
     <div className="exportbox">
       <h3>Export wallet</h3>
-      {session.kind === "guest" ? <>
+      {session.kind === "google" ? <>
+        <p>This creates a new seed phrase in your browser and adds it to your wallet as a full-access key, after we confirm it&apos;s you. Anyone who has the phrase controls this wallet.</p>
+        <a className="btn action" href="/signin?google=export">Create seed phrase</a>
+      </> : session.kind === "guest" ? <>
         <p>This shows the private key for your guest wallet. Guest wallets have a private key but no seed phrase. Anyone who has this key controls the wallet.</p>
         {shown ? <Secret label="Private key" value={session.secretKey} /> : <button className="btn action" onClick={() => setShown(true)}>Show private key</button>}
       </> : <>

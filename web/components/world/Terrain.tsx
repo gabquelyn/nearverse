@@ -25,7 +25,7 @@ export function paintGroundMap(): THREE.Texture {
   const out = cv.getContext("2d", { willReadFrequently: true })!;
   try { out.filter = "blur(1.5px)"; } catch { /* unsupported: harder edges */ }
   out.drawImage(raw, 0, 0);
-  const tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter;
+  const tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.anisotropy = 8; // keeps ground sharp at a shallow angle, far from the camera
   return tex;
 }
 
