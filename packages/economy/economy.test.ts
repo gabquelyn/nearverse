@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rules as c, newMarket, tickOnce, createSim, stepHour, floodMarket, bid, ask, explainPrice, newPlayer, startGame, sell, buy, gather, powRatio, buildSection, GameError, cloneMarket, vehiclePrice, buyVehicle, selectVehicle, buildStall, claimLot, buyFromStall, sellToStall, stockStall, collectStall, listStall, buyListedStall, sellStallToCity, fuelBurn, refuel, repair, burnFuel, addCredits } from "./index";
+import { investInMerchant, collectFromMerchant, merchantClosed, rules as c, newMarket, tickOnce, createSim, stepHour, floodMarket, bid, ask, explainPrice, newPlayer, startGame, sell, buy, gather, powRatio, buildSection, GameError, cloneMarket, vehiclePrice, buyVehicle, selectVehicle, buildStall, claimLot, buyFromStall, sellToStall, stockStall, collectStall, listStall, buyListedStall, sellStallToCity, fuelBurn, refuel, repair, burnFuel, addCredits } from "./index";
 
 const iron = c.items.findIndex((i) => i.id === "iron");
 describe("price", () => {
@@ -39,10 +39,11 @@ describe("credits", () => {
   it("pay for fuel and repairs, and no merchant sells fuel", () => {
     const { p } = fresh();
     expect(c.items.map((i) => i.id)).not.toContain("fuel");
-    p.fuel = 10; const before = p.credits; refuel(c, p, 20);
-    expect(p.fuel).toBe(30); expect(p.credits).toBe(before - 20 * c.credits_per_fuel);
-    p.durability = 60; const b2 = p.credits; repair(c, p);
-    expect(p.durability).toBe(100); expect(p.credits).toBe(b2 - 40 * c.credits_per_repair);
+    p.fuel = 10; const before = p.coins, credits = p.credits; refuel(c, p, 20);
+    expect(p.fuel).toBe(30); expect(p.coins).toBe(before - 20 * c.coins_per_fuel); expect(p.credits).toBe(credits);
+    p.durability = 60; const b2 = p.coins; repair(c, p);
+    expect(p.durability).toBe(100); expect(p.coins).toBe(b2 - 40 * c.coins_per_repair);
+    p.coins = 0; refuel(c, p, 7); expect(p.credits).toBe(credits - 2); // 1.05 coins, charged as 2 credits rounded up
     p.credits = 0; expect(code(() => refuel(c, p, 1))).toBe("NOT_ENOUGH_CREDITS");
     expect(code(() => refuel(c, p, 1000))).toBe("BAD_QTY");
   });
@@ -72,12 +73,64 @@ describe("guards", () => {
     sell(c, mk, p, 0, iron, 1, 0, 100_000);
     expect(code(() => sell(c, mk, p, 1, iron, 1, 0, 100_001))).toBe("TRAVELING");
     expect(code(() => sell(c, mk, p, 0, iron, 1, 1e9, 100_002))).toBe("PRICE_MOVED");
-    mk.merchants[0].cash = 0; expect(code(() => sell(c, mk, p, 0, iron, 1, 0, 100_003))).toBe("MERCHANT_OUT_OF_CASH");
+    mk.merchants[0].cash = Math.ceil((c.merchants[0].start_cash * c.closed_below_bps) / 10000); p.items[iron] = 50; expect(code(() => sell(c, mk, p, 0, iron, 50, 0, 100_003))).toBe("MERCHANT_OUT_OF_CASH");
     p.items[iron] = 0; gather(c, mk, p, 0, 200_000); expect(code(() => gather(c, mk, p, 0, 200_001))).toBe("COOLDOWN");
   });
   it("burns materials and labor when building", () => {
     const mk = newMarket(c), p = newPlayer(c); startGame(c, p); p.items[0] = 6; const cash = mk.merchants[2].cash;
     buildSection(c, mk, p, 0); expect(p.items[0]).toBe(0); expect(mk.merchants[2].cash).toBe(cash + c.blueprints[0].sections[0].labor);
+  });
+});
+describe("hunting", () => {
+  it("pays a bonus at rich spots, so a far trip beats a nearby one", () => {
+    const rich = c.nodes.reduce((best, n, i) => (n.rich > c.nodes[best].rich ? i : best), 0), plain = c.nodes.findIndex((n) => n.rich === 0);
+    const mk = newMarket(c), p = newPlayer(c); startGame(c, p); const before = p.coins;
+    gather(c, mk, p, plain, 100_000); expect(p.coins).toBe(before);
+    gather(c, mk, p, rich, 200_000); expect(p.coins).toBe(before + c.nodes[rich].rich * c.rich_bonus_per_point);
+  });
+  it("keeps upkeep prices in step with each vehicle's size", () => {
+    const pickup = c.vehicles[0];
+    expect(pickup.tank * c.coins_per_fuel).toBe(1500); expect(pickup.endurance * c.coins_per_repair).toBe(1000);
+  });
+});
+describe("broke merchants", () => {
+  const code = (f: () => unknown) => { try { f(); } catch (e) { return (e as GameError).code; } return "OK"; };
+  const broke = () => { const mk = newMarket(c), p = newPlayer(c); startGame(c, p); p.coins = 1e6; p.items[iron] = 5; mk.merchants[0].cash = 1; return { mk, p }; };
+  it("close completely, with no income", () => {
+    const { mk, p } = broke();
+    expect(merchantClosed(c, mk, 0)).toBe(true);
+    expect(code(() => sell(c, mk, p, 0, iron, 1, 0, 100_000))).toBe("MERCHANT_CLOSED");
+    expect(code(() => buy(c, mk, p, 0, iron, 1, 1e9, 100_000))).toBe("MERCHANT_CLOSED");
+    tickOnce(c, mk); expect(mk.merchants[0].cash).toBe(1);
+  });
+  it("reopen when players invest, and investors share what they sell", () => {
+    const { mk, p } = broke();
+    investInMerchant(c, mk, p, "a", 0, 60000); investInMerchant(c, mk, p, "b", 0, 20000);
+    expect(merchantClosed(c, mk, 0)).toBe(false); expect(p.coins).toBe(1e6 - 80000);
+    const cash = mk.merchants[0].cash, paid = buy(c, mk, p, 0, iron, 2, 1e9, 100_000), cut = Math.floor((paid * c.investor_cut_bps) / 10000);
+    const [a, b] = mk.merchants[0].investors;
+    expect(a.earned).toBe(Math.floor((cut * 3) / 4)); expect(b.earned).toBe(Math.floor(cut / 4));
+    expect(mk.merchants[0].cash).toBe(cash + paid - a.earned - b.earned);
+    const before = p.coins; expect(collectFromMerchant(mk, p, "a", 0)).toBe(Math.floor((cut * 3) / 4));
+    expect(p.coins).toBeGreaterThan(before);
+    expect(code(() => collectFromMerchant(mk, p, "a", 0))).toBe("NOTHING_TO_COLLECT");
+    expect(code(() => collectFromMerchant(mk, p, "stranger", 0))).toBe("NOTHING_TO_COLLECT");
+  });
+  it("limit how many can invest", () => {
+    const { mk, p } = broke();
+    for (let i = 0; i < c.max_investors; i++) investInMerchant(c, mk, p, `p${i}`, 0, 100);
+    expect(code(() => investInMerchant(c, mk, p, "late", 0, 100))).toBe("INVESTORS_FULL");
+    investInMerchant(c, mk, p, "p0", 0, 100); expect(mk.merchants[0].investors[0].stake).toBe(200);
+  });
+  it("sell their stalls for coins, which go to their cash", () => {
+    const { mk, p } = broke(), lot = c.lots.findIndex((l) => l.seeded && l.seed_merchant === 0), till = mk.stalls[lot].cash;
+    buyListedStall(c, mk, p, "me", lot);
+    expect(mk.stalls[lot].owner).toBe("me"); expect(mk.merchants[0].cash).toBe(1 + c.seed_price + till); expect(merchantClosed(c, mk, 0)).toBe(false);
+  });
+  it("get reopened in the simulated week if traders can afford it", () => {
+    const s = createSim(c, newMarket(c)); s.mk.merchants[1].cash = 1;
+    s.traders.forEach((t) => { t.coins = 1e6; });
+    expect(stepHour(s).reopened).toContain(1);
   });
 });
 describe("resources", () => {
@@ -126,7 +179,7 @@ describe("player stalls", () => {
     const { mk, p } = fresh(); p.coins = 1e6;
     expect(code(() => buyListedStall(c, mk, p, "me", freeLot))).toBe("NOT_FOR_SALE");
     const before = mk.stalls[seeded].cash, sale = buyListedStall(c, mk, p, "me", seeded);
-    expect(sale.seller).toBe(c.seed_owner); expect(sale.paid).toBe(c.seed_price + before);
+    expect(sale.seller).toBe(""); expect(sale.paid).toBe(c.seed_price + before);
     expect(code(() => sellStallToCity(c, mk, p, "me", seeded))).toBe("STALL_NOT_EMPTY");
     mk.stalls[seeded].stock = c.items.map(() => 0);
     const coinsBefore = p.coins, v = sellStallToCity(c, mk, p, "me", seeded);
@@ -137,7 +190,7 @@ describe("player stalls", () => {
     expect(code(() => stockStall(c, mk, p, "me", seeded, 0, 1))).toBe("NOT_YOUR_STALL");
     expect(code(() => collectStall(c, mk, p, "me", seeded))).toBe("NOT_YOUR_STALL");
     expect(code(() => listStall(c, mk, p, "me", seeded, 5))).toBe("NOT_YOUR_STALL");
-    expect(code(() => buyFromStall(c, mk, p, c.seed_owner, seeded, 0, 1, 1e9, 1))).toBe("YOUR_OWN_STALL");
+    expect(code(() => buyFromStall(c, mk, p, mk.stalls[seeded].owner!, seeded, 0, 1, 1e9, 1))).toBe("YOUR_OWN_STALL");
   });
 });
 describe("a simulated week", () => {
@@ -148,7 +201,6 @@ describe("a simulated week", () => {
     const iSeries = s.history.map((h) => h.prices[iron]);
     expect(Math.max(...iSeries) / Math.min(...iSeries)).toBeGreaterThan(1.15);
     expect(s.history.reduce((a, h) => a + h.trades, 0)).toBeGreaterThan(300);
-    expect(s.history.reduce((a, h) => a + h.built, 0)).toBeGreaterThan(5);
     expect(s.history.filter((h) => h.event).length).toBeGreaterThan(20);
     for (const m of s.mk.merchants) expect(m.cash).toBeGreaterThan(0);
     const changed = s.mk.merchants.some((m, i) => m.target.some((t, j) => t !== c.merchants[i].targets[j]));

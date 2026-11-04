@@ -57,6 +57,13 @@ merchants:
     reversion_bps: 200
     targets: { wood: 100, iron: 70, slate: 80, clay: 90 }
 
+# A merchant below this share of its starting cash closes completely: no trade and no income, until
+# players invest coins that lift it back over the line. Investors share in what it sells from then on.
+closure:
+  closed_below_bps: 500      # under 5% of starting cash
+  investor_cut_bps: 2000     # 20% of each sale to a player goes to investors, split by stake
+  max_investors: 10          # per merchant
+
 # Merchants learn. When stock stays outside the band, they change what they stock.
 adaptation:
   every_ticks: 24
@@ -88,9 +95,8 @@ stalls:
   max_spread_bps: 2500
   # The city will always buy an empty stall for this share of its material value.
   city_buyback_bps: 5000
-  # Two lots begin as finished stalls of a labeled simulated owner, for sale in coins, so there is a market on day one.
-  seed_owner: ghost-builder.testnet
-  seed_lots: [lot-brook, lot-plaza]
+  # These lots begin as finished stalls owned by a merchant and for sale in coins, so there is a market on day one.
+  merchant_stalls: { lot-brook: foreman, lot-plaza: flipper, lot-hollow: hoarder }
   seed_price: 60000
   seed_stock: 30
   seed_cash: 40000

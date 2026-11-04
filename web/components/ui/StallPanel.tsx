@@ -2,14 +2,17 @@
 import { useState } from "react";
 import { rules as c, coins, cityBuyback, explainStall } from "@nearverse/economy";
 import { PRACTICE_ID, useGame } from "@/lib/state/game";
+import { useOutside } from "@/lib/useOutside";
 import { biomeName } from "../world/world";
 
-const ownerLabel = (owner: string) => (owner === c.seed_owner ? "a simulated owner" : owner.length > 24 ? `${owner.slice(0, 10)}…${owner.slice(-6)}` : owner);
+const ownerLabel = (owner: string) => (owner.startsWith("merchant:") ? `the ${c.merchants.find((m) => `merchant:${m.id}` === owner)?.name ?? "merchant"}` : owner.length > 24 ? `${owner.slice(0, 10)}…${owner.slice(-6)}` : owner);
 
 function StallPrice({ lot, item, side }: { lot: number; item: number; side: "bid" | "ask" }) {
   const market = useGame((s) => s.market);
   const e = explainStall(c, market, lot, item, side);
-  return <span className="tip-wrap"><button className="tip-btn" aria-label={e.sentence}>{coins(e.price)}</button><span className="tip" role="tooltip"><b>{e.sentence}</b>{e.lines.map((l) => <span key={l} style={{ display: "block" }}>{l}</span>)}</span></span>;
+  const [open, setOpen] = useState(false);
+  useOutside(open, ".tip-wrap", () => setOpen(false));
+  return <span className={`tip-wrap ${open ? "open" : ""}`}><button className="tip-btn" aria-label={e.sentence} aria-expanded={open} onClick={() => setOpen((o) => !o)}>{coins(e.price)}</button><span className="tip" role="tooltip"><b>{e.sentence}</b>{e.lines.map((l) => <span key={l} style={{ display: "block" }}>{l}</span>)}</span></span>;
 }
 
 export function LotPanel({ lot }: { lot: number }) {

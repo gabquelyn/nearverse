@@ -75,7 +75,7 @@ export default function Profile() {
         <section>
           <h2 style={{ marginTop: 0 }}>Credits</h2>
           {g.mode === "chain" && g.session && <Wallet accountId={g.session.accountId} />}
-          <p>You have <b data-testid="profile-credits">{g.player.credits}</b> credits. 1 NEAR buys {c.credits_per_near} credits, which pay for fuel, repairs, vehicles and stall locations. Credit purchases are final.</p>
+          <p>You have <b data-testid="profile-credits">{g.player.credits}</b> credits. 1 NEAR buys {c.credits_per_near} credits, which pay for vehicles and stall locations, and cover fuel and repairs if your coins run out. Credit purchases are final.</p>
           <div className="row">
             <label className="field">NEAR <input value={amount} inputMode="decimal" onChange={(e) => setAmount(e.target.value)} /></label>
             <button className="btn action" onClick={() => g.buyCredits(Number(amount))}>Buy {Math.floor(Number(amount || 0) * c.credits_per_near)} credits</button>
@@ -91,7 +91,7 @@ export default function Profile() {
       <h2>Stall locations</h2>
       <Locations />
       <h2>Top players</h2>
-      {g.board.length ? <table className="prices"><thead><tr><th>Player</th><th className="num">Sections built</th><th className="num">Net worth</th></tr></thead><tbody>{g.board.slice(0, 10).map((r) => <tr key={r.account_id}><td title={r.account_id}>{shortAccount(r.account_id)}</td><td className="num">{r.sections_built}</td><td className="num">{coins(r.net_worth)}</td></tr>)}</tbody></table> : <p>The board fills in once this game runs on testnet.</p>}
+      {g.board.length ? <table className="prices"><thead><tr><th>Player</th><th className="num">Net worth</th></tr></thead><tbody>{g.board.slice(0, 10).map((r) => <tr key={r.account_id}><td title={r.account_id}>{shortAccount(r.account_id)}</td><td className="num">{coins(r.net_worth)}</td></tr>)}</tbody></table> : <p>The board fills in once this game runs on testnet.</p>}
     </div>
   );
 }

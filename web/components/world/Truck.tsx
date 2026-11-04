@@ -115,7 +115,7 @@ export function Truck() {
       fuelOwed.current += ((Math.abs(speed) * d) / c.meters_per_fuel) * (v0.fuel_bps / 10000);
       if (fuelOwed.current >= FUEL_BATCH) { const units = Math.floor(fuelOwed.current); fuelOwed.current -= units; useGame.getState().act({ t: "burn_fuel", units }); warned.current = false; }
     }
-    if (player.started && player.fuel <= 0 && !warned.current) { warned.current = true; useGame.getState().say("Out of fuel. Refuel with credits, any time, from the panel at the top.", true); }
+    if (player.started && player.fuel <= 0 && !warned.current) { warned.current = true; useGame.getState().say("Out of fuel. Refuel, any time, from the panel at the top.", true); }
     model.spins.forEach((w) => { w.rotation.x += (speed * d) / 0.6; });
     // Front wheels point where the truck is turning. Positive y turns toward the driver's left.
     model.steers.forEach((w) => { w.rotation.y = smoothSteer.current * 0.42; });
@@ -165,7 +165,7 @@ export function Truck() {
     if (!player.started) return;
     const points = Math.min(25, Math.max(1, Math.round((sp - 4) * 1.5)));
     spring.current.v -= Math.min(3, sp * 0.14); fx.burst(truck.pos.x + Math.sin(truck.yaw) * 2, truck.pos.z + Math.cos(truck.yaw) * 2, false);
-    if (act({ t: "damage", points })) { sfx.crash(); say(`Hit a ${name}: lost ${points} health. Repair with credits from the top panel.`, true); }
+    if (act({ t: "damage", points })) { sfx.crash(); say(`Hit a ${name}: lost ${points} health. Repair from the top panel.`, true); }
   };
   const onMine = (handle: number) => {
     const now = performance.now();

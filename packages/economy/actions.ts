@@ -1,5 +1,6 @@
 // Player actions. Rules and error codes mirror contracts/nearverse/src/engine.rs.
-import type { Config, Market, Player } from "./types";
+import type { Config, Market, MerchantState, Player } from "./types";
+import { merchantClosed } from "./tick";
 import { bidAt, askAt, stallBidAt, stallAskAt } from "./price";
 
 export class GameError extends Error { constructor(public code: string) { super(code); } }
@@ -32,7 +33,7 @@ export function gather(c: Config, mk: Market, p: Player, node: number, now: numb
   const qty = Math.min(n.yield_qty, mk.nodes[node]);
   if (qty === 0) fail("NODE_EMPTY");
   if (cargoUsed(c, p) + qty > vehicleOf(c, p).capacity) fail("CARGO_FULL");
-  p.fuel -= burn; p.durability -= n.wear; p.items[n.item] += qty;
+  p.fuel -= burn; p.durability -= n.wear; p.items[n.item] += qty; p.coins += n.rich * c.rich_bonus_per_point;
   mk.nodes[node] -= qty; p.last_gather_ms = now;
   const w = Math.floor(mk.tick / c.quest_period_ticks);
   if (p.quest_window !== w) { p.quest_window = w; p.quest_progress = 0; }
@@ -55,6 +56,7 @@ function checkTrade(c: Config, item: number, qty: number) {
 export function sell(c: Config, mk: Market, p: Player, merchant: number, item: number, qty: number, minTotal: number, now: number): number {
   need(p); travel(c, p, merchant, now); checkTrade(c, item, qty);
   if (p.items[item] < qty) fail("NOT_ENOUGH_ITEMS");
+  if (merchantClosed(c, mk, merchant)) fail("MERCHANT_CLOSED");
   const s = mk.merchants[merchant];
   let total = 0, stock = s.stock[item];
   for (let i = 0; i < qty; i++) { total += bidAt(c, merchant, item, mk.tick, s.target[item], stock); stock += 1; }
@@ -67,6 +69,7 @@ export function sell(c: Config, mk: Market, p: Player, merchant: number, item: n
 
 export function buy(c: Config, mk: Market, p: Player, merchant: number, item: number, qty: number, maxTotal: number, now: number): number {
   need(p); travel(c, p, merchant, now); checkTrade(c, item, qty);
+  if (merchantClosed(c, mk, merchant)) fail("MERCHANT_CLOSED");
   const s = mk.merchants[merchant];
   if (s.stock[item] < qty) fail("MERCHANT_OUT_OF_STOCK");
   if (cargoUsed(c, p) + qty > vehicleOf(c, p).capacity) fail("CARGO_FULL");
@@ -74,9 +77,41 @@ export function buy(c: Config, mk: Market, p: Player, merchant: number, item: nu
   for (let i = 0; i < qty; i++) { total += askAt(c, merchant, item, s.target[item], stock); stock -= 1; }
   if (total > maxTotal) fail("PRICE_MOVED");
   if (p.coins < total) fail("NOT_ENOUGH_COINS");
-  s.stock[item] = stock; s.cash += total; p.coins -= total; p.items[item] += qty;
+  s.stock[item] = stock; s.cash += total - shareWithInvestors(c, s, total); p.coins -= total; p.items[item] += qty;
   p.last_trade_ms = now; p.last_merchant = merchant;
   return total;
+}
+
+/** Sets aside investors' cut of a sale, split by stake. Returns what was set aside. */
+function shareWithInvestors(c: Config, s: MerchantState, sale: number) {
+  const staked = s.investors.reduce((a, i) => a + i.stake, 0);
+  if (staked === 0) return 0;
+  const cut = Math.floor((sale * c.investor_cut_bps) / 10000);
+  let paid = 0;
+  for (const i of s.investors) { const e = Math.floor((cut * i.stake) / staked); i.earned += e; paid += e; }
+  return paid;
+}
+
+/** Puts coins into a merchant's cash for good, in return for a share of what it sells. This is how a closed shop reopens. */
+export function investInMerchant(c: Config, mk: Market, p: Player, who: string, merchant: number, cents: number) {
+  need(p);
+  const s = mk.merchants[merchant]; if (!s) return fail("BAD_MERCHANT");
+  if (cents === 0) fail("BAD_QTY");
+  if (p.coins < cents) fail("NOT_ENOUGH_COINS");
+  const mine = s.investors.find((i) => i.who === who);
+  if (!mine && s.investors.length >= c.max_investors) fail("INVESTORS_FULL");
+  p.coins -= cents; s.cash += cents;
+  if (mine) mine.stake += cents; else s.investors.push({ who, stake: cents, earned: 0 });
+}
+
+export function collectFromMerchant(mk: Market, p: Player, who: string, merchant: number) {
+  need(p);
+  const s = mk.merchants[merchant]; if (!s) return fail("BAD_MERCHANT");
+  const mine = s.investors.find((i) => i.who === who);
+  if (!mine || mine.earned === 0) return fail("NOTHING_TO_COLLECT");
+  const earned = mine.earned;
+  p.coins += earned; mine.earned = 0;
+  return earned;
 }
 
 export const foremanIndex = (c: Config) => c.merchants.findIndex((m) => m.premium_bps > 0);
@@ -85,26 +120,30 @@ export const foremanIndex = (c: Config) => c.merchants.findIndex((m) => m.premiu
 export function addCredits(p: Player, credits: number) { need(p); p.credits += credits; }
 const spend = (p: Player, credits: number) => { if (p.credits < credits) fail("NOT_ENOUGH_CREDITS"); p.credits -= credits; };
 
+/** Upkeep comes out of coins. With too few, the same amount is charged in credits, so nobody gets stranded. */
+function payUpkeep(p: Player, cents: number) {
+  if (p.coins >= cents) { p.coins -= cents; return; }
+  spend(p, Math.ceil(cents / 100));
+}
 export function repairQuote(c: Config, p: Player) {
   const missing = vehicleOf(c, p).endurance - p.durability;
-  return { missing, credits: missing * c.credits_per_repair };
+  return { missing, cost: missing * c.coins_per_repair };
 }
 export function repair(c: Config, p: Player) {
   need(p);
   const q = repairQuote(c, p);
   if (q.missing === 0) fail("NOTHING_TO_REPAIR");
-  spend(p, q.credits);
+  payUpkeep(p, q.cost);
   p.durability = vehicleOf(c, p).endurance;
 }
 export function refuelQuote(c: Config, p: Player) {
   const missing = vehicleOf(c, p).tank - p.fuel;
-  return { missing, credits: missing * c.credits_per_fuel };
+  return { missing, cost: missing * c.coins_per_fuel };
 }
-/** Fills the tank by this much, or all the way with no amount. */
 export function refuel(c: Config, p: Player, units: number) {
   need(p);
   if (units === 0 || units > refuelQuote(c, p).missing) fail("BAD_QTY");
-  spend(p, units * c.credits_per_fuel);
+  payUpkeep(p, units * c.coins_per_fuel);
   p.fuel += units;
 }
 /** Fuel used while driving, reported by the client. It can only hurt the player, so cheating here only skips a cost. */
@@ -251,6 +290,9 @@ export function buyListedStall(c: Config, mk: Market, p: Player, who: string, lo
   if (p.coins < s.price) fail("NOT_ENOUGH_COINS");
   const seller = s.owner as string, paid = s.price + s.cash;
   p.coins -= s.price; s.owner = who; s.price = 0; s.cash = 0;
+  // A merchant's stall pays into its cash, which can reopen a closed shop.
+  const shop = c.merchants.findIndex((m) => `merchant:${m.id}` === seller);
+  if (shop >= 0) { mk.merchants[shop].cash += paid; return { seller: "", paid }; }
   return { seller, paid };
 }
 export const cityBuyback = (c: Config, lot: number) =>

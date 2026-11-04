@@ -988,8 +988,9 @@
  "credits_per_near": 1000,
  "start_credits": 500,
  "start_fuel": 60,
- "credits_per_fuel": 1,
- "credits_per_repair": 1,
+ "coins_per_fuel": 15,
+ "coins_per_repair": 10,
+ "rich_bonus_per_point": 100,
  "meters_per_fuel": 40,
  "quest_period_ticks": 12,
  "quest_gathers": 3,
@@ -1187,7 +1188,8 @@
     0,
     6
    ],
-   "seeded": true
+   "seeded": true,
+   "seed_merchant": 2
   },
   {
    "id": "lot-orchard",
@@ -1201,7 +1203,8 @@
     0,
     4
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-crossing",
@@ -1215,7 +1218,8 @@
     0,
     12
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-mill",
@@ -1229,7 +1233,8 @@
     0,
     0
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-hollow",
@@ -1243,7 +1248,8 @@
     0,
     0
    ],
-   "seeded": false
+   "seeded": true,
+   "seed_merchant": 0
   },
   {
    "id": "lot-pass",
@@ -1257,7 +1263,8 @@
     0,
     0
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-lodge",
@@ -1271,7 +1278,8 @@
     0,
     0
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-summit",
@@ -1285,7 +1293,8 @@
     10,
     0
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-oasis",
@@ -1299,7 +1308,8 @@
     0,
     18
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-dunes",
@@ -1313,7 +1323,8 @@
     8,
     14
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-canyon",
@@ -1327,7 +1338,8 @@
     0,
     16
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-plaza",
@@ -1341,7 +1353,8 @@
     16,
     0
    ],
-   "seeded": true
+   "seeded": true,
+   "seed_merchant": 1
   },
   {
    "id": "lot-docks",
@@ -1355,7 +1368,8 @@
     0,
     0
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   },
   {
    "id": "lot-terminal",
@@ -1369,16 +1383,19 @@
     10,
     0
    ],
-   "seeded": false
+   "seeded": false,
+   "seed_merchant": 0
   }
  ],
+ "closed_below_bps": 500,
+ "investor_cut_bps": 2000,
+ "max_investors": 10,
  "stall_k_quarters": 4,
  "stall_target": 40,
  "stall_spread_bps": 800,
  "stall_min_spread_bps": 200,
  "stall_max_spread_bps": 2500,
  "city_buyback_bps": 5000,
- "seed_owner": "ghost-builder.testnet",
  "seed_price": 60000,
  "seed_stock": 30,
  "seed_cash": 40000

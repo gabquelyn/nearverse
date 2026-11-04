@@ -5,12 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
-import { PLOT, gatherBar, keys, truck } from "./world";
+import { gatherBar, keys, truck, view } from "./world";
 import { glowMat, lampMat, sky, updateSky } from "./daynight";
 import { Ground, Ocean, paintBiomeMap, paintGroundMap } from "./Terrain";
 import { Grass, Trees, Weather, useTrees } from "./Foliage";
 import { Truck } from "./Truck";
-import { Benches, Lamps, LotSpot, Mines, NodeSpot, Obstacles, Plot, Scatter, Stall, TitleCrates, windowMat } from "./Props";
+import { Benches, Lamps, LotSpot, Mines, NodeSpot, Obstacles, Scatter, Stall, TitleCrates, windowMat } from "./Props";
 import { Near } from "./Instances";
 import { OtherCars } from "./OtherCars";
 import { Waypoint } from "./Waypoint";
@@ -74,8 +74,8 @@ function FollowCamera() {
     truck.cameraYaw = yaw.current;
     const sin = Math.sin(yaw.current), cos = Math.cos(yaw.current);
     const target = new THREE.Vector3(truck.pos.x + Math.sin(truck.yaw) * lead.current, 0, truck.pos.z + Math.cos(truck.yaw) * lead.current);
-    const back = portrait ? 30 : 27;
-    const off = new THREE.Vector3(-sin * back, portrait ? 40 : 28, -cos * back);
+    const back = (portrait ? 30 : 27) * view.zoom;
+    const off = new THREE.Vector3(-sin * back, (portrait ? 40 : 28) * view.zoom, -cos * back);
     camera.position.x = THREE.MathUtils.damp(camera.position.x, target.x + off.x, 5, dt);
     camera.position.y = THREE.MathUtils.damp(camera.position.y, off.y, 5, dt);
     camera.position.z = THREE.MathUtils.damp(camera.position.z, target.z + off.z, 5, dt);
@@ -97,7 +97,6 @@ function Zones() {
       for (let i = 0; i < c.nodes.length; i++) if (Math.abs(x - c.nodes[i].x) < 7 && Math.abs(z - c.nodes[i].z) < 7) { zone = { kind: "node", index: i }; break; }
       for (let i = 0; i < c.merchants.length; i++) { const m = c.merchants[i], l = Math.hypot(m.x, m.z); if (Math.hypot(x - (m.x - m.x / l), z - (m.z - m.z / l)) < 5.6) zone = { kind: "stall", index: i }; }
       for (let i = 0; i < c.lots.length; i++) { const m = c.lots[i], st = market.stalls[i]; if (Math.abs(x - m.x) < 7 && Math.abs(z - m.z) < 7 && st?.owner && (st.built || st.owner === me)) zone = { kind: "lot", index: i }; }
-      if (Math.abs(x - PLOT[0]) < 10 && Math.abs(z - PLOT[1]) < 6) zone = { kind: "plot", index: 0 };
       setZone(zone);
     }
     if (current?.kind === "node" && keys.has("KeyE")) {
@@ -199,7 +198,7 @@ function World() {
       <Physics gravity={[0, -24, 0]} timeStep="vary">
         <RigidBody type="fixed" friction={1}><CuboidCollider args={[1300, 1, 1300]} position={[0, -1, 0]} /></RigidBody>
         <Truck />
-        <Near x={0} z={0} radius={120}><TitleCrates /><Scatter /><Lamps /><Benches /><Plot /></Near>
+        <Near x={0} z={0} radius={120}><TitleCrates /><Scatter /><Lamps /><Benches /></Near>
         {c.merchants.map((_, i) => <Stall key={i} i={i} />)}
         {c.lots.map((_, i) => <LotSpot key={i} i={i} />)}
         {c.nodes.map((n, i) => <Near key={i} x={n.x} z={n.z}><NodeSpot i={i} /></Near>)}

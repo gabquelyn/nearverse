@@ -82,8 +82,9 @@ impl Nearverse {
     pub fn stall_buy_listed(&mut self, lot: u32) {
         let id = env::predecessor_account_id();
         let mut p = self.load(&id);
-        let (seller, paid) = ok(engine::buy_listed_stall(&mut self.market, &mut p, id.as_str(), lot as usize));
+        let (seller, paid) = ok(engine::buy_listed_stall(&self.config, &mut self.market, &mut p, id.as_str(), lot as usize));
         self.players.insert(id, p);
+        if seller.is_empty() { return; } // a merchant's stall: the money went to its cash
         let seller: AccountId = seller.parse().unwrap_or_else(|_| env::panic_str("BAD_SELLER"));
         let mut s = self.load(&seller);
         s.coins += paid;

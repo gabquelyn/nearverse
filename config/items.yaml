@@ -23,8 +23,13 @@ credits:
   credits_per_near: 1000
   start_credits: 500
   start_fuel: 60
-  credits_per_fuel: 1
-  credits_per_repair: 1
+  # Upkeep is paid in coins, so a sold load pays for the next trip. Prices are in hundredths of a coin:
+  # a Pickup's 100-unit tank costs 15.00 coins to fill and its 100 health costs 10.00 to repair.
+  # With too few coins, the same amount is charged in credits instead, rounded up.
+  coins_per_fuel: 15
+  coins_per_repair: 10
+  # A rich spot pays this many hundredths of a coin per richness point, each time you load there.
+  rich_bonus_per_point: 100
   meters_per_fuel: 40        # how far one unit of fuel takes the starter truck
 
 # Every vehicle's price, in credits, comes from this formula, and the contract computes it itself:

@@ -1,7 +1,7 @@
 "use client";
-import { rules as c, explainPrice, coins, bid, ask } from "@nearverse/economy";
+import { rules as c, explainPrice, coins, bid, ask, merchantClosed } from "@nearverse/economy";
 import { useState } from "react";
-import { useGame } from "@/lib/state/game";
+import { PRACTICE_ID, useGame } from "@/lib/state/game";
 import { useOutside } from "@/lib/useOutside";
 
 function Price({ merchant, item, side }: { merchant: number; item: number; side: "bid" | "ask" }) {
@@ -21,9 +21,11 @@ export function MerchantTable({ merchant, plain = false }: { merchant: number; p
   const market = useGame((x) => x.market), player = useGame((x) => x.player), act = useGame((x) => x.act);
   const s = market.merchants[merchant], rules = c.merchants[merchant];
   void bid; void ask;
+  const closed = merchantClosed(c, market, merchant);
   return (
     <>
-      <p>{rules.personality}. Cash on hand: <b>{coins(s.cash)}</b>{s.cash < 5000 ? ". Almost out, so it may stop buying." : "."}</p>
+      <p>{rules.personality}. Cash on hand: <b>{coins(s.cash)}</b>.</p>
+      {closed && <div className="notice" data-testid="closed">This shop is broke and closed. It won&apos;t trade or earn until players invest {coins(Math.ceil((rules.start_cash * c.closed_below_bps) / 10000) - s.cash)} more.</div>}
       <table className="prices">
         <thead><tr><th scope="col">Material</th><th scope="col" className="num">Pays</th><th scope="col" className="num">Charges</th><th scope="col" className="num">Stock / wants</th><th scope="col" className="num">You have</th><th scope="col"><span style={{ position: "absolute", left: -9999 }}>Trade</span></th></tr></thead>
         <tbody>
@@ -36,35 +38,33 @@ export function MerchantTable({ merchant, plain = false }: { merchant: number; p
               <td className="num">{player.items[i]}</td>
               <td>
                 <span className="row" style={{ flexWrap: "nowrap", justifyContent: "flex-end" }}>
-                  <button className="btn small" aria-label={`Sell one ${it.name}`} disabled={!plain && player.items[i] < 1} onClick={() => act({ t: "sell", merchant, item: i, qty: 1 })}>Sell</button>
-                  <button className="btn small" aria-label={`Sell all ${it.name}`} disabled={player.items[i] < 1} onClick={() => act({ t: "sell", merchant, item: i, qty: Math.min(player.items[i], c.max_trade_qty) })}>All</button>
-                  <button className="btn small ghost" aria-label={`Buy one ${it.name}`} onClick={() => act({ t: "buy", merchant, item: i, qty: 1 })}>Buy</button>
+                  <button className="btn small" aria-label={`Sell one ${it.name}`} disabled={closed || (!plain && player.items[i] < 1)} onClick={() => act({ t: "sell", merchant, item: i, qty: 1 })}>Sell</button>
+                  <button className="btn small" aria-label={`Sell all ${it.name}`} disabled={closed || player.items[i] < 1} onClick={() => act({ t: "sell", merchant, item: i, qty: Math.min(player.items[i], c.max_trade_qty) })}>All</button>
+                  <button className="btn small ghost" aria-label={`Buy one ${it.name}`} disabled={closed} onClick={() => act({ t: "buy", merchant, item: i, qty: 1 })}>Buy</button>
                 </span>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <Invest merchant={merchant} />
     </>
   );
 }
 
-export function Blueprints() {
-  const player = useGame((x) => x.player), act = useGame((x) => x.act);
+/** Players can back a merchant with coins for a share of its sales. That's also how a broke shop reopens. */
+function Invest({ merchant }: { merchant: number }) {
+  const investors = useGame((x) => x.market.merchants[merchant].investors), coinsHeld = useGame((x) => x.player.coins), act = useGame((x) => x.act), me = useGame((x) => x.session?.accountId ?? PRACTICE_ID);
+  const [amount, setAmount] = useState("50");
+  const mine = investors.find((i) => i.who === me), staked = investors.reduce((a, i) => a + i.stake, 0), cents = Math.round(Number(amount) * 100);
   return (
-    <div>
-      {c.blueprints.map((b, i) => {
-        const done = player.blueprints[i], sec = b.sections[done];
-        return (
-          <div key={b.id} style={{ borderTop: "1px solid var(--line)", padding: "6px 0" }}>
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <span><b>{b.name}</b> {done}/{b.sections.length} sections</span>
-              <button className="btn small" disabled={!sec} onClick={() => act({ t: "build", blueprint: i })}>{sec ? "Build section" : "Finished"}</button>
-            </div>
-            {sec && <small>Needs {sec.needs.map((q, j) => (q ? `${player.items[j]}/${q} ${c.items[j].name.toLowerCase()}` : null)).filter(Boolean).join(", ")} and {coins(sec.labor)} labor</small>}
-          </div>
-        );
-      })}
+    <div className="invest" data-testid="invest">
+      <p>Invest coins for good, and earn your share of {c.investor_cut_bps / 100}% of what this merchant sells.{mine ? ` Your stake: ${coins(mine.stake)} of ${coins(staked)}. Earned: ${coins(mine.earned)}.` : ""}</p>
+      <div className="row">
+        <label className="field">Coins <input value={amount} inputMode="decimal" onChange={(e) => setAmount(e.target.value)} /></label>
+        <button className="btn small action" disabled={!(cents > 0) || cents > coinsHeld} onClick={() => act({ t: "invest", merchant, cents })}>Invest</button>
+        {mine && mine.earned > 0 && <button className="btn small" onClick={() => act({ t: "merchant_collect", merchant })}>Collect {coins(mine.earned)}</button>}
+      </div>
     </div>
   );
 }

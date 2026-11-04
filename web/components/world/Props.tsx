@@ -7,7 +7,7 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { DRIVE_RADIUS, ITEM_COLOR, PAL, PLOT, biomeAt, canvasText, reserved, seeded, spacing } from "./world";
+import { DRIVE_RADIUS, ITEM_COLOR, PAL, biomeAt, canvasText, reserved, seeded, spacing } from "./world";
 import { mineHandles, useStaticColliders, type Round, type Solid } from "./colliders";
 import { registerMine } from "./Truck";
 import { Instances, Near, type Spot } from "./Instances";
@@ -241,6 +241,8 @@ const SignPost = ({ tex }: { tex: THREE.Texture }) => (
 );
 
 /** A hidden resource: just a stockpile in the landscape, with no sign or marker to give it away. */
+const MARK_RING = new THREE.RingGeometry(6.4, 7, 40), MARK_BEAM = new THREE.CylinderGeometry(0.35, 1.1, 9, 10, 1, true), MARK_GEM = new THREE.OctahedronGeometry(0.9);
+
 export function NodeSpot({ i }: { i: number }) {
   const n = c.nodes[i];
   const left = useGame((s) => s.market.nodes[i]);
@@ -248,6 +250,12 @@ export function NodeSpot({ i }: { i: number }) {
   const heaps = Math.max(0, Math.ceil((left / n.max_stock) * 10));
   return (
     <group position={[n.x, 0, n.z]}>
+      {/* The marker: a ring showing where to stop, and a beacon you can spot from a distance. Only while there's something to load. */}
+      {left > 0 && <>
+        <mesh geometry={MARK_RING} position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}><meshBasicMaterial color={color} transparent opacity={0.8} depthWrite={false} /></mesh>
+        <mesh geometry={MARK_BEAM} position={[0, 4.5, 0]}><meshBasicMaterial color={color} transparent opacity={0.22} depthWrite={false} side={THREE.DoubleSide} /></mesh>
+        <mesh geometry={MARK_GEM} position={[0, 9.4, 0]}><meshBasicMaterial color={color} /></mesh>
+      </>}
       {Array.from({ length: heaps }, (_, k) => {
         const a = k * 2.399, d = 1 + (k % 4) * 1.05;
         const pos: [number, number, number] = [Math.cos(a) * d, 0.32, Math.sin(a) * d];
@@ -317,27 +325,7 @@ const brickTexture = (base: string) => {
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 1); return t;
 };
 
-export function Plot() {
-  const doneKey = useGame((s) => s.player.blueprints.join());
-  const done = useMemo(() => doneKey.split(",").map(Number), [doneKey]);
-  const tex = useMemo(() => [brickTexture("#a9713d"), brickTexture("#b9583a"), brickTexture("#7c7c90")], []);
-  return (
-    <group position={[PLOT[0], 0, PLOT[1]]}>
-      {c.blueprints.map((b, i) => {
-        const hasAny = done[i] > 0, top = done[i] * 1.8;
-        return (
-          <group key={b.id} position={[(1 - i) * 6.2, 0, -1]}>
-            {hasAny && <RigidBody type="fixed" colliders={false} name="obstacle" userData={{ obstacle: "building" }}><CuboidCollider args={[2, top / 2, 2]} position={[0, top / 2, 0]} /></RigidBody>}
-            {Array.from({ length: done[i] }, (_, s) => { const w = 4 - s * 0.45; return <mesh key={s} position={[0, 0.9 + s * 1.8, 0]} castShadow receiveShadow><boxGeometry args={[w, 1.8, w]} /><meshLambertMaterial map={tex[i]} /></mesh>; })}
-            {done[i] === b.sections.length && <mesh position={[0, top + 0.8, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[(4 - b.sections.length * 0.45) * 0.95, 1.8, 4]} /><Mat color={PAL.paint} flat /></mesh>}
-            {!hasAny && <mesh rotation={[-Math.PI / 2, 0, Math.PI / 4]} position={[0, 0.05, 0]}><ringGeometry args={[2.5, 2.7, 4]} /><meshBasicMaterial color={PAL.cream} transparent opacity={0.8} /></mesh>}
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
+const MINE_GAP = 14;
 /** Mines guard the richest spots. */
 export function Mines() {
   const { spots, sensors, geo, mat } = useMemo(() => {
@@ -345,10 +333,15 @@ export function Mines() {
     for (const n of c.nodes) {
       if (n.rich < 60) continue;
       const count = 6 + Math.round((n.rich - 60) / 5);
-      for (let k = 0; k < count; k++) { const a = r() * 6.283, d = 9.5 + r() * 15; spots.push({ x: n.x + Math.cos(a) * d, y: 0.25, z: n.z + Math.sin(a) * d, ry: r() * 6 }); }
+      for (let k = 0; k < count; k++) {
+        const a = r() * 6.283, d = 9.5 + r() * 15, x = n.x + Math.cos(a) * d, z = n.z + Math.sin(a) * d, ry = r() * 6;
+        // Bombs stay a hazard but never a wall: there's always room for even the widest vehicle to steer between them.
+        if (spots.every((m) => Math.hypot(m.x - x, m.z - z) >= MINE_GAP)) spots.push({ x, y: 0.25, z, ry });
+      }
     }
     const sensors = spots.map((s): Round => ({ kind: "ball", x: s.x, y: 0.3, z: s.z, r: 0.9 }));
     const geo = mergeGeometries([vertexColored(new THREE.SphereGeometry(0.55, 10, 6).scale(1, 0.45, 1), PAL.iron), vertexColored(new THREE.SphereGeometry(0.1, 6, 5).translate(0, 0.27, 0), "#ff3a2a")])!;
+    ((window as unknown as { __nearverse?: Record<string, unknown> }).__nearverse ??= {}).mines = spots;
     return { spots, sensors, geo, mat: paintedMat };
   }, []);
   useStaticColliders(sensors, null, { sensor: true, onMade: (handle, i) => { mineHandles.set(handle, i); registerMine(handle, spots[i].x, spots[i].z); } });

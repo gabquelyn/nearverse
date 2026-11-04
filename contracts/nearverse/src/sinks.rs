@@ -1,4 +1,4 @@
-//! Spending that isn't trade: repairs and fuel cost credits, building uses materials and coins.
+//! Spending that isn't trade: repairs and fuel cost coins, or credits if coins run short; building uses materials and coins.
 use crate::{engine, ok, Nearverse, NearverseExt};
 use near_sdk::{env, near};
 

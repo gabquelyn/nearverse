@@ -1,6 +1,6 @@
 // Builds the tooltip text from the same inputs the contract uses.
 import type { Config, Market } from "./types";
-import { stockPrice, premiumFor, bid, ask, currentBlueprint, stallPrice, stallBidAt, stallAskAt } from "./price";
+import { stockPrice, premiumFor, bid, ask, stallPrice, stallBidAt, stallAskAt } from "./price";
 
 const pct = (bps: number) => `${bps >= 0 ? "+" : "−"}${(Math.abs(bps) / 100).toFixed(bps % 100 ? 1 : 0)}%`;
 export const coins = (cents: number) => (cents / 100).toFixed(2);
@@ -21,9 +21,8 @@ export function explainPrice(c: Config, mk: Market, merchant: number, item: numb
   if (side === "bid") {
     const prem = premiumFor(c, merchant, item, mk.tick);
     if (prem) {
-      const name = c.blueprints[currentBlueprint(c, mk.tick)].name;
-      parts.push(`${rules.name.toLowerCase()} blueprint demand (${pct(prem)})`);
-      lines.push(`${name} blueprint needs this: ${pct(prem)}.`);
+      parts.push(`${rules.name} is short of this for now (${pct(prem)})`);
+      lines.push(`${rules.name} is short of this for now: ${pct(prem)}.`);
     }
     parts.push(`spread (${pct(-rules.spread_bps)})`);
     lines.push(`${rules.name}'s margin: ${pct(-rules.spread_bps)}.`);

@@ -157,6 +157,14 @@ canvas:focus { outline: none; }
 .tip-wrap.open .tip { display: block; }
 .pin.car { width: 6px; height: 6px; border-radius: 50%; background: #fff; transform: translate(-50%, -50%); pointer-events: none; } .pin.car.ghost { background: var(--accent); }
 
+/* Tour, nearby hint, zoom and investing */
+.tour { position: absolute; left: 12px; bottom: 76px; width: min(400px, calc(100vw - 24px)); background: rgba(14, 34, 41, .96); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; z-index: 8; }
+.tour small { color: var(--muted); } .tour h3 { color: var(--accent); margin: 2px 0 4px; font-size: 20px; } .tour p { margin: 0 0 10px; font-size: 15px; }
+.nearby { position: absolute; left: 50%; top: 46px; transform: translateX(-50%); background: rgba(14, 34, 41, .92); border: 1px solid var(--good); color: var(--good); border-radius: 999px; padding: 4px 14px; font-size: 14px; font-weight: 700; z-index: 6; white-space: nowrap; pointer-events: none; }
+.zoom { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 6; } .zoom .btn { width: 36px; height: 36px; padding: 0; font-size: 20px; }
+.invest { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); } .invest p { font-size: 14px; }
+.event .close { float: right; background: none; border: 0; font-size: 18px; line-height: 1; padding: 0 0 0 8px; color: var(--muted); }
+
 /* Phone: full-screen controls */
 .touch, .turn, .phone-only { display: none; }
 @media (pointer: coarse) {
@@ -170,6 +178,9 @@ canvas:focus { outline: none; }
   .pad .gas { width: 92px; height: 92px; font-size: 17px; background: rgba(79, 214, 163, .55); }
   .pad .load { width: 76px; height: 76px; background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   .modebar { display: none; }
+  .tour { left: 50%; bottom: 8px; transform: translateX(-50%); width: min(50vw, 420px); max-height: calc(100vh - 56px); overflow: auto; padding: 8px 10px; } .tour h3 { font-size: 16px; } .tour p { font-size: 13px; margin-bottom: 6px; }
+  .zoom { top: 46px; transform: none; flex-direction: row; }
+  .nearby { top: 40px; } .toast { top: 72px; }
   .tip-wrap.open .tip { position: fixed; left: 50%; right: auto; top: 8px; bottom: auto; transform: translateX(-50%); z-index: 70; }
   .livepanel { top: 46px; bottom: 8px; left: 50%; right: auto; transform: translateX(-50%); width: min(50vw, 400px); max-height: none; }
   .coach { left: 50%; bottom: 8px; transform: translateX(-50%); width: min(46vw, 400px); font-size: 13px; padding: 6px 9px; }

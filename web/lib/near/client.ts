@@ -8,7 +8,7 @@ export const CONTRACT = publicConfig().contract;
 export const NETWORK = publicConfig().network as "testnet";
 export const RPC_URL = publicConfig().rpcUrl;
 export const chainEnabled = () => Boolean(CONTRACT);
-export const SESSION_METHODS = ["start_game", "gather", "sell", "buy", "repair", "refuel", "burn_fuel", "build_section", "take_damage", "buy_vehicle", "select_vehicle", "claim_lot", "build_stall", "stall_sell", "stall_buy", "stall_stock", "stall_unstock", "stall_fund", "stall_collect", "stall_spread", "stall_list", "stall_buy_listed", "stall_sell_to_city"];
+export const SESSION_METHODS = ["start_game", "gather", "sell", "buy", "repair", "refuel", "burn_fuel", "build_section", "take_damage", "merchant_invest", "merchant_collect", "buy_vehicle", "select_vehicle", "claim_lot", "build_stall", "stall_sell", "stall_buy", "stall_stock", "stall_unstock", "stall_fund", "stall_collect", "stall_spread", "stall_list", "stall_buy_listed", "stall_sell_to_city"];
 const SESSION_KEY = "nearverse.session.v1";
 
 export interface Session { accountId: string; secretKey: string; kind: "guest" | "login" }
@@ -42,7 +42,7 @@ export const fetchGenesis = () => reader().view<number>(CONTRACT, "get_genesis_m
 export const fetchPlayer = (accountId: string) => reader().view<Player | null>(CONTRACT, "get_player", { account_id: accountId });
 export const fetchLeaderboard = () => reader().view<{ account_id: string; net_worth: number; sections_built: number }[]>(CONTRACT, "leaderboard", { limit: 200 });
 
-const KNOWN = /(ALREADY_STARTED|NOT_STARTED|BAD_NODE|COOLDOWN|TRUCK_DAMAGED|OUT_OF_FUEL|NODE_EMPTY|CARGO_FULL|BAD_MERCHANT|TRAVELING|BAD_ITEM|BAD_QTY|NOT_ENOUGH_ITEMS|PRICE_MOVED|MERCHANT_OUT_OF_CASH|MERCHANT_OUT_OF_STOCK|NOT_ENOUGH_COINS|NOTHING_TO_REPAIR|BAD_BLUEPRINT|BLUEPRINT_DONE|DEPOSIT_TOO_SMALL|NOT_ENOUGH_CREDITS|NOT_BUILT|ALREADY_BUILT|BAD_VEHICLE|ALREADY_OWNED|NOT_OWNED|BAD_LOT|LOT_TAKEN|NO_STALL|YOUR_OWN_STALL|NOT_YOUR_STALL|BAD_SPREAD|NOT_FOR_SALE|STALL_NOT_EMPTY)/;
+const KNOWN = /(ALREADY_STARTED|NOT_STARTED|BAD_NODE|COOLDOWN|TRUCK_DAMAGED|OUT_OF_FUEL|NODE_EMPTY|CARGO_FULL|BAD_MERCHANT|TRAVELING|BAD_ITEM|BAD_QTY|NOT_ENOUGH_ITEMS|PRICE_MOVED|MERCHANT_OUT_OF_CASH|MERCHANT_OUT_OF_STOCK|NOT_ENOUGH_COINS|NOTHING_TO_REPAIR|BAD_BLUEPRINT|BLUEPRINT_DONE|DEPOSIT_TOO_SMALL|NOT_ENOUGH_CREDITS|NOT_BUILT|ALREADY_BUILT|BAD_VEHICLE|ALREADY_OWNED|NOT_OWNED|BAD_LOT|LOT_TAKEN|NO_STALL|YOUR_OWN_STALL|NOT_YOUR_STALL|BAD_SPREAD|NOT_FOR_SALE|STALL_NOT_EMPTY|MERCHANT_CLOSED|INVESTORS_FULL|NOTHING_TO_COLLECT)/;
 export function errorCode(e: unknown) {
   const err = e as { message?: string; details?: unknown; data?: unknown } | null;
   let text = String(err?.message ?? e);

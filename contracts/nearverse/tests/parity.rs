@@ -54,7 +54,9 @@ fn full_trace_matches_step_by_step() {
             "stall_collect" => collect_stall(&mut mk, &mut p, WHO, u("lot") as usize).err(),
             "stall_spread" => set_stall_spread(&c, &mut mk, &p, WHO, u("lot") as usize, u("bps")).err(),
             "stall_list" => list_stall(&mut mk, &p, WHO, u("lot") as usize, u("price")).err(),
-            "stall_buy_listed" => buy_listed_stall(&mut mk, &mut p, WHO, u("lot") as usize).err(),
+            "invest" => invest_in_merchant(&c, &mut mk, &mut p, WHO, u("merchant") as usize, u("cents")).err(),
+            "merchant_collect" => collect_from_merchant(&mut mk, &mut p, WHO, u("merchant") as usize).err(),
+            "stall_buy_listed" => buy_listed_stall(&c, &mut mk, &mut p, WHO, u("lot") as usize).err(),
             "stall_city" => sell_stall_to_city(&c, &mut mk, &mut p, WHO, u("lot") as usize).err(),
             "tick" => { tick_once(&c, &mut mk); None }
             o => panic!("{o}"),

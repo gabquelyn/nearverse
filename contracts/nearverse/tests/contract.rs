@@ -74,14 +74,54 @@ fn only_the_owner_withdraws_revenue() {
 }
 
 #[test]
-fn credits_pay_for_fuel_and_repair_anywhere() {
+fn coins_pay_for_fuel_and_repair_anywhere() {
     let mut g = game();
     ctx("a.testnet", 10_000, 0); g.start_game();
     g.take_damage(30); g.burn_fuel(10);
-    let c0 = g.get_player(acc("a.testnet")).unwrap().credits;
+    let before = g.get_player(acc("a.testnet")).unwrap();
     g.repair(); g.refuel(5);
     let p = g.get_player(acc("a.testnet")).unwrap();
-    assert_eq!((p.durability, p.fuel, p.credits), (100, 55, c0 - 35));
+    assert_eq!((p.durability, p.fuel, p.coins, p.credits), (100, 55, before.coins - 300 - 75, before.credits));
+}
+
+#[test]
+fn a_broke_merchant_closes_until_someone_invests_and_investors_share_sales() {
+    let mut g = game();
+    ctx("a.testnet", 10_000, 0); g.start_game();
+    let mut mk = g.market.clone(); mk.merchants[0].cash = 1; g.market = mk;
+    let mut p = g.get_player(acc("a.testnet")).unwrap(); p.coins = 500_000; g.players.insert(acc("a.testnet"), p);
+    g.merchant_invest(0, 100_000);
+    assert_eq!(g.get_player(acc("a.testnet")).unwrap().coins, 400_000);
+    assert_eq!(g.market.merchants[0].cash, 100_001);
+    ctx("a.testnet", 200_000, 0);
+    let paid = g.buy(0, 1, 2, 1_000_000);
+    let earned = g.market.merchants[0].investors[0].earned;
+    assert_eq!(earned, paid * g.get_config().investor_cut_bps / 10000);
+    assert_eq!(g.merchant_collect(0), earned);
+}
+
+#[test]
+#[should_panic(expected = "MERCHANT_CLOSED")]
+fn a_closed_merchant_refuses_to_trade() {
+    let mut g = game();
+    ctx("a.testnet", 10_000, 0); g.start_game();
+    let mut mk = g.market.clone(); mk.merchants[0].cash = 1; g.market = mk;
+    ctx("a.testnet", 200_000, 0);
+    g.buy(0, 1, 1, 1_000_000);
+}
+
+#[test]
+fn a_merchants_stall_sells_for_coins_into_its_cash() {
+    let mut g = game();
+    ctx("a.testnet", 10_000, 0); g.start_game();
+    let lot = g.get_config().lots.iter().position(|l| l.seeded).unwrap();
+    let shop = g.get_config().lots[lot].seed_merchant as usize;
+    let (price, till, cash) = (g.get_config().seed_price, g.market.stalls[lot].cash, g.market.merchants[shop].cash);
+    let mut p = g.get_player(acc("a.testnet")).unwrap(); p.coins = price; g.players.insert(acc("a.testnet"), p);
+    g.stall_buy_listed(lot as u32);
+    assert_eq!(g.market.stalls[lot].owner, Some("a.testnet".to_string()));
+    assert_eq!(g.market.merchants[shop].cash, cash + price + till);
+    assert_eq!(g.get_player(acc("a.testnet")).unwrap().coins, 0);
 }
 
 #[test]

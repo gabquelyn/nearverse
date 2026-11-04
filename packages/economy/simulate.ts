@@ -1,8 +1,8 @@
 // Fast-forward engine: a labeled, in-memory simulation on a copy of live state. Sends no transactions.
 import type { Config, Market } from "./types";
-import { newPlayer, startGame, sell, buy, gather, repair, buildSection, GameError, netWorth } from "./actions";
+import { newPlayer, startGame, sell, buy, gather, repair, investInMerchant, GameError, netWorth } from "./actions";
 import { bid, ask } from "./price";
-import { tickOnce, activeEvent } from "./tick";
+import { tickOnce, activeEvent, merchantClosed } from "./tick";
 
 /** Small deterministic PRNG, so a run with one seed can be replayed. */
 export function rng(seed: number) {
@@ -18,7 +18,10 @@ export interface HourSample {
   targets: number[];
   event: string | null;
   trades: number;
-  built: number;
+  /** Merchants closed at the end of this hour. */
+  closed: number[];
+  /** Merchants that simulated traders reopened this hour. */
+  reopened: number[];
 }
 
 export interface Sim {
@@ -36,12 +39,10 @@ export function createSim(c: Config, from: Market, traders = 14, seed = 7): Sim 
 const tryDo = (f: () => unknown) => { try { f(); return true; } catch (e) { if (e instanceof GameError) return false; throw e; } };
 
 /** One simulated trader takes one simple, greedy decision. */
-function act(sim: Sim, t: ReturnType<typeof newPlayer>): "trade" | "build" | null {
+function act(sim: Sim, t: ReturnType<typeof newPlayer>): "trade" | null {
   const { c, mk } = sim;
   sim.now += 20_000;
   if (t.durability < 25) tryDo(() => repair(c, t));
-  const bpIdx = t.blueprints.findIndex((done, i) => done < c.blueprints[i].sections.length);
-  if (bpIdx >= 0 && tryDo(() => buildSection(c, mk, t, bpIdx))) return "build";
   // sell what is priced above base, otherwise gather
   let best = -1, bestM = 0, bestRatio = 1.0;
   t.items.forEach((q, it) => {
@@ -57,15 +58,12 @@ function act(sim: Sim, t: ReturnType<typeof newPlayer>): "trade" | "build" | nul
     const qty = Math.min(t.items[best], 6);
     if (tryDo(() => sell(c, mk, t, bestM, best, qty, 0, sim.now))) { sim.playerSold[best] += qty; return "trade"; }
   }
-  // needs of the first unfinished blueprint guide what to fetch
-  const sec = bpIdx >= 0 ? c.blueprints[bpIdx].sections[t.blueprints[bpIdx]] : null;
-  const missing = sec ? sec.needs.findIndex((q, i) => t.items[i] < q) : -1;
-  if (missing >= 0 && t.coins > 6000 && sim.rand() < 0.35) {
-    const m = Math.floor(sim.rand() * c.merchants.length);
-    if (ask(c, mk, m, missing) < c.items[missing].base_price * 1.5 && tryDo(() => buy(c, mk, t, m, missing, 2, 1e9, sim.now))) return "trade";
+  // now and then, stock up on whatever is cheap
+  if (t.coins > 6000 && sim.rand() < 0.2) {
+    const m = Math.floor(sim.rand() * c.merchants.length), it = Math.floor(sim.rand() * c.items.length);
+    if (ask(c, mk, m, it) < c.items[it].base_price && tryDo(() => buy(c, mk, t, m, it, 2, 1e9, sim.now))) return "trade";
   }
-  const nodes = c.nodes.map((n, i) => ({ n, i })).filter(({ n }) => (missing < 0 || n.item === missing || sim.rand() < 0.25));
-  const pick = nodes[Math.floor(sim.rand() * nodes.length)] ?? { i: 0 };
+  const pick = { i: Math.floor(sim.rand() * c.nodes.length) };
   tryDo(() => gather(c, mk, t, pick.i, sim.now));
   return null;
 }
@@ -73,9 +71,17 @@ function act(sim: Sim, t: ReturnType<typeof newPlayer>): "trade" | "build" | nul
 /** Advances one market hour. */
 export function stepHour(sim: Sim): HourSample {
   const { c, mk } = sim;
-  let trades = 0, built = 0;
+  let trades = 0;
+  // The richest trader reopens any closed shop, for the share of its sales.
+  const reopened: number[] = [];
+  c.merchants.forEach((m, i) => {
+    if (!merchantClosed(c, mk, i)) return;
+    const who = sim.traders.reduce((best, t) => (t.coins > best.coins ? t : best), sim.traders[0]);
+    const cents = Math.floor((m.start_cash * c.closed_below_bps) / 10000) * 2;
+    if (who.coins >= cents && tryDo(() => investInMerchant(c, mk, who, `sim-${sim.traders.indexOf(who)}`, i, cents))) reopened.push(i);
+  });
   for (const t of sim.traders) {
-    for (let a = 0; a < 3; a++) { const r = act(sim, t); if (r === "trade") trades++; if (r === "build") built++; }
+    for (let a = 0; a < 3; a++) { if (act(sim, t) === "trade") trades++; }
   }
   tickOnce(c, mk);
   const sample: HourSample = {
@@ -84,7 +90,7 @@ export function stepHour(sim: Sim): HourSample {
     cash: mk.merchants.map((m) => m.cash),
     targets: c.items.map((_, it) => mk.merchants.reduce((a, m) => a + m.target[it], 0)),
     event: activeEvent(c, mk.tick)?.title ?? null,
-    trades, built,
+    trades, closed: c.merchants.flatMap((_, i) => (merchantClosed(c, mk, i) ? [i] : [])), reopened,
   };
   sim.history.push(sample);
   return sample;

@@ -1,13 +1,16 @@
 // Advances market time: stock reversion, stipends, adaptation, node regrowth and events.
 import type { Config, Market } from "./types";
 
+export const merchantClosed = (c: Config, mk: Market, merchant: number) =>
+  mk.merchants[merchant].cash * 10000 < c.merchants[merchant].start_cash * c.closed_below_bps;
+
 export function newMarket(c: Config): Market {
   return {
     tick: 0,
-    merchants: c.merchants.map((m) => ({ stock: [...m.targets], target: [...m.targets], cash: m.start_cash })),
+    merchants: c.merchants.map((m) => ({ stock: [...m.targets], target: [...m.targets], cash: m.start_cash, investors: [] })),
     nodes: c.nodes.map((n) => n.max_stock),
     stalls: c.lots.map((l) => l.seeded
-      ? { owner: c.seed_owner, built: true, stock: c.items.map(() => c.seed_stock), cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price }
+      ? { owner: `merchant:${c.merchants[l.seed_merchant].id}`, built: true, stock: c.items.map(() => c.seed_stock), cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price }
       : { owner: null, built: false, stock: c.items.map(() => 0), cash: 0, spread_bps: c.stall_spread_bps, price: 0 }),
   };
 }
@@ -34,7 +37,8 @@ export function tickOnce(c: Config, mk: Market): void {
         }
       }
     }
-    if (s.cash < rules.cash_cap) s.cash = Math.min(rules.cash_cap, s.cash + rules.stipend);
+    // A closed merchant earns nothing until players invest.
+    if (!merchantClosed(c, mk, i) && s.cash < rules.cash_cap) s.cash = Math.min(rules.cash_cap, s.cash + rules.stipend);
   });
   c.nodes.forEach((n, i) => { mk.nodes[i] = Math.min(n.max_stock, mk.nodes[i] + n.regrow); });
   if (t % c.event_period_ticks === 0) {

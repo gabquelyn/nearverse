@@ -17,6 +17,23 @@ impl Nearverse {
         self.players.insert(id, p);
         total
     }
+    /// Puts coins into a merchant for good, for a share of what it sells. Reopens a closed shop.
+    pub fn merchant_invest(&mut self, merchant: u32, cents: u64) {
+        self.advance();
+        let id = env::predecessor_account_id();
+        let mut p = self.load(&id);
+        ok(engine::invest_in_merchant(&self.config, &mut self.market, &mut p, id.as_str(), merchant as usize, cents));
+        self.players.insert(id, p);
+    }
+    /// Pays out this player's share of a merchant's sales so far.
+    pub fn merchant_collect(&mut self, merchant: u32) -> u64 {
+        self.advance();
+        let id = env::predecessor_account_id();
+        let mut p = self.load(&id);
+        let earned = ok(engine::collect_from_merchant(&mut self.market, &mut p, id.as_str(), merchant as usize));
+        self.players.insert(id, p);
+        earned
+    }
     /// Buy qty units; fails with PRICE_MOVED if the total would be over max_total.
     pub fn buy(&mut self, merchant: u32, item: u32, qty: u64, max_total: u64) -> u64 {
         self.advance();

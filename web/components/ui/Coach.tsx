@@ -10,12 +10,13 @@ const nearest = <T extends { x: number; z: number }>(list: T[]) => list.reduce((
 
 export const Coach = memo(function Coach() {
   const held = useGame((s) => s.player.items.reduce((a, b) => a + b, 0)), hasZone = useGame((s) => Boolean(s.zone)), waypoint = useGame((s) => Boolean(s.waypoint)), setWaypoint = useGame((s) => s.setWaypoint);
+  const toured = useGame((s) => s.toured);
   const [gone, setGone] = useState(true), [loaded, setLoaded] = useState(false), [sold, setSold] = useState(false);
   useEffect(() => { try { setGone(localStorage.getItem(KEY) === "1"); } catch { setGone(false); } }, []);
   const finish = () => { setGone(true); try { localStorage.setItem(KEY, "1"); } catch { /* shown again next visit */ } };
   useEffect(() => { if (held > 0) setLoaded(true); else if (loaded) setSold(true); }, [held, loaded]);
   useEffect(() => { if (!sold) return; const id = setTimeout(finish, 9000); return () => clearTimeout(id); }, [sold]);
-  if (gone || (hasZone && !sold)) return null;
+  if (gone || !toured || (hasZone && !sold)) return null;
   const point = () => {
     if (held > 0) { const m = nearest(c.merchants); setWaypoint({ x: m.x, z: m.z, label: m.name }); return; }
     const market = useGame.getState().market, n = nearest(c.nodes.filter((_, i) => market.nodes[i] > 0));

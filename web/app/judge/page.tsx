@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { rules as c, createSim, stepHour, floodMarket, type Sim, type HourSample, coins, cargoUsed } from "@nearverse/economy";
 import { useGame, worth } from "@/lib/state/game";
-import { MerchantTable, Blueprints } from "@/components/ui/Prices";
+import { MerchantTable } from "@/components/ui/Prices";
 import { WeekChart, CashChart, HOURS } from "@/components/ui/WeekChart";
 import { Nav } from "@/components/ui/Nav";
 import { LiveMarket } from "@/components/ui/LiveMarket";
@@ -36,7 +36,7 @@ function FastForward() {
     const was = c.merchants[j].targets[i];
     if (Math.abs(t - was) / was >= 0.05) adapted.push(`${c.merchants[j].name} ${t > was ? "stocks" : "cut"} ${Math.abs(Math.round(((t - was) / was) * 100))}% ${t > was ? "more" : "of its"} ${c.items[i].name.toLowerCase()}`);
   }));
-  const trades = history.reduce((a, h) => a + h.trades, 0), built = history.reduce((a, h) => a + h.built, 0);
+  const trades = history.reduce((a, h) => a + h.trades, 0), reopened = history.reduce((a, h) => a + h.reopened.length, 0);
   return (
     <section aria-label="Fast-forward">
       <h2>A week of trading in a minute</h2>
@@ -53,7 +53,7 @@ function FastForward() {
             <p className="mlabel" style={{ marginTop: 0 }}>Merchant cash</p>
             <CashChart history={history} />
             <p className="mlabel">This week so far</p>
-            <p style={{ margin: 0 }} data-testid="sim-summary">{trades} trades, {built} sections built{flooded.length ? `, iron flooded in hour ${flooded.join(", ")}` : ""}.</p>
+            <p style={{ margin: 0 }} data-testid="sim-summary">{trades} trades{reopened ? `, ${reopened} broke shops reopened by investors` : ""}{flooded.length ? `, iron flooded in hour ${flooded.join(", ")}` : ""}.</p>
             <p className="mlabel">What merchants learned</p>
             {adapted.length ? <ul style={{ margin: 0, paddingLeft: 18 }}>{adapted.slice(0, 5).map((a) => <li key={a}>{a}</li>)}</ul> : <p style={{ margin: 0 }}>Nothing yet. They review their stock every {c.adapt_every_ticks} hours.</p>}
           </div>
@@ -79,8 +79,8 @@ export default function Judge() {
       <div className="row" style={{ marginBottom: 12 }}>
         <button className="btn" disabled={g.player.started} onClick={() => g.startDriving()}>{g.player.started ? "Game started" : "Start game"}</button>
         <button className="btn" onClick={() => g.act({ t: "damage", points: 15 })}>Crash the truck</button>
-        <button className="btn" onClick={() => g.act({ t: "repair" })}>Repair with credits</button>
-        <button className="btn" onClick={() => g.act({ t: "refuel", units: 10 })}>Refuel 10 with credits</button>
+        <button className="btn" onClick={() => g.act({ t: "repair" })}>Repair</button>
+        <button className="btn" onClick={() => g.act({ t: "refuel", units: 10 })}>Refuel 10</button>
         <button className="btn" onClick={() => g.buyCredits(1)}>{g.mode === "practice" ? "Add 1000 practice credits" : "Buy credits with 1 NEAR"}</button>
         {g.mode === "practice" && <button className="btn ghost" onClick={() => g.advanceHours(24)}>Advance market 24 hours</button>}
       </div>
@@ -89,7 +89,6 @@ export default function Judge() {
         <div>
           <p className="mlabel" style={{ marginTop: 0 }}>Gather (these spots are hidden in the game)</p>
           <div className="row">{c.nodes.slice(0, 8).map((n, i) => <button key={n.id} className="btn small" onClick={() => g.act({ t: "gather", node: i })}>{n.name} in {n.region} ({g.market.nodes[i]})</button>)}</div>
-          <p className="mlabel">Build</p><Blueprints />
           <p className="mlabel">Activity</p>
           <ul className="log" data-testid="log">{g.log.length ? g.log.slice(0, 8).map((l) => <li key={l.id} className={l.failed ? "failed" : ""}>{l.text}{l.hash ? <> (<a href={explorerTx(l.hash)} target="_blank" rel="noreferrer">view transaction</a>)</> : ""}</li>) : <li>Nothing yet. Gather a load to begin.</li>}</ul>
         </div>

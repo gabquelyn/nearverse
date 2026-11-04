@@ -72,7 +72,7 @@ test("hitting an obstacle hard damages the truck", async ({ page }) => {
   await expect(page.getByText("Pickup 100%")).toHaveCount(0);
 });
 
-const SAVE = "nearverse.practice.v3";
+const SAVE = "nearverse.practice.v4";
 async function seed(page: import("@playwright/test").Page, change: (p: Record<string, number[] | number>) => void) {
   await page.goto("/judge");
   await expect(page.getByRole("button", { name: "Game started" })).toBeVisible();
@@ -84,14 +84,14 @@ async function seed(page: import("@playwright/test").Page, change: (p: Record<st
   await expect(page.getByRole("button", { name: "Game started" })).toBeVisible();
 }
 
-test("credits pay for fuel, repairs and vehicles, shown with pictures", async ({ page }) => {
+test("coins pay for fuel and repairs, credits for vehicles, shown with pictures", async ({ page }) => {
   await page.goto("/profile");
   await page.getByRole("button", { name: /Buy 1000 credits/ }).click().catch(() => {});
   await seed(page, (p) => { p.credits = 5000; p.durability = 50; p.fuel = 10; });
-  await page.getByRole("button", { name: "Repair with credits" }).click();
-  await page.getByRole("button", { name: "Refuel 10 with credits" }).click();
+  await page.getByRole("button", { name: "Repair" }).click();
+  await page.getByRole("button", { name: "Refuel 10" }).click();
   await expect(page.getByTestId("player-summary")).toContainText("fuel 20/100");
-  await expect(page.getByTestId("player-summary")).toContainText("Credits 4940");
+  await expect(page.getByTestId("player-summary")).toContainText("Credits 5000, coins 143.50");
   const scout = page.getByRole("article", { name: "Scout" });
   await expect(scout.getByRole("img", { name: "The Scout" })).toBeVisible({ timeout: 20_000 });
   await scout.getByRole("button", { name: /Buy for 1620 credits/ }).click();
@@ -131,7 +131,7 @@ test("the map shows regions and you, hides resources, collapses, and routes to m
   const map = page.getByTestId("map");
   for (const name of ["Snowfields", "Desert", "City", "Forest"]) await expect(map.getByText(name, { exact: true })).toBeVisible();
   // Home, 3 merchants, 2 stalls for sale, my location. Resources never appear.
-  await expect(map.locator(".pin:not(.maplegend .pin)")).toHaveCount(7);
+  await expect(map.locator(".pin:not(.maplegend .pin)")).toHaveCount(8);
   await expect(map.getByRole("button", { name: /Route to Hoarder/ })).toBeVisible();
   await expect(map.getByRole("button", { name: /Route to Brook Corner/ })).toBeVisible();
   await map.getByRole("button", { name: "Nearest stall" }).click();
@@ -243,6 +243,7 @@ test("on a keyboard, left and right follow the vehicle and the camera stays behi
 test("pressing outside closes panels and details, and the game explains its first loop", async ({ page }) => {
   await page.goto("/play");
   await ready(page);
+  await page.getByRole("button", { name: "Skip tour" }).click();
   await expect(page.getByTestId("coach")).toContainText("Find your first load");
   await page.getByRole("button", { name: "Point me to one" }).click();
   await expect(page.getByTestId("map")).toContainText("A hidden spot");
@@ -287,4 +288,48 @@ test("the game says plainly when moves are slow, the connection drops, or the ke
   await expect(page.getByText("Connection lost. Reconnecting.")).toBeVisible();
   await set({ offline: false, keyExpired: true });
   await expect(page.getByRole("button", { name: "Approve a new one" })).toBeVisible();
+});
+
+test("a new player gets a tour, and the world helps them hunt", async ({ page }) => {
+  await page.goto("/play");
+  await ready(page);
+  const tour = page.getByTestId("tour");
+  await expect(tour).toContainText("Welcome to Nearverse");
+  for (let i = 0; i < 5; i++) await tour.getByRole("button", { name: "Next" }).click();
+  await tour.getByRole("button", { name: "Start hunting" }).click();
+  await expect(tour).toBeHidden();
+  await page.reload();
+  await ready(page);
+  await expect(tour).toBeHidden();
+  await move(page, 95, -60);
+  await expect(page.getByTestId("nearby")).toContainText("Timber stand");
+  await expect(page.getByRole("button", { name: "Zoom in" })).toBeDisabled();
+  await page.getByRole("button", { name: "Zoom out" }).click();
+  await expect(page.getByRole("button", { name: "Zoom in" })).toBeEnabled();
+  const closest = await page.evaluate(() => {
+    const m = (window as never as { __nearverse: { mines: { x: number; z: number }[] } }).__nearverse.mines;
+    let least = 1e9; m.forEach((a, i) => m.forEach((b, j) => { if (i < j) least = Math.min(least, Math.hypot(a.x - b.x, a.z - b.z)); }));
+    return { least, count: m.length };
+  });
+  expect(closest.count).toBeGreaterThan(5);
+  expect(closest.least).toBeGreaterThanOrEqual(14);
+});
+
+test("a broke merchant closes, and investing reopens it and earns a share", async ({ page }) => {
+  await page.goto("/judge");
+  const panel = page.getByTestId("invest");
+  await expect(panel).toBeVisible();
+  const save = "nearverse.practice.v4";
+  await page.waitForFunction((k) => localStorage.getItem(k), save);
+  await page.evaluate((k) => { const s = JSON.parse(localStorage.getItem(k)!); s.market.merchants[0].cash = 1; s.player.coins = 200000; s.player.started = true; localStorage.setItem(k, JSON.stringify(s)); }, save);
+  await page.reload();
+  await expect(page.getByTestId("closed")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Buy one Iron", exact: true })).toBeDisabled();
+  await panel.getByLabel("Coins").fill("900");
+  await panel.getByRole("button", { name: "Invest" }).click();
+  await expect(page.getByTestId("closed")).toBeHidden();
+  await page.getByRole("button", { name: "Buy one Iron", exact: true }).click();
+  await expect(panel).toContainText("Earned: 4.");
+  await panel.getByRole("button", { name: /Collect/ }).click();
+  await expect(panel).toContainText("Earned: 0.00");
 });

@@ -4,7 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { rules as c, rng } from "@nearverse/economy";
-import { COAST_GLSL, DRIVE_RADIUS, PLOT, ROADS, WORLD_SIZE, biomeAt } from "./world";
+import { COAST_GLSL, DRIVE_RADIUS, ROADS, WORLD_SIZE, biomeAt } from "./world";
 import { sky } from "./daynight";
 
 /** R = road or dirt, G = paving, B = sand. Read by the ground and grass shaders. */
@@ -18,7 +18,6 @@ export function paintGroundMap(): THREE.Texture {
   for (const [a, b] of ROADS) { g.beginPath(); g.moveTo(u(a.x), u(a.z)); g.lineTo(u(b.x), u(b.z)); g.stroke(); }
   for (const n of [...c.lots, ...c.merchants]) { g.beginPath(); g.arc(u(n.x), u(n.z), l(10), 0, 7); g.fill(); }
   g.fillStyle = "#0f0"; g.beginPath(); g.arc(u(0), u(0), l(25), 0, 7); g.fill();
-  g.fillRect(u(PLOT[0] - 11), u(PLOT[1] - 8), l(22), l(16));
   const rim = g.createRadialGradient(u(0), u(0), l(DRIVE_RADIUS - 2), u(0), u(0), l(DRIVE_RADIUS + 4));
   rim.addColorStop(0, "#000"); rim.addColorStop(1, "#00f");
   g.fillStyle = rim; g.fillRect(0, 0, S, S);

@@ -1,6 +1,6 @@
 // Writes shared cases. The Rust tests replay these, so any drift between the two engines fails CI.
 import { writeFileSync } from "node:fs";
-import { rules as c, newMarket, tickOnce, bidAt, askAt, newPlayer, startGame, gather, sell, buy, repair, buildSection, takeDamage, GameError, rng, buyVehicle, selectVehicle, buildStall, claimLot, refuel, burnFuel, addCredits, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity } from "../packages/economy/index";
+import { investInMerchant, collectFromMerchant, rules as c, newMarket, tickOnce, bidAt, askAt, newPlayer, startGame, gather, sell, buy, repair, buildSection, takeDamage, GameError, rng, buyVehicle, selectVehicle, buildStall, claimLot, refuel, burnFuel, addCredits, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity } from "../packages/economy/index";
 const root = new URL("..", import.meta.url).pathname;
 const vectors: any[] = [];
 const r = rng(42);
@@ -47,6 +47,8 @@ for (let i = 0; i < 2500; i++) {
     else if (k < 0.82) { const price = Math.floor(r() * 2) * 5000; rec({ t: "stall_list", lot, price }, () => listStall(c, mk, p, who, lot, price)); }
     else if (k < 0.9) rec({ t: "stall_buy_listed", lot }, () => buyListedStall(c, mk, p, who, lot));
     else if (k < 0.95) rec({ t: "stall_city", lot }, () => sellStallToCity(c, mk, p, who, lot));
+    else if (k < 0.97) { const cents = Math.floor(r() * 90000); rec({ t: "invest", merchant, cents }, () => investInMerchant(c, mk, p, who, merchant, cents)); }
+    else if (k < 0.98) rec({ t: "merchant_collect", merchant }, () => collectFromMerchant(mk, p, who, merchant));
     else { const credits = Math.floor(r() * 400); rec({ t: "add_credits", credits }, () => addCredits(p, credits)); }
   }
   if (false) rec({ t: "tick" }, () => tickOnce(c, mk));

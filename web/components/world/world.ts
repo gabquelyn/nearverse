@@ -8,6 +8,8 @@ export const DRIVE_RADIUS = 1000;
 export const WORLD_SIZE = 2240; // the painted ground maps cover -1120..1120
 export const truck = { pos: new THREE.Vector3(0, 2, 0), yaw: 0, speed: 0, cameraYaw: 0 };
 export const keys = new Set<string>();
+/** How far back the camera sits: 1 is normal, higher is a wider view. */
+export const view = { zoom: 1 };
 /** The phone thumb stick. x is the vehicle's right, y is its forward, each from -1 to 1. */
 export const stick = { x: 0, y: 0 };
 /** Written straight to the page, so loading a spot doesn't re-render the interface every frame. */

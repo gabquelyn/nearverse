@@ -1,13 +1,13 @@
 "use client";
 import { create } from "zustand";
-import { rules as c, activeEvent, newMarket, newPlayer, advanceTo, startGame, gather, sell, buy, repair, refuel, burnFuel, addCredits, claimLot, buildSection, takeDamage, buyVehicle, selectVehicle, buildStall, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity, stallBidAt, stallAskAt, GameError, quoteSell, quoteBuy, ask, netWorth, tickOnce, coins, type Market, type Player } from "@nearverse/economy";
+import { rules as c, activeEvent, investInMerchant, collectFromMerchant, newMarket, newPlayer, advanceTo, startGame, gather, sell, buy, repair, refuel, burnFuel, addCredits, claimLot, buildSection, takeDamage, buyVehicle, selectVehicle, buildStall, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity, stallBidAt, stallAskAt, GameError, quoteSell, quoteBuy, ask, netWorth, tickOnce, coins, type Market, type Player } from "@nearverse/economy";
 import * as near from "../near/client";
 
 export const MESSAGES: Record<string, string> = {
   NOT_STARTED: "Press Start driving first.",
   COOLDOWN: "Still loading the last batch. Try again in a moment.",
-  TRUCK_DAMAGED: "The truck is too damaged for this spot. Repair it with credits from the top panel.",
-  OUT_OF_FUEL: "Out of fuel. Refuel with credits from the top panel.",
+  TRUCK_DAMAGED: "The truck is too damaged for this spot. Repair it from the top panel.",
+  OUT_OF_FUEL: "Out of fuel. Refuel from the top panel.",
   NOT_ENOUGH_CREDITS: "You need more credits. Buy them with NEAR in your profile.",
   NOT_BUILT: "Build the stall first.",
   ALREADY_BUILT: "This stall is already built.",
@@ -32,6 +32,9 @@ export const MESSAGES: Record<string, string> = {
   BAD_SPREAD: "Choose a margin within the allowed range.",
   NOT_FOR_SALE: "That stall isn't for sale.",
   STALL_NOT_EMPTY: "Take all the stock out before selling this stall to the city.",
+  MERCHANT_CLOSED: "This merchant is broke and closed. Invest to reopen the shop.",
+  INVESTORS_FULL: "This merchant already has as many investors as it can take.",
+  NOTHING_TO_COLLECT: "Nothing to collect from this merchant yet.",
   NETWORK: "That move didn't go through, so your game was corrected.",
   KEY_ALLOWANCE: "Your game key has run out. Approve a new one to keep playing.",
   NO_BALANCE: "Your wallet is out of NEAR for moves. Get more from your profile.",
@@ -42,10 +45,10 @@ export type Action =
   | { t: "buy"; merchant: number; item: number; qty: number } | { t: "repair" } | { t: "refuel"; units: number } | { t: "burn_fuel"; units: number } | { t: "claim_lot"; lot: number } | { t: "damage"; points: number } | { t: "buy_vehicle"; vehicle: number } | { t: "select_vehicle"; vehicle: number }
   | { t: "build_stall"; lot: number } | { t: "stall_sell"; lot: number; item: number; qty: number } | { t: "stall_buy"; lot: number; item: number; qty: number }
   | { t: "stall_stock"; lot: number; item: number; qty: number } | { t: "stall_unstock"; lot: number; item: number; qty: number } | { t: "stall_fund"; lot: number; cents: number }
-  | { t: "stall_collect"; lot: number } | { t: "stall_spread"; lot: number; bps: number } | { t: "stall_list"; lot: number; price: number } | { t: "stall_buy_listed"; lot: number } | { t: "stall_city"; lot: number } | { t: "build"; blueprint: number };
+  | { t: "stall_collect"; lot: number } | { t: "stall_spread"; lot: number; bps: number } | { t: "stall_list"; lot: number; price: number } | { t: "stall_buy_listed"; lot: number } | { t: "stall_city"; lot: number } | { t: "build"; blueprint: number } | { t: "invest"; merchant: number; cents: number } | { t: "merchant_collect"; merchant: number };
 export interface LogEntry { id: number; text: string; hash?: string | null; failed?: boolean }
 type Mode = "practice" | "chain";
-const SAVE = "nearverse.practice.v3", SEEN = "nearverse.seen.v3";
+const SAVE = "nearverse.practice.v4", SEEN = "nearverse.seen.v4";
 export const PRACTICE_ID = "you";
 export interface Waypoint { x: number; z: number; label: string }
 
@@ -65,7 +68,7 @@ let pending = 0;
 
 interface State {
   ready: boolean; mode: Mode; market: Market; player: Player; genesis: number; session: near.Session | null;
-  log: LogEntry[]; toast: { id: number; text: string; bad?: boolean; retry?: Action } | null; activity: { id: number; text: string }[]; slow: boolean; offline: boolean; keyExpired: boolean; closedZone: string | null; closeZone(): void; clearToast(): void; away: string[] | null;
+  log: LogEntry[]; toast: { id: number; text: string; bad?: boolean; retry?: Action } | null; activity: { id: number; text: string }[]; toured: boolean; setToured(): void; slow: boolean; offline: boolean; keyExpired: boolean; closedZone: string | null; closeZone(): void; clearToast(): void; away: string[] | null;
   zone: { kind: "node" | "stall" | "plot" | "lot"; index: number } | null; waypoint: Waypoint | null; mapOpen: boolean; setWaypoint(w: Waypoint | null): void; setMapOpen(open: boolean): void; worldReady: boolean; setWorldReady(): void; board: { account_id: string; net_worth: number; sections_built: number }[];
   init(): Promise<void>; startDriving(): Promise<boolean>; act(a: Action): boolean; poll(): Promise<void>; say(text: string, bad?: boolean, retry?: Action): void;
   setZone(z: State["zone"]): void; dismissAway(): void; resetPractice(): void; advanceHours(n: number): void;
@@ -111,8 +114,8 @@ function describe(a: Action, result: number): string {
     case "gather": return `Gathered ${result} ${c.items[c.nodes[a.node].item].name.toLowerCase()}`;
     case "sell": return `Sold ${a.qty} ${c.items[a.item].name.toLowerCase()} to ${c.merchants[a.merchant].name} for ${coins(result)}`;
     case "buy": return `Bought ${a.qty} ${c.items[a.item].name.toLowerCase()} from ${c.merchants[a.merchant].name} for ${coins(result)}`;
-    case "repair": return "Repaired the truck with credits";
-    case "refuel": return `Refueled ${a.units} with credits`;
+    case "repair": return "Repaired the truck";
+    case "refuel": return `Refueled ${a.units}`;
     case "burn_fuel": return "";
     case "claim_lot": return `Bought the location ${c.lots[a.lot].name} for ${c.lots[a.lot].price} credits`;
     case "damage": return `Crashed: truck lost ${a.points} health`;
@@ -129,13 +132,15 @@ function describe(a: Action, result: number): string {
     case "stall_list": return a.price ? `Listed ${c.lots[a.lot].name} for ${coins(a.price)}` : `Took ${c.lots[a.lot].name} off the market`;
     case "stall_buy_listed": return `Bought the stall at ${c.lots[a.lot].name}`;
     case "stall_city": return `Sold ${c.lots[a.lot].name} to the city for ${coins(result)}`;
+    case "invest": return `Invested ${coins(a.cents)} in the ${c.merchants[a.merchant].name}`;
+    case "merchant_collect": return `Collected ${coins(result)} from the ${c.merchants[a.merchant].name}`;
     case "build": return `Built a ${c.blueprints[a.blueprint].name.toLowerCase()} section`;
   }
 }
 
 export const useGame = create<State>((set, get) => ({
   ready: false, mode: "practice", market: newMarket(c), player: newPlayer(c), genesis: 0, session: null,
-  log: [], toast: null, activity: [], slow: false, offline: false, keyExpired: false, closedZone: null, away: null,
+  log: [], toast: null, activity: [], toured: false, setToured() { set({ toured: true }); }, slow: false, offline: false, keyExpired: false, closedZone: null, away: null,
   closeZone() { set({ closedZone: zoneKey(get().zone) }); },
   clearToast() { set({ toast: null }); },
   zone: null, worldReady: false, setWorldReady() { set({ worldReady: true }); }, board: [], waypoint: null, mapOpen: false,
@@ -250,6 +255,8 @@ export const useGame = create<State>((set, get) => ({
         case "refuel": refuel(c, p, a.units); args = { method: "refuel", args: { units: a.units } }; break;
         case "burn_fuel": burnFuel(c, p, a.units); args = { method: "burn_fuel", args: { units: a.units } }; break;
         case "claim_lot": claimLot(c, mk, p, who, a.lot); args = { method: "claim_lot", args: { lot: a.lot } }; break;
+        case "invest": investInMerchant(c, mk, p, who, a.merchant, a.cents); args = { method: "merchant_invest", args: { merchant: a.merchant, cents: a.cents } }; break;
+        case "merchant_collect": result = collectFromMerchant(mk, p, who, a.merchant); args = { method: "merchant_collect", args: { merchant: a.merchant } }; break;
         case "build": buildSection(c, mk, p, a.blueprint); args = { method: "build_section", args: { blueprint: a.blueprint } }; break;
       }
     } catch (e) {

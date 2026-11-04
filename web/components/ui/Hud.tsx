@@ -2,9 +2,9 @@
 // Each part subscribes only to what it shows, so a crash or pickup doesn't redraw the whole interface.
 import Link from "next/link";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { rules as c, activeEvent, coins, cargoUsed, currentBlueprint, refuelQuote, repairQuote, vehicleOf, fuelBurn } from "@nearverse/economy";
+import { rules as c, activeEvent, coins, cargoUsed, premiumFor, refuelQuote, repairQuote, vehicleOf, fuelBurn } from "@nearverse/economy";
 import { useGame, worth } from "@/lib/state/game";
-import { MerchantTable, Blueprints } from "./Prices";
+import { MerchantTable } from "./Prices";
 import { LotPanel } from "./StallPanel";
 import { TopMap } from "./WorldMap";
 import { timeLabel } from "../world/daynight";
@@ -14,6 +14,8 @@ import { useOutside } from "@/lib/useOutside";
 import { link, others, realtimeEnabled } from "@/lib/realtime";
 import { MarketButton } from "./LiveMarket";
 import { Coach } from "./Coach";
+import { Tour } from "./Tour";
+import { Nearby, ZoomButtons } from "./Nearby";
 
 const Stats = memo(function Stats() {
   const player = useGame((s) => s.player), tick = useGame((s) => s.market.tick), act = useGame((s) => s.act);
@@ -32,8 +34,8 @@ const Stats = memo(function Stats() {
       <div className="plate" style={{ flexGrow: 3 }}><small>Truck bed {cargoUsed(c, player)}/{vehicle.capacity}</small>
         <div className="cargo">{c.items.map((it, i) => <span key={it.id} title={it.name}><i className="swatch" style={{ background: `var(--${it.id})` }} />{player.items[i]}</span>)}</div>
         <div className="garage">
-          <button className="btn small" disabled={rf.missing === 0} onClick={() => act({ t: "refuel", units: rf.missing })}>{rf.missing ? `Refuel: ${rf.credits} cr` : "Tank full"}</button>
-          <button className="btn small" disabled={rq.missing === 0} onClick={() => act({ t: "repair" })}>{rq.missing ? `Repair: ${rq.credits} cr` : "No damage"}</button>
+          <button className="btn small" disabled={rf.missing === 0} onClick={() => act({ t: "refuel", units: rf.missing })}>{rf.missing ? `Refuel: ${coins(rf.cost)}` : "Tank full"}</button>
+          <button className="btn small" disabled={rq.missing === 0} onClick={() => act({ t: "repair" })}>{rq.missing ? `Repair: ${coins(rq.cost)}` : "No damage"}</button>
         </div></div>
       <div className="plate job"><small>Job this shift</small><br />{progress >= c.quest_gathers ? "Done. Reward paid." : `Find ${c.quest_gathers - progress} loads of ${c.items[quest.item].name.toLowerCase()} ${quest.region === "Home" ? "near Home" : `in the ${quest.region}`} for ${c.quest_reward_qty} ${c.items[window_ % c.items.length].name.toLowerCase()}`}</div>
     </div>
@@ -42,9 +44,13 @@ const Stats = memo(function Stats() {
 
 const Banner = memo(function Banner() {
   const ev = useGame((s) => activeEvent(c, s.market.tick)), away = useGame((s) => s.away), dismiss = useGame((s) => s.dismissAway);
+  // A market event shows for a few seconds, then gets out of the way. The next one shows again.
+  const [hidden, setHidden] = useState<string | null>(null);
+  useEffect(() => { if (!ev) return; const id = setTimeout(() => setHidden(ev.title), 7000); return () => clearTimeout(id); }, [ev?.title]); // eslint-disable-line react-hooks/exhaustive-deps
   useOutside(Boolean(away), ".away", dismiss);
+  useOutside(Boolean(ev) && hidden !== ev?.title && !away, ".event", () => setHidden(ev?.title ?? null));
   if (away) return <div className="away"><h3>While you were away</h3><ul>{away.map((a) => <li key={a}>{a}</li>)}</ul><button className="btn small" onClick={dismiss}>Back to driving</button></div>;
-  return ev ? <div className="event"><b>{ev.title}</b>{ev.text}</div> : null;
+  return ev && hidden !== ev.title ? <div className="event"><button className="close" aria-label="Close" onClick={() => setHidden(ev.title)}>×</button><b>{ev.title}</b>{ev.text}</div> : null;
 });
 
 const Toast = memo(function Toast() {
@@ -75,13 +81,14 @@ const ZonePanel = memo(function ZonePanel() {
   if (zone.kind !== "node" && closed === key) return null;
   if (zone.kind === "node") return <GatherPrompt index={zone.index} />;
   if (zone.kind === "lot") return <section className="panel" aria-label={`${c.lots[zone.index].name} lot`}><LotPanel lot={zone.index} /></section>;
-  if (zone.kind === "plot") return <section className="panel" aria-label="Your plot"><h2>Your plot</h2><p>Home. Finished blueprints stand here for good.</p><Blueprints /></section>;
   return <section className="panel" aria-label={`${c.merchants[zone.index].name} stall`}><h2>{c.merchants[zone.index].name}</h2><MerchantTable merchant={zone.index} /><BlueprintNote merchant={zone.index} /></section>;
 });
 
 function BlueprintNote({ merchant }: { merchant: number }) {
   const tick = useGame((s) => s.market.tick);
-  return c.merchants[merchant].premium_bps > 0 ? <p style={{ marginTop: 10 }}>Blueprint now: {c.blueprints[currentBlueprint(c, tick)].name}</p> : null;
+  if (c.merchants[merchant].premium_bps === 0) return null;
+  const short = c.items.filter((_, i) => premiumFor(c, merchant, i, tick) > 0).map((it) => it.name.toLowerCase()).join(", ");
+  return short ? <p style={{ marginTop: 10 }}>Short of for now, so paying extra: {short}.</p> : null;
 }
 
 const Clock = memo(function Clock() {
@@ -134,7 +141,7 @@ export const Hud = memo(function Hud() {
   const [canFull, setCanFull] = useState(false);
   useEffect(() => setCanFull(Boolean(document.documentElement.requestFullscreen)), []); // iPhones have no full screen for web pages
   // A press outside hides the details for now, without changing what's remembered for next time.
-  useOutside(open, ".hud, .links, .topmap, .event, .away, .panel, .livepanel, .prompt, .toast, .coach, .statusbar", () => setOpen(false));
+  useOutside(open, ".hud, .links, .topmap, .event, .away, .panel, .livepanel, .prompt, .toast, .coach, .tour, .zoom, .nearby, .statusbar", () => setOpen(false));
   const fullscreen = () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else document.documentElement.requestFullscreen?.().catch(() => {}); };
   return (
     <>
@@ -147,7 +154,10 @@ export const Hud = memo(function Hud() {
       </div>
       {open && <><Stats /><nav className="links" aria-label="Pages"><Clock /><Link href="/profile">Shop and profile</Link><Link href="/judge">Judge view</Link></nav><TopMap /><Banner /><Mode /></>}
       <Status />
+      <Tour />
       <Coach />
+      <Nearby />
+      <ZoomButtons />
       <Toast />
       <ZonePanel />
     </>

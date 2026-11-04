@@ -41,7 +41,7 @@ pub struct Vehicle { pub id: String, pub name: String, pub blurb: String, pub ca
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug)]
-pub struct Lot { pub id: String, pub name: String, pub x: i32, pub z: i32, pub price: u64, pub needs: Vec<u64>, pub seeded: bool }
+pub struct Lot { pub id: String, pub name: String, pub x: i32, pub z: i32, pub price: u64, pub needs: Vec<u64>, pub seeded: bool, pub seed_merchant: u32 }
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug)]
@@ -50,17 +50,21 @@ pub struct Config {
     pub items: Vec<Item>, pub merchants: Vec<MerchantRules>,
     pub adapt_every_ticks: u64, pub adapt_band_bps: u64, pub adapt_step_bps: u64, pub adapt_min_bps: u64, pub adapt_max_bps: u64,
     pub blueprint_period_ticks: u64, pub event_period_ticks: u64, pub event_duration_ticks: u64, pub events: Vec<EventRule>,
-    pub nodes: Vec<NodeRule>, pub start_coins: u64, pub start_fuel: u64, pub start_credits: u64, pub credits_per_near: u64, pub credits_per_fuel: u64, pub credits_per_repair: u64, pub meters_per_fuel: u64,
+    pub nodes: Vec<NodeRule>, pub start_coins: u64, pub start_fuel: u64, pub start_credits: u64, pub credits_per_near: u64, pub coins_per_fuel: u64, pub coins_per_repair: u64, pub rich_bonus_per_point: u64, pub meters_per_fuel: u64,
     pub gather_cooldown_ms: u64, pub travel_ms: u64, pub max_trade_qty: u64, pub quest_period_ticks: u64, pub quest_gathers: u64, pub quest_reward_qty: u64,
     pub blueprints: Vec<Blueprint>,
     pub vehicles: Vec<Vehicle>, pub price_per_capacity: i64, pub price_per_endurance: i64, pub price_per_fuel_percent: i64, pub price_per_flair: i64, pub price_per_size: i64,
     pub lots: Vec<Lot>, pub stall_k_quarters: u8, pub stall_target: u64, pub stall_spread_bps: u64, pub stall_min_spread_bps: u64, pub stall_max_spread_bps: u64, pub city_buyback_bps: u64,
-    pub seed_owner: String, pub seed_price: u64, pub seed_stock: u64, pub seed_cash: u64,
+    pub closed_below_bps: u64, pub investor_cut_bps: u64, pub max_investors: u64, pub seed_price: u64, pub seed_stock: u64, pub seed_cash: u64,
 }
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug, PartialEq)]
-pub struct MerchantState { pub stock: Vec<u64>, pub target: Vec<u64>, pub cash: u64 }
+pub struct Investor { pub who: String, pub stake: u64, pub earned: u64 }
+
+#[near(serializers = [json, borsh])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct MerchantState { pub stock: Vec<u64>, pub target: Vec<u64>, pub cash: u64, pub investors: Vec<Investor> }
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug, PartialEq)]
@@ -140,19 +144,24 @@ pub fn ask_at(c: &Config, merchant: usize, item: usize, target: u64, stock: u64)
 pub fn new_market(c: &Config) -> Market {
     Market {
         tick: 0,
-        merchants: c.merchants.iter().map(|m| MerchantState { stock: m.targets.clone(), target: m.targets.clone(), cash: m.start_cash }).collect(),
+        merchants: c.merchants.iter().map(|m| MerchantState { stock: m.targets.clone(), target: m.targets.clone(), cash: m.start_cash, investors: vec![] }).collect(),
         nodes: c.nodes.iter().map(|n| n.max_stock).collect(),
         stalls: c.lots.iter().map(|l| if l.seeded {
-            StallState { owner: Some(c.seed_owner.clone()), built: true, stock: vec![c.seed_stock; c.items.len()], cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price }
+            StallState { owner: Some(format!("merchant:{}", c.merchants[l.seed_merchant as usize].id)), built: true, stock: vec![c.seed_stock; c.items.len()], cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price }
         } else {
             StallState { owner: None, built: false, stock: vec![0; c.items.len()], cash: 0, spread_bps: c.stall_spread_bps, price: 0 }
         }).collect(),
     }
 }
 
+pub fn merchant_closed(c: &Config, mk: &Market, merchant: usize) -> bool {
+    mk.merchants[merchant].cash * 10000 < c.merchants[merchant].start_cash * c.closed_below_bps
+}
+
 pub fn tick_once(c: &Config, mk: &mut Market) {
     let t = mk.tick + 1;
     for (i, rules) in c.merchants.iter().enumerate() {
+        let closed = merchant_closed(c, mk, i);
         let s = &mut mk.merchants[i];
         for it in 0..s.stock.len() {
             let diff = s.target[it] as i64 - s.stock[it] as i64;
@@ -173,7 +182,7 @@ pub fn tick_once(c: &Config, mk: &mut Market) {
                 }
             }
         }
-        if s.cash < rules.cash_cap { s.cash = (s.cash + rules.stipend).min(rules.cash_cap); }
+        if !closed && s.cash < rules.cash_cap { s.cash = (s.cash + rules.stipend).min(rules.cash_cap); }
     }
     for (i, n) in c.nodes.iter().enumerate() { mk.nodes[i] = (mk.nodes[i] + n.regrow).min(n.max_stock); }
     if t % c.event_period_ticks == 0 {
@@ -235,6 +244,7 @@ pub fn gather(c: &Config, mk: &mut Market, p: &mut Player, node: usize, now: u64
     p.fuel -= burn;
     p.durability -= n.wear;
     p.items[n.item as usize] += qty;
+    p.coins += n.rich as u64 * c.rich_bonus_per_point;
     mk.nodes[node] -= qty;
     p.last_gather_ms = now;
     let w = mk.tick / c.quest_period_ticks;
@@ -269,6 +279,7 @@ fn check_trade(c: &Config, item: usize, qty: u64) -> R<()> {
 pub fn sell(c: &Config, mk: &mut Market, p: &mut Player, merchant: usize, item: usize, qty: u64, min_total: u64, now: u64) -> R<u64> {
     need(p)?; travel(c, p, merchant, now)?; check_trade(c, item, qty)?;
     if p.items[item] < qty { return Err("NOT_ENOUGH_ITEMS"); }
+    if merchant_closed(c, mk, merchant) { return Err("MERCHANT_CLOSED"); }
     let tick = mk.tick;
     let s = &mut mk.merchants[merchant];
     let (mut total, mut stock) = (0u64, s.stock[item]);
@@ -283,6 +294,7 @@ pub fn sell(c: &Config, mk: &mut Market, p: &mut Player, merchant: usize, item: 
 #[allow(clippy::too_many_arguments)]
 pub fn buy(c: &Config, mk: &mut Market, p: &mut Player, merchant: usize, item: usize, qty: u64, max_total: u64, now: u64) -> R<u64> {
     need(p)?; travel(c, p, merchant, now)?; check_trade(c, item, qty)?;
+    if merchant_closed(c, mk, merchant) { return Err("MERCHANT_CLOSED"); }
     let s = &mut mk.merchants[merchant];
     if s.stock[item] < qty { return Err("MERCHANT_OUT_OF_STOCK"); }
     if cargo_used(c, p) + qty > vehicle_of(c, p).capacity { return Err("CARGO_FULL"); }
@@ -290,9 +302,43 @@ pub fn buy(c: &Config, mk: &mut Market, p: &mut Player, merchant: usize, item: u
     for _ in 0..qty { total += ask_at(c, merchant, item, s.target[item], stock); stock -= 1; }
     if total > max_total { return Err("PRICE_MOVED"); }
     if p.coins < total { return Err("NOT_ENOUGH_COINS"); }
-    s.stock[item] = stock; s.cash += total; p.coins -= total; p.items[item] += qty;
+    let shared = share_with_investors(c, s, total);
+    s.stock[item] = stock; s.cash += total - shared; p.coins -= total; p.items[item] += qty;
     p.last_trade_ms = now; p.last_merchant = Some(merchant as u32);
     Ok(total)
+}
+
+/// Sets aside investors' cut of a sale, split by stake. Returns what was set aside.
+fn share_with_investors(c: &Config, s: &mut MerchantState, sale: u64) -> u64 {
+    let staked: u64 = s.investors.iter().map(|i| i.stake).sum();
+    if staked == 0 { return 0; }
+    let cut = sale * c.investor_cut_bps / 10000;
+    let mut paid = 0;
+    for i in s.investors.iter_mut() { let e = (cut as u128 * i.stake as u128 / staked as u128) as u64; i.earned += e; paid += e; }
+    paid
+}
+
+/// Puts coins into a merchant's cash for good, in return for a share of what it sells. This is how a closed shop reopens.
+pub fn invest_in_merchant(c: &Config, mk: &mut Market, p: &mut Player, who: &str, merchant: usize, cents: u64) -> R<()> {
+    need(p)?;
+    let s = mk.merchants.get_mut(merchant).ok_or("BAD_MERCHANT")?;
+    if cents == 0 { return Err("BAD_QTY"); }
+    if p.coins < cents { return Err("NOT_ENOUGH_COINS"); }
+    let mine = s.investors.iter().position(|i| i.who == who);
+    if mine.is_none() && s.investors.len() as u64 >= c.max_investors { return Err("INVESTORS_FULL"); }
+    p.coins -= cents; s.cash += cents;
+    match mine { Some(i) => s.investors[i].stake += cents, None => s.investors.push(Investor { who: who.to_string(), stake: cents, earned: 0 }) }
+    Ok(())
+}
+
+pub fn collect_from_merchant(mk: &mut Market, p: &mut Player, who: &str, merchant: usize) -> R<u64> {
+    need(p)?;
+    let s = mk.merchants.get_mut(merchant).ok_or("BAD_MERCHANT")?;
+    let mine = s.investors.iter_mut().find(|i| i.who == who).ok_or("NOTHING_TO_COLLECT")?;
+    if mine.earned == 0 { return Err("NOTHING_TO_COLLECT"); }
+    let earned = mine.earned;
+    p.coins += earned; mine.earned = 0;
+    Ok(earned)
 }
 
 fn foreman(c: &Config) -> usize { c.merchants.iter().position(|m| m.premium_bps > 0).expect("no foreman") }
@@ -306,25 +352,27 @@ fn spend(p: &mut Player, credits: u64) -> R<()> {
     Ok(())
 }
 
+/// Upkeep comes out of coins. With too few, the same amount is charged in credits, so nobody gets stranded.
+fn pay_upkeep(p: &mut Player, cents: u64) -> R<()> {
+    if p.coins >= cents { p.coins -= cents; return Ok(()); }
+    spend(p, cents.div_ceil(100))
+}
 pub fn repair(c: &Config, p: &mut Player) -> R<()> {
     need(p)?;
     let endurance = vehicle_of(c, p).endurance;
     let missing = endurance - p.durability;
     if missing == 0 { return Err("NOTHING_TO_REPAIR"); }
-    spend(p, missing * c.credits_per_repair)?;
+    pay_upkeep(p, missing * c.coins_per_repair)?;
     p.durability = endurance;
     Ok(())
 }
-
 pub fn refuel(c: &Config, p: &mut Player, units: u64) -> R<()> {
     need(p)?;
     if units == 0 || units > vehicle_of(c, p).tank - p.fuel { return Err("BAD_QTY"); }
-    spend(p, units * c.credits_per_fuel)?;
+    pay_upkeep(p, units * c.coins_per_fuel)?;
     p.fuel += units;
     Ok(())
 }
-
-/// Fuel used while driving, reported by the client. It can only hurt the player, so cheating here only skips a cost.
 pub fn burn_fuel(c: &Config, p: &mut Player, units: u64) -> R<()> {
     need(p)?;
     if units == 0 || units > vehicle_of(c, p).tank { return Err("BAD_QTY"); }
@@ -521,7 +569,7 @@ pub fn list_stall(mk: &mut Market, p: &Player, who: &str, lot: usize, price: u64
 }
 
 /// Buys a listed stall. Stock stays with the stall; its cash goes to the seller. Returns who to pay and how much.
-pub fn buy_listed_stall(mk: &mut Market, p: &mut Player, who: &str, lot: usize) -> R<(String, u64)> {
+pub fn buy_listed_stall(c: &Config, mk: &mut Market, p: &mut Player, who: &str, lot: usize) -> R<(String, u64)> {
     need(p)?;
     let s = mk.stalls.get_mut(lot).ok_or("BAD_LOT")?;
     let seller = match (&s.owner, s.price) { (Some(o), pr) if pr > 0 && s.built => o.clone(), _ => return Err("NOT_FOR_SALE") };
@@ -529,6 +577,11 @@ pub fn buy_listed_stall(mk: &mut Market, p: &mut Player, who: &str, lot: usize) 
     if p.coins < s.price { return Err("NOT_ENOUGH_COINS"); }
     let paid = s.price + s.cash;
     p.coins -= s.price; s.owner = Some(who.to_string()); s.price = 0; s.cash = 0;
+    // A merchant's stall pays into its cash, which can reopen a closed shop.
+    if let Some(shop) = c.merchants.iter().position(|m| format!("merchant:{}", m.id) == seller) {
+        mk.merchants[shop].cash += paid;
+        return Ok((String::new(), paid));
+    }
     Ok((seller, paid))
 }
 

@@ -155,6 +155,24 @@ docker compose --profile ops logs -f ghosts
 
 Ably's free package allowed 6 million messages a month when this was written. A moving player sends about two a second, and each delivery to another player counts too, so leave it off when you aren't testing or judging.
 
+## Moving to a new contract
+
+The rules are saved in the contract when it's created, so changing them means a new account. Everything on the old contract stays behind, and players sign in again for a new game key. To move:
+
+```bash
+near create-account nearverse-game-v2.testnet --useFaucet
+near account export-account nearverse-game-v2.testnet
+```
+
+Top it up to about 10 NEAR from [near-faucet.io](https://near-faucet.io/). In `.env`, set `NEARVERSE_DEPLOYER_ACCOUNT` and `NEARVERSE_DEPLOYER_PRIVATE_KEY` to the new account, then run:
+
+```bash
+docker compose run --build --rm test
+docker compose run --build --rm deploy
+```
+
+Set `GAME_CONTRACT=nearverse-game-v2.testnet` in `.env` and on Vercel, redeploy the site, then run `docker compose run --rm smoke`. Ghost traders use new sub-accounts of the new deployer, so remove their old keys first with `docker compose --profile ops down -v`. Any revenue on the old contract can still be withdrawn by its owner.
+
 ## Before judging
 
 - Keep the game, treasury and deployer accounts funded through at least Nov 18, ideally Nov 25. Start the ghost traders before judging opens on Nov 16 and check `ps`.

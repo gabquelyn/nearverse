@@ -47,12 +47,34 @@ export function Shop() {
   );
 }
 
+/** Finished stalls up for sale, from merchants or other players. They open for business the moment you buy. */
+function ForSale() {
+  const stalls = useGame((s) => s.market.stalls), held = useGame((s) => s.player.coins), started = useGame((s) => s.player.started), act = useGame((s) => s.act), me = useGame((s) => s.session?.accountId ?? PRACTICE_ID);
+  const listed = c.lots.map((l, i) => ({ l, i, s: stalls[i] })).filter(({ s }) => s.owner && s.owner !== me && s.built && s.price > 0);
+  if (!listed.length) return null;
+  return (
+    <>
+      <p style={{ maxWidth: "68ch", marginTop: 0 }}>Ready-built stalls for sale in coins. Their stock comes with them.</p>
+      <div className="shop" style={{ marginBottom: 16 }} data-testid="for-sale">
+        {listed.map(({ l, i, s }) => (
+          <article className="card" key={l.id} aria-label={`${l.name} for sale`}>
+            <h3>{l.name}</h3>
+            <p className="muted" style={{ margin: "4px 0 8px" }}>Sold by {s.owner!.startsWith("merchant:") ? `the ${c.merchants.find((m) => `merchant:${m.id}` === s.owner)?.name}` : "another player"}. {s.stock.reduce((a, q) => a + q, 0)} items in stock.</p>
+            <button className="btn action" disabled={!started || held < s.price} onClick={() => act({ t: "stall_buy_listed", lot: i })}>Buy for {(s.price / 100).toFixed(2)} coins</button>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
 /** Stall locations for sale. The exact spot is revealed once you own it. */
 export function Locations() {
   const stalls = useGame((s) => s.market.stalls), credits = useGame((s) => s.player.credits), started = useGame((s) => s.player.started), act = useGame((s) => s.act), setWaypoint = useGame((s) => s.setWaypoint);
   const free = c.lots.map((l, i) => ({ l, i })).filter(({ i }) => !stalls[i].owner);
   return (
     <>
+      <ForSale />
       <p style={{ maxWidth: "68ch", marginTop: 0 }}>Buy a location with credits, then bring the materials it needs. Bought or found materials both count.</p>
       <div className="shop">
         {free.map(({ l, i }) => (

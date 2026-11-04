@@ -58,17 +58,19 @@ const config = {
     sections: b.sections.map((s: any) => ({ needs: ids.map((id) => s.needs[id] ?? 0), labor: s.labor })),
   })),
 };
-const seedLots: string[] = r.stalls.seed_lots;
+const merchantStalls: Record<string, string> = r.stalls.merchant_stalls;
+const merchantIndex = (id: string) => { const n = r.merchants.findIndex((m: any) => m.id === id); if (n < 0) fail("unknown merchant " + id); return n; };
 Object.assign(config, {
   ...it.vehicle_pricing,
   vehicles: it.vehicles.map((v: any) => {
     if (v.fuel_bps % 100) fail(`${v.id} fuel_bps must be a whole percent`);
     return { id: v.id, name: v.name, blurb: v.blurb, capacity: v.capacity, endurance: v.endurance, fuel_bps: v.fuel_bps, tank: v.tank, flair: v.flair, size: v.size, paint: v.paint };
   }),
-  lots: it.stall_lots.map((l: any) => ({ id: l.id, name: l.name, x: l.x, z: l.z, price: l.price, needs: ids.map((id) => l.needs[id] ?? 0), seeded: seedLots.includes(l.id) })),
+  lots: it.stall_lots.map((l: any) => ({ id: l.id, name: l.name, x: l.x, z: l.z, price: l.price, needs: ids.map((id) => l.needs[id] ?? 0), seeded: l.id in merchantStalls, seed_merchant: l.id in merchantStalls ? merchantIndex(merchantStalls[l.id]) : 0 })),
+  closed_below_bps: r.closure.closed_below_bps, investor_cut_bps: r.closure.investor_cut_bps, max_investors: r.closure.max_investors,
   stall_k_quarters: r.stalls.k_quarters, stall_target: r.stalls.target_stock, stall_spread_bps: r.stalls.default_spread_bps,
   stall_min_spread_bps: r.stalls.min_spread_bps, stall_max_spread_bps: r.stalls.max_spread_bps, city_buyback_bps: r.stalls.city_buyback_bps,
-  seed_owner: r.stalls.seed_owner, seed_price: r.stalls.seed_price, seed_stock: r.stalls.seed_stock, seed_cash: r.stalls.seed_cash,
+  seed_price: r.stalls.seed_price, seed_stock: r.stalls.seed_stock, seed_cash: r.stalls.seed_cash,
 });
 if (![1, 2, 3, 4, 6, 8].includes(r.stalls.k_quarters)) fail("stalls k_quarters");
 const out = config;
