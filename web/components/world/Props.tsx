@@ -1,6 +1,6 @@
 "use client";
 // Everything placed on the island: obstacles, stalls, material spots, plot, title crates.
-import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
+import { CuboidCollider, CylinderCollider, RigidBody, type RapierRigidBody } from "@react-three/rapier";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
@@ -149,6 +149,9 @@ function Fenceline() {
 }
 
 /** Light things you can scatter without hurting the truck. */
+/** Loose props stay exactly where they were placed until the truck touches them, however long a frame takes. */
+const asleep = (body: RapierRigidBody | null) => { body?.sleep(); };
+
 export function Scatter() {
   const items = useMemo(() => {
     const out: { kind: "cone" | "barrel"; x: number; z: number }[] = [];
@@ -157,14 +160,14 @@ export function Scatter() {
     return out;
   }, []);
   return <>{items.map((p, i) => p.kind === "cone" ? (
-    <RigidBody key={i} position={[p.x, 0.5, p.z]} colliders={false} mass={0.08} linearDamping={0.35} angularDamping={0.35} restitution={0.3}>
+    <RigidBody key={i} ref={asleep} position={[p.x, 0.5, p.z]} colliders={false} ccd mass={0.08} linearDamping={0.35} angularDamping={0.35} restitution={0.3}>
       <CylinderCollider args={[0.42, 0.28]} />
       <mesh position={[0, -0.42, 0]} castShadow><boxGeometry args={[0.72, 0.06, 0.72]} /><Mat color="#c9562a" /></mesh>
       <mesh castShadow><coneGeometry args={[0.32, 0.9, 12]} /><Mat color="#e0642c" rough={0.5} /></mesh>
       <mesh position={[0, 0.02, 0]}><cylinderGeometry args={[0.145, 0.21, 0.2, 12]} /><Mat color={PAL.cream} /></mesh>
     </RigidBody>
   ) : (
-    <RigidBody key={i} position={[p.x, 0.62, p.z]} colliders={false} mass={0.35} linearDamping={0.3} angularDamping={0.3} restitution={0.2}>
+    <RigidBody key={i} ref={asleep} position={[p.x, 0.62, p.z]} colliders={false} ccd mass={0.35} linearDamping={0.3} angularDamping={0.3} restitution={0.2}>
       <CylinderCollider args={[0.58, 0.42]} />
       <mesh castShadow receiveShadow><cylinderGeometry args={[0.42, 0.42, 1.16, 14]} /><meshStandardMaterial color={i % 2 ? "#2f6d84" : "#b5472d"} roughness={0.45} metalness={0.4} /></mesh>
       {[-0.32, 0.32].map((y) => <mesh key={y} position={[0, y, 0]}><torusGeometry args={[0.43, 0.025, 6, 16]} /><Mat color={PAL.iron} /></mesh>)}
@@ -329,7 +332,7 @@ export function TitleCrates() {
   const mats = useMemo(() => letters.map((l) => new THREE.MeshStandardMaterial({ map: canvasText(l, { bg: "#c08a55", fg: "#2a1810", w: 256, h: 256, size: 170, planks: true }), roughness: 0.85 })), []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => mats.forEach((m) => m.dispose()), [mats]);
   return <>{letters.map((_, i) => (
-    <RigidBody key={i} position={[(4 - i) * 2.1, 0.97, 6.5]} colliders="cuboid" mass={0.35} restitution={0.15} friction={0.8} linearDamping={0.25} angularDamping={0.3}>
+    <RigidBody key={i} ref={asleep} position={[(4 - i) * 2.1, 0.95, 6.5]} colliders="cuboid" ccd mass={0.35} restitution={0.15} friction={0.8} linearDamping={0.25} angularDamping={0.3}>
       <mesh geometry={geo} material={mats[i]} castShadow receiveShadow rotation={[0, Math.PI, 0]} />
     </RigidBody>
   ))}</>;

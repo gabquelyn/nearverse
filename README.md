@@ -160,6 +160,6 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 
 ## Third-party code and AI disclosure
 
-Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. Inspired by bruno-simon.com (studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks, wind lines and foliage that thins around the vehicle). No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
+Written during the hackathon window. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen, fontsource (Bowlby One, Atkinson Hyperlegible). No template. No code or assets were copied. Developed with AI assistance from Claude.
 
 License: MIT.

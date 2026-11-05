@@ -202,6 +202,14 @@ function Governor() {
 }
 
 function World() {
+  // The loading frames can be seconds long. A step that size drops loose props through the ground or scatters them, so physics waits.
+  const worldReady = useGame((s) => s.worldReady);
+  const [physicsOn, setPhysicsOn] = useState(false);
+  useEffect(() => {
+    if (!worldReady) return;
+    const t = setTimeout(() => setPhysicsOn(true), 300);
+    return () => clearTimeout(t);
+  }, [worldReady]);
   const map = useMemo(() => paintGroundMap(), []);
   const biome = useMemo(() => paintBiomeMap(), []);
   const water = useMemo(() => paintWaterMap(), []);
@@ -212,8 +220,8 @@ function World() {
       <Ocean />
       <Grass map={map} biome={biome} water={water} />
       <Weather />
-      <Physics gravity={[0, -24, 0]} timeStep="vary">
-        <RigidBody type="fixed" friction={1}><CuboidCollider args={[1300, 1, 1300]} position={[0, -1, 0]} /></RigidBody>
+      <Physics gravity={[0, -24, 0]} timeStep="vary" paused={!physicsOn}>
+        <RigidBody type="fixed" friction={1}><CuboidCollider args={[1300, 40, 1300]} position={[0, -40, 0]} /></RigidBody>
         <Truck />
         <Near x={0} z={0} radius={120}><TitleCrates /><Scatter /><Lamps /><Benches /></Near>
         {c.merchants.map((_, i) => <Stall key={i} i={i} />)}
