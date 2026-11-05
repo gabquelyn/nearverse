@@ -57,7 +57,7 @@ export const fetchGenesis = () => reader().view<number>(CONTRACT, "get_genesis_m
 export const fetchPlayer = (accountId: string) => reader().view<Player | null>(CONTRACT, "get_player", { account_id: accountId });
 export const fetchLeaderboard = () => reader().view<{ account_id: string; net_worth: number; sections_built: number }[]>(CONTRACT, "leaderboard", { limit: 200 });
 
-const KNOWN = /(ALREADY_STARTED|NOT_STARTED|BAD_NODE|COOLDOWN|TRUCK_DAMAGED|OUT_OF_FUEL|NODE_EMPTY|CARGO_FULL|BAD_MERCHANT|TRAVELING|BAD_ITEM|BAD_QTY|NOT_ENOUGH_ITEMS|PRICE_MOVED|MERCHANT_OUT_OF_CASH|MERCHANT_OUT_OF_STOCK|NOT_ENOUGH_COINS|NOTHING_TO_REPAIR|BAD_BLUEPRINT|BLUEPRINT_DONE|DEPOSIT_TOO_SMALL|NOT_ENOUGH_CREDITS|NOT_BUILT|ALREADY_BUILT|BAD_VEHICLE|ALREADY_OWNED|NOT_OWNED|BAD_LOT|LOT_TAKEN|NO_STALL|YOUR_OWN_STALL|NOT_YOUR_STALL|BAD_SPREAD|NOT_FOR_SALE|STALL_NOT_EMPTY|MERCHANT_CLOSED|INVESTORS_FULL|NOTHING_TO_COLLECT)/;
+const KNOWN = /(DOES_NOT_TRADE|NOT_NEEDED|ALREADY_STARTED|NOT_STARTED|BAD_NODE|COOLDOWN|TRUCK_DAMAGED|OUT_OF_FUEL|NODE_EMPTY|CARGO_FULL|BAD_MERCHANT|TRAVELING|BAD_ITEM|BAD_QTY|NOT_ENOUGH_ITEMS|PRICE_MOVED|MERCHANT_OUT_OF_CASH|MERCHANT_OUT_OF_STOCK|NOT_ENOUGH_COINS|NOTHING_TO_REPAIR|BAD_BLUEPRINT|BLUEPRINT_DONE|DEPOSIT_TOO_SMALL|NOT_ENOUGH_CREDITS|NOT_BUILT|ALREADY_BUILT|BAD_VEHICLE|ALREADY_OWNED|NOT_OWNED|BAD_LOT|LOT_TAKEN|NO_STALL|YOUR_OWN_STALL|NOT_YOUR_STALL|BAD_SPREAD|NOT_FOR_SALE|STALL_NOT_EMPTY|MERCHANT_CLOSED|INVESTORS_FULL|NOTHING_TO_COLLECT)/;
 export function errorCode(e: unknown) {
   const err = e as { message?: string; details?: unknown; data?: unknown } | null;
   let text = String(err?.message ?? e);
@@ -70,7 +70,7 @@ export function errorCode(e: unknown) {
 
 export interface TxResult { hash: string | null }
 export async function callGame(s: Session, method: string, args: object, opts: { deposit?: string } = {}): Promise<TxResult> {
-  const out = await signer(s).call(CONTRACT, method, args as Record<string, unknown>, { gas: "60 Tgas", ...(opts.deposit ? { attachedDeposit: opts.deposit as never } : {}) });
+  const out = await signer(s).call(CONTRACT, method, args as Record<string, unknown>, { gas: "100 Tgas", ...(opts.deposit ? { attachedDeposit: opts.deposit as never } : {}) });
   return { hash: (out as { transaction?: { hash?: string } })?.transaction?.hash ?? null };
 }
 
@@ -78,7 +78,7 @@ export async function callGame(s: Session, method: string, args: object, opts: {
 export async function createGuest(): Promise<Session> {
   const key = generateKey();
   const accountId = implicitAccountId(key.publicKey.toString());
-  const res = await fetch("/api/claim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accountId }) });
+  const res = await fetch("/api/claim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accountId }), signal: AbortSignal.timeout(25_000) });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Test funds are unavailable right now.");
   const session: Session = { accountId, secretKey: key.secretKey, kind: "guest" };
   saveSession(session);

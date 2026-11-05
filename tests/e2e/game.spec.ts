@@ -1,5 +1,6 @@
 // Plays the game in a real browser, in practice mode. Software rendering makes the world slow here, not broken.
 import { test, expect } from "@playwright/test";
+import { seen } from "./seen";
 
 test("health reports practice mode", async ({ request }) => {
   const r = await request.get("/api/health");
@@ -54,7 +55,7 @@ test("the hunt: find a hidden spot, load it, then trade", async ({ page }) => {
 });
 
 test("the judge view fits a phone", async ({ browser }) => {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const ctx = await browser.newContext({ storageState: seen, viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   await page.goto("/judge");
   await page.getByRole("button", { name: "Skip to the end" }).click();
@@ -111,7 +112,11 @@ test("a stall takes a location bought with credits, then bought or found materia
   await page.getByRole("tab", { name: "Orchard Gate" }).click();
   await page.getByRole("button", { name: /Buy this location/ }).click();
   await expect(page.getByTestId("player-summary")).toContainText("Credits 4700");
-  await page.getByRole("button", { name: "Build this stall" }).click();
+  // Building happens in stages: part of the list now, the rest on a later trip. Progress stays.
+  await page.getByRole("button", { name: "Add Clay" }).click();
+  await expect(page.getByTestId("build-progress")).toContainText("Clay 4/4");
+  await expect(page.getByTestId("build-progress")).toContainText("Wood 0/14");
+  await page.getByRole("button", { name: "Add Wood" }).click();
   await expect(page.getByText("Your stall.")).toBeVisible();
   await page.getByRole("button", { name: "Stock one Wood" }).click();
   await page.getByRole("button", { name: "List for sale" }).click();
@@ -119,6 +124,17 @@ test("a stall takes a location bought with credits, then bought or found materia
   await page.getByRole("button", { name: "Take one Wood" }).click();
   await page.getByRole("button", { name: /Sell to the city/ }).click();
   await expect(page.getByRole("button", { name: /Buy this location/ })).toBeVisible();
+});
+
+test("a half-built plot can be given up with nothing back", async ({ page }) => {
+  await seed(page, (p) => { p.credits = 5000; (p.items as number[])[0] = 5; });
+  await page.getByRole("tab", { name: "Orchard Gate" }).click();
+  await page.getByRole("button", { name: /Buy this location/ }).click();
+  await page.getByRole("button", { name: "Add Wood" }).click();
+  await expect(page.getByTestId("build-progress")).toContainText("Wood 5/14");
+  await page.getByRole("button", { name: "Give up this plot" }).click();
+  await expect(page.getByRole("button", { name: /Buy this location/ })).toBeVisible();
+  await expect(page.getByTestId("player-summary")).toContainText("Credits 4700");
 });
 
 test("the map shows regions and you, hides resources, collapses, and routes to my stall", async ({ page }) => {
@@ -130,8 +146,8 @@ test("the map shows regions and you, hides resources, collapses, and routes to m
   await ready(page);
   const map = page.getByTestId("map");
   for (const name of ["Snowfields", "Desert", "City", "Forest"]) await expect(map.getByText(name, { exact: true })).toBeVisible();
-  // Home, 3 merchants, 2 stalls for sale, my location. Resources never appear.
-  await expect(map.locator(".pin:not(.maplegend .pin)")).toHaveCount(8);
+  // Home, 5 merchants, 5 stalls for sale, my location. Resources never appear.
+  await expect(map.locator(".pin:not(.maplegend .pin)")).toHaveCount(12);
   await expect(map.getByRole("button", { name: /Route to Hoarder/ })).toBeVisible();
   await expect(map.getByRole("button", { name: /Route to Brook Corner/ })).toBeVisible();
   await map.getByRole("button", { name: "Nearest stall" }).click();
@@ -177,7 +193,7 @@ test("sign-in explains itself when no contract is set", async ({ page }) => {
 });
 
 test("a phone steers from the vehicle's view with a right-hand stick, and asks for landscape", async ({ browser }) => {
-  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  const ctx = await browser.newContext({ storageState: seen, viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   await page.goto("/play");
   await ready(page);
@@ -219,9 +235,9 @@ test("a phone steers from the vehicle's view with a right-hand stick, and asks f
   await page.mouse.click(100, 150);
   await expect(page.getByTestId("live-market")).toBeHidden();
   await profile.tap();
-  await expect(page).toHaveURL(/\/profile/);
+  await expect(page).toHaveURL(/\/profile/, { timeout: 30_000 });
   await ctx.close();
-  const upright = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const upright = await browser.newContext({ storageState: seen, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const tall = await upright.newPage();
   await tall.goto("/play");
   await expect(tall.getByText("Turn your phone sideways")).toBeVisible();
@@ -259,7 +275,7 @@ test("pressing outside closes panels and details, and the game explains its firs
   await expect(page.getByRole("region", { name: "Hoarder stall" })).toBeHidden();
   await move(page, 0, 0);
   await expect.poll(() => page.evaluate(() => (window as never as { __nearverse: { truck: { pos: { x: number } } } }).__nearverse.truck.pos.x > -50), { timeout: 20_000 }).toBe(true);
-  await page.waitForTimeout(1500); // the zone clears on the next check
+  await expect.poll(() => page.evaluate(() => (window as never as { __nearverse: { game: { getState(): { zone: unknown } } } }).__nearverse.game.getState().zone), { timeout: 20_000 }).toBeNull(); // the zone clears on the next check
   await move(page, -539.2, 339.5);
   await expect(page.getByRole("region", { name: "Hoarder stall" })).toBeVisible({ timeout: 20_000 });
 });
@@ -285,17 +301,17 @@ test("the game says plainly when moves are slow, the connection drops, or the ke
   await set({ slow: true });
   await expect(page.getByText("Still confirming your last move.")).toBeVisible();
   await set({ slow: false, offline: true });
-  await expect(page.getByText("Connection lost. Reconnecting.")).toBeVisible();
+  await expect(page.getByText("Can't reach the NEAR network")).toBeVisible();
   await set({ offline: false, keyExpired: true });
-  await expect(page.getByRole("button", { name: "Approve a new one" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Renew it" })).toBeVisible();
 });
 
 test("a new player gets a tour, and the world helps them hunt", async ({ page }) => {
   await page.goto("/play");
   await ready(page);
   const tour = page.getByTestId("tour");
-  await expect(tour).toContainText("Welcome to Nearverse");
-  for (let i = 0; i < 5; i++) await tour.getByRole("button", { name: "Next" }).click();
+  await expect(tour).toContainText("Drive");
+  for (let i = 0; i < 4; i++) await tour.getByRole("button", { name: "Next" }).click();
   await tour.getByRole("button", { name: "Start hunting" }).click();
   await expect(tour).toBeHidden();
   await page.reload();
@@ -358,4 +374,94 @@ test("the status page reports what needs attention", async ({ page }) => {
   await page.goto("/status");
   await expect(page.getByTestId("status")).toContainText("Ghost traders");
   await expect(page.getByTestId("status")).toContainText("Not set");
+});
+
+test("the market shows the best price for each material and charts it, and prices react to trades", async ({ page }) => {
+  await page.goto("/play");
+  await ready(page);
+  await page.getByRole("button", { name: "Market" }).click();
+  await page.getByRole("tab", { name: "Best prices" }).click();
+  const board = page.getByTestId("price-board");
+  await expect(board.locator("tbody tr")).toHaveCount(24);
+  await board.getByRole("button", { name: "Chart Meteorite" }).click();
+  await expect(page.getByTestId("chart-item")).toHaveValue("23");
+  await expect(page.getByTestId("price-chart").getByRole("button", { name: /Jeweler/ })).toBeVisible();
+  const prices = await page.request.get("/api/prices?item=0");
+  expect((await prices.json()).points).toEqual([]);
+});
+
+test("the truck bed lists only what you carry, and finds go in the discovery log", async ({ page }) => {
+  await page.goto("/");
+  const start = page.getByRole("button", { name: "Start driving" });
+  await expect(start).toBeEnabled({ timeout: 30_000 });
+  await ready(page);
+  await start.click();
+  const bed = page.getByTestId("cargo");
+  await expect(bed).toContainText("Empty");
+  await page.evaluate(() => { const g = (window as unknown as { __nearverse: { game: { getState(): { act(a: object): boolean } } } }).__nearverse.game.getState(); g.act({ t: "gather", node: 0 }); });
+  await expect(bed.locator("span")).toHaveCount(1);
+  await page.goto("/profile");
+  await expect(page.getByTestId("found-count")).toContainText("found 1 of 24");
+});
+
+test("the first visit explains the game once", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+  const page = await ctx.newPage();
+  await page.goto("/");
+  const welcome = page.getByTestId("welcome");
+  await expect(welcome).toContainText("Hunt");
+  await welcome.getByRole("button", { name: "Let's go" }).click();
+  await expect(welcome).toBeHidden();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Start driving" })).toBeVisible();
+  await expect(welcome).toBeHidden();
+  await ctx.close();
+});
+
+test("going to the profile and back carries on from the same spot", async ({ page }) => {
+  await page.goto("/");
+  const start = page.getByRole("button", { name: "Start driving" });
+  await expect(start).toBeEnabled({ timeout: 30_000 });
+  await ready(page);
+  await start.click();
+  await move(page, 300, 300);
+  await page.waitForFunction(() => localStorage.getItem("nearverse.lastSpot")?.includes("300"), undefined, { timeout: 30_000 });
+  await page.goto("/profile");
+  await page.goto("/play");
+  await ready(page);
+  const x = await page.evaluate(() => (window as never as { __nearverse: { truck: { pos: { x: number } } } }).__nearverse.truck.pos.x);
+  expect(Math.abs(x - 300)).toBeLessThan(5);
+});
+
+test("the goal changes with what you own and carry", async ({ page }) => {
+  await page.goto("/");
+  const start = page.getByRole("button", { name: "Start driving" });
+  await expect(start).toBeEnabled({ timeout: 30_000 });
+  await ready(page);
+  await start.click();
+  const goal = page.getByTestId("goal");
+  await expect(goal).toContainText("Buy a plot");
+  const act = (a: object) => page.evaluate((x) => (window as unknown as { __nearverse: { game: { getState(): { act(a: object): boolean } } } }).__nearverse.game.getState().act(x), a);
+  await act({ t: "claim_lot", lot: 1 });
+  await expect(goal).toContainText("Orchard Gate still needs");
+  await move(page, 95, -110);
+  await expect(page.locator(".prompt")).toContainText("You found", { timeout: 20_000 });
+  await page.keyboard.down("KeyE");
+  await expect(goal).not.toContainText("still needs", { timeout: 30_000 });
+  await page.keyboard.up("KeyE");
+});
+
+test("the load bar waits for the last batch instead of giving an error", async ({ page }) => {
+  await page.goto("/");
+  const start = page.getByRole("button", { name: "Start driving" });
+  await expect(start).toBeEnabled({ timeout: 30_000 });
+  await ready(page);
+  await start.click();
+  // Keep holding E past the first load: the bar waits out the last batch, a second load goes in, and no error appears.
+  await move(page, 95, -110);
+  await expect(page.locator(".prompt")).toContainText("You found", { timeout: 20_000 });
+  await page.keyboard.down("KeyE");
+  await expect(page.getByText("Truck bed 6/24")).toBeVisible({ timeout: 40_000 });
+  await page.keyboard.up("KeyE");
+  await expect(page.locator(".toast.bad")).toHaveCount(0);
 });

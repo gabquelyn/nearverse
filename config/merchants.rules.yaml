@@ -29,7 +29,7 @@ merchants:
     cash_cap: 1200000
     stipend: 1500           # coins from townsfolk each market hour, up to cash_cap
     reversion_bps: 80       # stock drifts 0.8% toward target each hour
-    targets: { wood: 300, iron: 160, slate: 200, clay: 280 }
+    targets: { wood: 300, iron: 160, slate: 200, clay: 280, stone: 300, sand: 400, reed: 250, coal: 200, limestone: 120, salt: 110 }
   - id: flipper
     x: 560
     z: -250
@@ -42,7 +42,7 @@ merchants:
     cash_cap: 500000
     stipend: 1200
     reversion_bps: 350
-    targets: { wood: 60, iron: 30, slate: 40, clay: 55 }
+    targets: { wood: 60, iron: 30, slate: 40, clay: 55, copper: 30, coal: 50, tin: 16, silver: 10 }
   - id: foreman
     x: 280
     z: 250
@@ -55,7 +55,33 @@ merchants:
     cash_cap: 800000
     stipend: 1000
     reversion_bps: 200
-    targets: { wood: 100, iron: 70, slate: 80, clay: 90 }
+    targets: { wood: 100, iron: 70, slate: 80, clay: 90, stone: 120, limestone: 60, hardwood: 40, copper: 40, resin: 30 }
+  - id: jeweler
+    x: -60
+    z: -560
+    name: Jeweler
+    personality: Deals only in precious things, holds little, and prices jump with every sale
+    k_quarters: 6
+    spread_bps: 500
+    premium_bps: 0
+    start_cash: 400000
+    cash_cap: 700000
+    stipend: 900
+    reversion_bps: 150
+    targets: { silver: 14, amber: 8, quartz: 8, obsidian: 8, gold: 4, sapphire: 3, ruby: 3, meteorite: 2 }
+  - id: outfitter
+    x: -200
+    z: 620
+    name: Outfitter
+    personality: Supplies expeditions with goods from the far regions
+    k_quarters: 3
+    spread_bps: 700
+    premium_bps: 0
+    start_cash: 350000
+    cash_cap: 600000
+    stipend: 900
+    reversion_bps: 180
+    targets: { wool: 40, ice: 12, salt: 40, resin: 30, hardwood: 30, reed: 80, obsidian: 8, coal: 40 }
 
 # A merchant below this share of its starting cash closes completely: no trade and no income, until
 # players invest coins that lift it back over the line. Investors share in what it sells from then on.
@@ -85,6 +111,8 @@ events:
     - { id: timber-glut, title: Timber glut, text: Storm-felled trees flooded the market., item: wood, keep_bps: 15000 }
     - { id: slate-slide, title: Slate slide, text: The cut collapsed and slate is scarce., item: slate, keep_bps: 6000 }
     - { id: clay-flood, title: River flood, text: The river left clay everywhere., item: clay, keep_bps: 14000 }
+    - { id: copper-boom, title: Copper boom, text: A new wire works bought up all the copper., item: copper, keep_bps: 6000 }
+    - { id: gold-rush, title: Gold rush, text: Prospectors flooded in with gold., item: gold, keep_bps: 15000 }
 
 # Player-owned stalls price like merchants, from their own stock. The owner sets the spread within these limits.
 stalls:
@@ -96,7 +124,7 @@ stalls:
   # The city will always buy an empty stall for this share of its material value.
   city_buyback_bps: 5000
   # These lots begin as finished stalls owned by a merchant and for sale in coins, so there is a market on day one.
-  merchant_stalls: { lot-brook: foreman, lot-plaza: flipper, lot-hollow: hoarder }
+  merchant_stalls: { lot-brook: foreman, lot-plaza: flipper, lot-hollow: hoarder, lot-vault: jeweler, lot-frost: outfitter }
   seed_price: 60000
   seed_stock: 30
   seed_cash: 40000

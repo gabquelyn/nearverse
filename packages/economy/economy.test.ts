@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { investInMerchant, collectFromMerchant, merchantClosed, rules as c, newMarket, tickOnce, createSim, stepHour, floodMarket, bid, ask, explainPrice, newPlayer, startGame, sell, buy, gather, powRatio, buildSection, GameError, cloneMarket, vehiclePrice, buyVehicle, selectVehicle, buildStall, claimLot, buyFromStall, sellToStall, stockStall, collectStall, listStall, buyListedStall, sellStallToCity, fuelBurn, refuel, repair, burnFuel, addCredits } from "./index";
+import { depositToStall, plotExpired, investInMerchant, type Market, type Player, collectFromMerchant, merchantClosed, rules as c, newMarket, tickOnce, createSim, stepHour, floodMarket, bid, ask, explainPrice, newPlayer, startGame, sell, buy, gather, powRatio, buildSection, GameError, cloneMarket, vehiclePrice, buyVehicle, selectVehicle, claimLot, buyFromStall, sellToStall, stockStall, collectStall, listStall, buyListedStall, sellStallToCity, fuelBurn, refuel, repair, burnFuel, addCredits } from "./index";
 
 const iron = c.items.findIndex((i) => i.id === "iron");
+/** Deposits a plot's whole list in one go. */
+function depositAll(mk: Market, p: Player, lot: number) {
+  const needs = c.lots[lot].needs;
+  if (!needs.some((q, i) => q > mk.stalls[lot].progress[i])) { depositToStall(c, mk, p, "me", lot, 0, 1, 0); return; }
+  needs.forEach((q, i) => { const left = q - mk.stalls[lot].progress[i]; if (left > 0) depositToStall(c, mk, p, "me", lot, i, left, 0); });
+}
 describe("price", () => {
   it("computes k = 0.5 exactly", () => { expect(powRatio(100, 25, 2)).toBe(2_000_000n); });
   it("falls as stock rises and rises as stock falls", () => {
@@ -11,7 +17,7 @@ describe("price", () => {
   });
   it("always charges more than it pays at the same stock", () => {
     const mk = newMarket(c);
-    for (let t = 0; t < 200; t++) { c.merchants.forEach((_, m) => c.items.forEach((__, i) => expect(ask(c, mk, m, i)).toBeGreaterThan(bid(c, mk, m, i)))); tickOnce(c, mk); }
+    for (let t = 0; t < 200; t++) { c.merchants.forEach((rules, m) => c.items.forEach((__, i) => { if (rules.targets[i] > 0) expect(ask(c, mk, m, i)).toBeGreaterThan(bid(c, mk, m, i)); })); tickOnce(c, mk); }
   });
   it("explains a price with the same number the market uses", () => {
     const mk = newMarket(c); mk.merchants[2].stock[iron] = 49;
@@ -26,10 +32,10 @@ describe("events", () => {
     for (const ev of c.events) {
       const mk = newMarket(c);
       while ((mk.tick + 1) % c.event_period_ticks !== 0 || c.events[((mk.tick + 1) / c.event_period_ticks - 1) % c.events.length].id !== ev.id) tickOnce(c, mk);
-      const before = bid(c, mk, 1, ev.item);
+      const m = c.merchants.findIndex((x) => x.targets[ev.item] > 0), before = bid(c, mk, m, ev.item);
       tickOnce(c, mk);
-      if (ev.keep_bps < 10000) expect(bid(c, mk, 1, ev.item)).toBeGreaterThan(before);
-      else expect(bid(c, mk, 1, ev.item)).toBeLessThan(before);
+      if (ev.keep_bps < 10000) expect(bid(c, mk, m, ev.item)).toBeGreaterThan(before);
+      else expect(bid(c, mk, m, ev.item)).toBeLessThan(before);
     }
   });
 });
@@ -135,6 +141,51 @@ describe("broke merchants", () => {
     expect(reopened).toBe(true); expect(s.mk.merchants[1].investors.length).toBe(1);
   });
 });
+describe("materials and building in stages", () => {
+  const code = (f: () => unknown) => { try { f(); } catch (e) { return (e as GameError).code; } return "OK"; };
+  it("has at least 20 materials, and rarer ones cost more and are scarcer", () => {
+    expect(c.items.length).toBeGreaterThanOrEqual(20);
+    const avg = (tier: number, f: (n: (typeof c.nodes)[number]) => number) => { const l = c.nodes.filter((n) => c.items[n.item].tier === tier); return l.reduce((a, n) => a + f(n), 0) / Math.max(1, l.length); };
+    const price = (tier: number) => Math.min(...c.items.filter((i) => i.tier === tier).map((i) => i.base_price));
+    expect(price(4)).toBeGreaterThan(price(3)); expect(price(3)).toBeGreaterThan(price(2));
+    for (const it of c.items) { expect(c.merchants.some((m) => m.targets[c.items.indexOf(it)] > 0)).toBe(true); expect(c.lots.some((l) => l.accepts.includes(c.items.indexOf(it)))).toBe(true); }
+    expect(c.nodes.filter((n) => c.items[n.item].tier === 1).length).toBeGreaterThan(c.nodes.filter((n) => c.items[n.item].tier === 3).length);
+    expect(avg(3, (n) => n.regrow)).toBeLessThan(avg(1, (n) => n.regrow));
+    expect(c.items.every((_, i) => c.nodes.some((n) => n.item === i) )).toBe(true);
+  });
+  it("merchants and stalls only deal in their own materials", () => {
+    const mk = newMarket(c), p = newPlayer(c); startGame(c, p); p.coins = 1e7;
+    const m = c.merchants.findIndex((x) => x.id === "jeweler"), wood = 0; p.items[wood] = 5;
+    expect(code(() => sell(c, mk, p, m, wood, 1, 0, 100_000))).toBe("DOES_NOT_TRADE");
+    expect(code(() => buy(c, mk, p, m, wood, 1, 1e9, 100_000))).toBe("DOES_NOT_TRADE");
+    const lot = c.lots.findIndex((l) => l.seeded), no = c.items.findIndex((_, i) => !c.lots[lot].accepts.includes(i));
+    expect(code(() => buyFromStall(c, mk, p, "me", lot, no, 1, 1e9, 100_000))).toBe("DOES_NOT_TRADE");
+  });
+  it("buying raises the price and selling lowers it, for any material", () => {
+    const mk = newMarket(c), p = newPlayer(c); startGame(c, p); p.coins = 1e8; const m = c.merchants.findIndex((x) => x.id === "jeweler"), gold = c.items.findIndex((i) => i.id === "gold");
+    const before = ask(c, mk, m, gold); buy(c, mk, p, m, gold, 1, 1e9, 100_000); expect(ask(c, mk, m, gold)).toBeGreaterThan(before);
+    const up = bid(c, mk, m, gold); sell(c, mk, p, m, gold, 1, 0, 100_000); expect(bid(c, mk, m, gold)).toBeLessThan(up);
+  });
+  it("keeps building progress between trips, and opens the stall when complete", () => {
+    const mk = newMarket(c), p = newPlayer(c); startGame(c, p); p.credits = 1e6; const lot = c.lots.findIndex((l) => !l.seeded), needs = c.lots[lot].needs;
+    claimLot(c, mk, p, "me", lot, 1000);
+    const item = needs.findIndex((q) => q > 2), other = needs.findIndex((q, i) => q > 0 && i !== item); p.items[item] = 2;
+    expect(depositToStall(c, mk, p, "me", lot, item, 2, 2000)).toBe(2); expect(mk.stalls[lot].progress[item]).toBe(2); expect(mk.stalls[lot].built).toBe(false); expect(p.items[item]).toBe(0);
+    expect(code(() => depositToStall(c, mk, p, "me", lot, item, 1, 2000))).toBe("NOT_ENOUGH_ITEMS");
+    expect(code(() => depositToStall(c, mk, p, "you", lot, item, 1, 2000))).toBe("NOT_YOUR_STALL");
+    expect(code(() => depositToStall(c, mk, p, "me", lot, c.items.findIndex((_, i) => needs[i] === 0), 1, 2000))).toBe("NOT_NEEDED");
+    p.items[item] = 500; expect(depositToStall(c, mk, p, "me", lot, item, 500, 3000)).toBe(needs[item] - 2); expect(p.items[item]).toBe(500 - (needs[item] - 2));
+    p.items[other] = needs[other]; depositToStall(c, mk, p, "me", lot, other, needs[other], 4000); expect(mk.stalls[lot].built).toBe(true);
+  });
+  it("returns an idle plot to the market after the deadline, with half the price back", () => {
+    const mk = newMarket(c), p = newPlayer(c); startGame(c, p); p.credits = 1e6; const lot = c.lots.findIndex((l) => !l.seeded), item = c.lots[lot].needs.findIndex((q) => q > 0);
+    claimLot(c, mk, p, "me", lot, 1000); p.items[item] = 1; depositToStall(c, mk, p, "me", lot, item, 1, 5000);
+    expect(code(() => claimLot(c, mk, p, "you", lot, 5000 + c.plot_deadline_ms))).toBe("LOT_TAKEN");
+    expect(plotExpired(c, mk, lot, 5001 + c.plot_deadline_ms)).toBe(true);
+    expect(claimLot(c, mk, p, "you", lot, 5001 + c.plot_deadline_ms)).toEqual({ to: "me", credits: Math.floor(c.lots[lot].price / 2) });
+    expect(mk.stalls[lot].owner).toBe("you"); expect(mk.stalls[lot].progress[item]).toBe(0);
+  });
+});
 describe("resources", () => {
   it("are hidden off the road network and get richer further out", () => {
     expect(c.nodes.length).toBeGreaterThan(50);
@@ -150,23 +201,23 @@ describe("player stalls", () => {
   const fresh = () => { const mk = newMarket(c), p = newPlayer(c); startGame(c, p); return { mk, p }; };
   it("needs a location bought with credits first", () => {
     const { mk, p } = fresh();
-    expect(code(() => buildStall(c, mk, p, "me", freeLot))).toBe("NOT_YOUR_STALL");
-    p.credits = 0; expect(code(() => claimLot(c, mk, p, "me", freeLot))).toBe("NOT_ENOUGH_CREDITS");
-    p.credits = c.lots[freeLot].price; claimLot(c, mk, p, "me", freeLot);
+    expect(code(() => depositAll(mk, p, freeLot))).toBe("NOT_YOUR_STALL");
+    p.credits = 0; expect(code(() => claimLot(c, mk, p, "me", freeLot, 0))).toBe("NOT_ENOUGH_CREDITS");
+    p.credits = c.lots[freeLot].price; claimLot(c, mk, p, "me", freeLot, 0);
     expect(p.credits).toBe(0); expect(mk.stalls[freeLot].owner).toBe("me"); expect(mk.stalls[freeLot].built).toBe(false);
-    expect(code(() => claimLot(c, mk, p, "you", freeLot))).toBe("LOT_TAKEN");
+    expect(code(() => claimLot(c, mk, p, "you", freeLot, 0))).toBe("LOT_TAKEN");
   });
   it("is built from bought materials or found ones", () => {
     const { mk, p } = fresh(); p.credits = 1e6; p.coins = 1e7;
-    claimLot(c, mk, p, "me", freeLot);
-    expect(code(() => buildStall(c, mk, p, "me", freeLot))).toBe("NOT_ENOUGH_ITEMS");
+    claimLot(c, mk, p, "me", freeLot, 0);
+    expect(code(() => depositAll(mk, p, freeLot))).toBe("NOT_ENOUGH_ITEMS");
     c.lots[freeLot].needs.forEach((q, i) => { if (q) buy(c, mk, p, 0, i, q, 1e9, 1); });
-    buildStall(c, mk, p, "me", freeLot);
+    depositAll(mk, p, freeLot);
     expect(mk.stalls[freeLot].built).toBe(true); expect(p.items.reduce((a, q) => a + q, 0)).toBe(0);
-    expect(code(() => buildStall(c, mk, p, "me", freeLot))).toBe("ALREADY_BUILT");
+    expect(code(() => depositAll(mk, p, freeLot))).toBe("ALREADY_BUILT");
   });
   it("can't trade until it is built", () => {
-    const { mk, p } = fresh(); p.credits = 1e6; claimLot(c, mk, p, "you", freeLot);
+    const { mk, p } = fresh(); p.credits = 1e6; claimLot(c, mk, p, "you", freeLot, 0);
     expect(code(() => buyFromStall(c, mk, p, "me", freeLot, 0, 1, 1e9, 1))).toBe("NO_STALL");
     expect(code(() => stockStall(c, mk, p, "you", freeLot, 0, 1))).toBe("NOT_BUILT");
   });

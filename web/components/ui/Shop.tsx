@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { rules as c, vehiclePrice, cargoUsed } from "@nearverse/economy";
+import { rules as c, vehiclePrice, cargoUsed, plotExpired } from "@nearverse/economy";
 import { PRACTICE_ID, useGame } from "@/lib/state/game";
 import { biomeName } from "../world/world";
 
@@ -71,11 +71,12 @@ function ForSale() {
 /** Stall locations for sale. The exact spot is revealed once you own it. */
 export function Locations() {
   const stalls = useGame((s) => s.market.stalls), credits = useGame((s) => s.player.credits), started = useGame((s) => s.player.started), act = useGame((s) => s.act), setWaypoint = useGame((s) => s.setWaypoint);
-  const free = c.lots.map((l, i) => ({ l, i })).filter(({ i }) => !stalls[i].owner);
+  const market = useGame((s) => s.market);
+  const free = c.lots.map((l, i) => ({ l, i })).filter(({ i }) => !stalls[i].owner || plotExpired(c, market, i, Date.now()));
   return (
     <>
       <ForSale />
-      <p style={{ maxWidth: "68ch", marginTop: 0 }}>Buy a location with credits, then bring the materials it needs. Bought or found materials both count.</p>
+      <p style={{ maxWidth: "68ch", marginTop: 0 }}>Buy a location with credits, then bring its materials over as many trips as you like. Each deposit gives you 3 more days. Bought or found materials both count.</p>
       <div className="shop">
         {free.map(({ l, i }) => (
           <article className="card" key={l.id} aria-label={l.name}>
@@ -94,7 +95,7 @@ export function MyStalls() {
   const mine = c.lots.map((l, i) => ({ l, s: stalls[i] })).filter((x) => x.s.owner === me);
   if (!mine.length) return <p>You don&apos;t own a stall yet. Buy a location above to start one.</p>;
   return <div className="shop">{mine.map(({ l, s }) => (
-    <div className="card" key={l.id}><h3>{l.name}</h3><p className="muted" style={{ margin: "4px 0 8px" }}>{s.built ? `Till ${(s.cash / 100).toFixed(2)} coins, ${s.stock.reduce((a, q) => a + q, 0)} items${s.price ? `, listed at ${(s.price / 100).toFixed(2)}` : ""}.` : "Not built yet. Bring the materials."}</p>
+    <div className="card" key={l.id}><h3>{l.name}</h3><p className="muted" style={{ margin: "4px 0 8px" }}>{!s.built ? c.items.flatMap((it, k) => l.needs[k] ? [`${it.name} ${s.progress[k]}/${l.needs[k]}`] : []).join(", ") : s.built ? `Till ${(s.cash / 100).toFixed(2)} coins, ${s.stock.reduce((a, q) => a + q, 0)} items${s.price ? `, listed at ${(s.price / 100).toFixed(2)}` : ""}.` : "Not built yet. Bring the materials."}</p>
       <Link className="btn small action" href="/play" onClick={() => setWaypoint({ x: l.x, z: l.z, label: l.name })}>Go to my stall</Link></div>
   ))}</div>;
 }

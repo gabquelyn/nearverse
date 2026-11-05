@@ -2,19 +2,32 @@
 // The driven vehicle. This component only re-renders when you change vehicle, so crashes and pickups stay smooth.
 import { useFrame } from "@react-three/fiber";
 import { CoefficientCombineRule, CuboidCollider, RigidBody, type RapierRigidBody } from "@react-three/rapier";
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
-import { ITEM_COLOR, keys, stick, truck } from "./world";
+import { DRIVE_RADIUS, ITEM_COLOR, keys, stick, truck } from "./world";
+import { perf } from "./perf";
 import { sfx } from "./sound";
 import { sky } from "./daynight";
 import { buildVehicle, type VehicleModel } from "./vehicleModel";
 import { mineHandles, obstacleNames } from "./colliders";
 
 const START = new THREE.Vector3(0, 2, -3);
-const FUEL_BATCH = 5; // report driving fuel in small batches, not per metre
+const SPOT = "nearverse.lastSpot";
+/** Where you were, so going to your profile and back carries on from there. Pressing R still takes you home. */
+function readSpot(): { x: number; z: number; yaw: number } | null {
+  try {
+    const s = JSON.parse(localStorage.getItem(SPOT) ?? "null");
+    return s && Number.isFinite(s.x) && Number.isFinite(s.z) && Number.isFinite(s.yaw) && Math.hypot(s.x, s.z) < DRIVE_RADIUS && Math.hypot(s.x, s.z) > 12 ? s : null;
+  } catch { return null; }
+}
+function saveSpot(x: number, z: number, yaw: number) {
+  if (!useGame.getState().player.started) return;
+  try { localStorage.setItem(SPOT, JSON.stringify({ x, z, yaw })); } catch { /* starts from home next time */ }
+}
+const FUEL_BATCH = 10; // report driving fuel in small batches, not per metre
 
 /** Cargo cubes, one draw call. Subscribes only to what's in the bed. */
 const Cargo = memo(function Cargo({ model }: { model: VehicleModel }) {
@@ -77,6 +90,9 @@ export function Truck() {
   const v0 = c.vehicles[vehicleIndex];
   const model = useMemo(() => buildVehicle(v0), [v0]);
   const body = useRef<RapierRigidBody>(null!);
+  const [resume] = useState(readSpot);
+  const lastSave = useRef(0);
+  useEffect(() => { if (resume) { truck.pos.set(resume.x, 1, resume.z); truck.yaw = resume.yaw; } }, [resume]);
   const headlight = useRef<THREE.SpotLight>(null!), lightTarget = useRef<THREE.Object3D>(null!);
   const smoothSteer = useRef(0), impactSpeed = useRef(0), lastHit = useRef(0), puffClock = useRef(0), fuelOwed = useRef(0), warned = useRef(false);
   const fx = useMemo(() => ({ emit: (_x: number, _z: number, _y: number, _k: number) => {}, burst: (_x: number, _z: number, _b: boolean) => {} }), []);
@@ -88,6 +104,7 @@ export function Truck() {
     const r = b.rotation(), q = new THREE.Quaternion(r.x, r.y, r.z, r.w);
     const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q), side = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const v = b.linvel(), t = b.translation();
+    if (performance.now() - lastSave.current > 2000 && !perf.warming) { lastSave.current = performance.now(); saveSpot(t.x, t.z, truck.yaw); }
     const speed = v.x * fwd.x + v.z * fwd.z, grounded = t.y < 1.2;
     // The phone stick works from the vehicle's point of view: up goes, down reverses, left and right turn. Turning needs movement, so a sideways push also rolls forward.
     const up = keys.has("KeyW") || keys.has("ArrowUp") || stick.y > 0.35 || (Math.abs(stick.x) > 0.35 && stick.y > -0.35), down = keys.has("KeyS") || keys.has("ArrowDown") || stick.y < -0.35;
@@ -163,9 +180,10 @@ export function Truck() {
     lastHit.current = now;
     const { player, act, say } = useGame.getState();
     if (!player.started) return;
+    sfx.crash(); // before anything else, so saving the hit can't delay the sound
     const points = Math.min(25, Math.max(1, Math.round((sp - 4) * 1.5)));
     spring.current.v -= Math.min(3, sp * 0.14); fx.burst(truck.pos.x + Math.sin(truck.yaw) * 2, truck.pos.z + Math.cos(truck.yaw) * 2, false);
-    if (act({ t: "damage", points })) { sfx.crash(); say(`Hit a ${name}: lost ${points} health. Repair from the top panel.`, true); }
+    if (act({ t: "damage", points })) { say(`Hit a ${name}: lost ${points} health. Repair from the top panel.`, true); }
   };
   const onMine = (handle: number) => {
     const now = performance.now();
@@ -180,7 +198,7 @@ export function Truck() {
   return (
     <>
       <Puffs src={fx} />
-      <RigidBody ref={body} position={[0, 3, -3]} colliders={false} mass={3} enabledRotations={[false, true, false]} linearDamping={0.12} ccd restitution={0} name="truck"
+      <RigidBody ref={body} position={resume ? [resume.x, 1, resume.z] : [0, 3, -3]} rotation={resume ? [0, resume.yaw, 0] : undefined} colliders={false} mass={3} enabledRotations={[false, true, false]} linearDamping={0.12} ccd restitution={0} name="truck"
         onCollisionEnter={({ other }) => {
           const named = obstacleNames.get(other.collider.handle) ?? (other.rigidBodyObject?.userData as { obstacle?: string } | undefined)?.obstacle;
           if (named) onHit(named);

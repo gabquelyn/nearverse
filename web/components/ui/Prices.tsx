@@ -29,9 +29,9 @@ export function MerchantTable({ merchant, plain = false }: { merchant: number; p
       <table className="prices">
         <thead><tr><th scope="col">Material</th><th scope="col" className="num">Pays</th><th scope="col" className="num">Charges</th><th scope="col" className="num">Stock / wants</th><th scope="col" className="num">You have</th><th scope="col"><span style={{ position: "absolute", left: -9999 }}>Trade</span></th></tr></thead>
         <tbody>
-          {c.items.map((it, i) => (
+          {c.items.map((it, i) => s.target[i] === 0 ? null : (
             <tr key={it.id}>
-              <td><span className="swatch" style={{ background: `var(--${it.id})`, marginRight: 6 }} />{it.name}</td>
+              <td><span className="swatch" style={{ background: it.color, marginRight: 6 }} />{it.name}</td>
               <td className="num"><Price merchant={merchant} item={i} side="bid" /></td>
               <td className="num"><Price merchant={merchant} item={i} side="ask" /></td>
               <td className="num">{s.stock[i]} / {s.target[i]}</td>

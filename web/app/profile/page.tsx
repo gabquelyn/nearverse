@@ -7,6 +7,8 @@ import { Nav } from "@/components/ui/Nav";
 import { Locations, MyStalls, Shop } from "@/components/ui/Shop";
 import { WalletExport } from "@/components/ui/WalletExport";
 import { SalesChart } from "@/components/ui/SalesChart";
+import { PriceChart } from "@/components/ui/PriceChart";
+import { Discoveries } from "@/components/ui/Discoveries";
 import { dripNear, fetchBalance, shortAccount } from "@/lib/near/client";
 
 const dripKey = (id: string) => `nearverse.nextDrip.${id}`;
@@ -43,6 +45,11 @@ function Wallet({ accountId }: { accountId: string }) {
       <small className="muted">Free test NEAR every 10 minutes.</small>
     </div>
   );
+}
+
+function ProfileChart() {
+  const [item, setItem] = useState(0);
+  return <PriceChart item={item} setItem={setItem} />;
 }
 
 export default function Profile() {
@@ -87,6 +94,10 @@ export default function Profile() {
       </div>
       <h2>Sales performance</h2>
       <SalesChart />
+      <h2>Material prices</h2>
+      <ProfileChart />
+      <h2>Discoveries</h2>
+      <Discoveries />
       <h2 id="shop">Vehicle shop</h2>
       <Shop />
       <h2>Your stalls</h2>

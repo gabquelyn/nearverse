@@ -61,7 +61,7 @@ export async function fund(accountId: string) {
 function buildAddKey(nearApi: Awaited<ReturnType<typeof setup>>["nearApi"], accountId: string, pub: string, sessionPub: string, nonce: bigint, blockHash: Uint8Array) {
   const { transactions, utils } = nearApi;
   return transactions.createTransaction(accountId, utils.PublicKey.from(pub), accountId, nonce, [
-    transactions.addKey(utils.PublicKey.from(sessionPub), transactions.functionCallAccessKey(CONTRACT, SESSION_METHODS, 250000000000000000000000n)),
+    transactions.addKey(utils.PublicKey.from(sessionPub), transactions.functionCallAccessKey(CONTRACT, SESSION_METHODS, 10000000000000000000000000n)),
   ], blockHash);
 }
 

@@ -1,5 +1,5 @@
 // A record of what you earned, kept in this browser. The contract only stores balances, so this is the source of the sales chart.
-export interface Sale { id: number; t: number; cents: number; item: string; buyer: string; kind: "sale" | "stall" | "investment" }
+export interface Sale { id: number; t: number; cents: number; qty?: number; item: string; buyer: string; kind: "sale" | "stall" | "investment" }
 const key = (who: string) => `nearverse.sales.v1.${who}`;
 const MAX = 500;
 

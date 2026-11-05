@@ -12,6 +12,16 @@ const config = JSON.parse(readFileSync(root + "packages/economy/generated/rules.
 const live = await near.view(account, "get_genesis_ms", {}).then(() => true, () => false);
 if (live) throw new Error(`${account} already has a Nearverse contract with saved state. Deploy to a new account, such as a fresh sub-account, and update GAME_CONTRACT.`);
 console.log(`Deploying ${(wasm.length / 1024).toFixed(0)} KB to ${account}`);
-await near.transaction(account).deployContract(account, wasm).functionCall(account, "new", { config, owner_id: process.env.NEARVERSE_OWNER_ACCOUNT || account }, { gas: "150 Tgas" }).send();
-console.log("Done. Tick:", (await near.view<{ tick: number }>(account, "get_market", {})).tick);
+await near.transaction(account).deployContract(account, wasm).functionCall(account, "new", { config, owner_id: process.env.NEARVERSE_OWNER_ACCOUNT || account }, { gas: "300 Tgas" }).send({ waitUntil: "FINAL" });
+// A failed deploy or `new` has already thrown above. The RPC node answering this read can still be a moment behind.
+let tick: number | undefined;
+for (let attempt = 1; tick === undefined; attempt++) {
+  try {
+    tick = (await near.view<{ tick: number }>(account, "get_market", {})).tick;
+  } catch (error) {
+    if (attempt === 10) throw error;
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+}
+console.log("Done. Tick:", tick);
 console.log(`Now set GAME_CONTRACT=${account} in .env and restart the web service`);

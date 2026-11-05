@@ -1,4 +1,5 @@
 "use client";
+import { Welcome } from "../ui/Welcome";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -36,8 +37,16 @@ export default function Game({ landing }: { landing?: boolean }) {
     });
     return () => { stop(); listenForNotes(null); };
   }, []);
-  useEffect(() => { if (!landing && ready && !started) startDriving(); }, [landing, ready, started, startDriving]);
-  const showIntro = landing && !started;
+  // On the live game, nobody becomes a guest by accident: with no wallet, /play offers the same choice as the home page.
+  const choosing = mode === "chain" && !hasSession;
+  useEffect(() => { if (!landing && ready && !started && !choosing) startDriving(); }, [landing, ready, started, startDriving, choosing]);
+  // If starting failed because the network was down, keep trying once it's back, without another press.
+  useEffect(() => {
+    if (landing || !ready || started || choosing) return;
+    const id = setInterval(() => { if (!useGame.getState().player.started) startDriving(); }, 10_000);
+    return () => clearInterval(id);
+  }, [landing, ready, started, startDriving, choosing]);
+  const showIntro = (landing || choosing) && !started;
   return (
     <main className="game">
       <Scene />
@@ -46,6 +55,7 @@ export default function Game({ landing }: { landing?: boolean }) {
       {!showIntro && <Hud />}
       {!showIntro && <TouchControls />}
       <TurnPhone />
+      <Welcome />
       {showIntro && toast && <div className={`toast ${toast.bad ? "bad" : ""}`} role="alert">{toast.text}</div>}
       {showIntro && (
         <div className="overlay">
@@ -54,7 +64,7 @@ export default function Game({ landing }: { landing?: boolean }) {
             <p>A huge island, and the riches aren&apos;t on the map. Hunt for materials, sell them to merchants or from a stall of your own, and upgrade your truck. Knock the crates over on your way.</p>
           </div>
           <div className="row">
-            <button className="btn big" disabled={starting || !ready} onClick={async () => { enterLandscape(); setStarting(true); await startDriving(); setStarting(false); (document.activeElement as HTMLElement | null)?.blur(); }}>{starting ? "Starting" : mode === "chain" && !hasSession ? "Play as a guest" : "Start driving"}</button>
+            <button className="btn big" disabled={starting || !ready} onClick={async () => { enterLandscape(); setStarting(true); await startDriving(); setStarting(false); (document.activeElement as HTMLElement | null)?.blur(); }}>{starting ? "Starting" : !ready ? "Getting ready" : mode === "chain" && !hasSession ? "Play as a guest" : "Start driving"}</button>
             {mode === "chain" && !hasSession && <Link className="btn action" href="/signin">Sign in with Google or email</Link>}
             <Link className="btn ghost" href="/judge">Open judge view</Link>
           </div>

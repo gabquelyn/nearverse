@@ -9,9 +9,17 @@ function tone(f: number, t: number, type: OscillatorType = "square", vol = 0.05)
 }
 export const sfx = {
   /** Browsers only allow audio after an input, and starting it is slow, so do it on the first key press. */
-  prepare: () => { if (ctx) return; try { ctx = new AudioContext(); } catch { /* no audio available */ } },
+  prepare: () => {
+    if (ctx) { if (ctx.state === "suspended") ctx.resume().catch(() => {}); return; }
+    try {
+      ctx = new AudioContext({ latencyHint: "interactive" });
+      // Sound output goes to sleep when idle and takes a moment to wake, which delayed every hit. A silent signal keeps it awake.
+      const hush = ctx.createConstantSource(), g = ctx.createGain(); g.gain.value = 0.0001; hush.connect(g).connect(ctx.destination); hush.start();
+    } catch { /* no audio available */ }
+  },
   honk: () => { tone(370, 0.3); tone(466, 0.3); },
-  boom: () => tone(70, 0.5, "sawtooth", 0.14),
-  crash: () => { tone(110, 0.22, "sawtooth", 0.1); tone(62, 0.3, "square", 0.06); },
+  boom: () => { if (ctx?.state === "suspended") ctx.resume().catch(() => {}); tone(900, 0.05, "square", 0.1); tone(70, 0.5, "sawtooth", 0.14); },
+  // The short high click is what you hear as the moment of impact. A low thud alone sounds late.
+  crash: () => { if (ctx?.state === "suspended") ctx.resume().catch(() => {}); tone(1400, 0.04, "square", 0.08); tone(110, 0.22, "sawtooth", 0.1); tone(62, 0.3, "square", 0.06); },
   load: () => tone(660, 0.12, "triangle", 0.09),
 };

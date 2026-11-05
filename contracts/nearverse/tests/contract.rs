@@ -34,7 +34,9 @@ fn gather_mints_nep245_and_sale_burns() {
 fn one_contract_holds_every_item() {
     let g = game();
     let t = g.mt_tokens(None, None);
-    assert_eq!(t.iter().map(|x| x.token_id.as_str()).collect::<Vec<_>>(), ["wood", "iron", "slate", "clay"]);
+    assert_eq!(t.len(), g.get_config().items.len());
+    assert!(t.len() >= 20);
+    assert_eq!(t[0].token_id, "wood");
 }
 
 #[test]
@@ -167,7 +169,11 @@ fn location_bought_with_credits_then_built_then_sold_to_a_player() {
     g.supply = vec![1000; c.items.len()];
     g.claim_lot(lot as u32);
     assert_eq!(g.get_player(acc("a.testnet")).unwrap().credits, 0);
-    g.build_stall(lot as u32);
+    let needs = c.lots[lot].needs.clone();
+    for (i, q) in needs.iter().enumerate().filter(|(_, q)| **q > 0) {
+        assert!(!g.market.stalls[lot].built);
+        assert_eq!(g.stall_deposit(lot as u32, i as u32, *q), *q);
+    }
     assert!(get_logs().iter().any(|l| l.contains("mt_burn")));
     assert!(g.market.stalls[lot].built);
     g.stall_list(lot as u32, 500);
@@ -185,7 +191,32 @@ fn building_needs_a_location_first() {
     let c = g.get_config().clone();
     let lot = c.lots.iter().position(|l| !l.seeded).unwrap();
     ctx("a.testnet", 1, 0); g.start_game();
-    g.build_stall(lot as u32);
+    g.stall_deposit(lot as u32, 0, 1);
+}
+
+#[test]
+fn an_idle_plot_returns_to_the_market_and_refunds_half() {
+    let mut g = game();
+    let c = g.get_config().clone();
+    let lot = c.lots.iter().position(|l| !l.seeded).unwrap();
+    ctx("a.testnet", 10, 0); g.start_game();
+    let mut p = g.get_player(acc("a.testnet")).unwrap(); p.credits = c.lots[lot].price; g.players.insert(acc("a.testnet"), p);
+    g.claim_lot(lot as u32);
+    ctx("b.testnet", c.plot_deadline_ms + 100, 0); g.start_game();
+    let mut p = g.get_player(acc("b.testnet")).unwrap(); p.credits = c.lots[lot].price; g.players.insert(acc("b.testnet"), p);
+    g.claim_lot(lot as u32);
+    assert_eq!(g.market.stalls[lot].owner.as_deref(), Some("b.testnet"));
+    assert_eq!(g.get_player(acc("a.testnet")).unwrap().credits, c.lots[lot].price / 2);
+}
+
+#[test]
+#[should_panic(expected = "DOES_NOT_TRADE")]
+fn a_merchant_refuses_materials_it_does_not_deal_in() {
+    let mut g = game();
+    let c = g.get_config().clone();
+    let m = c.merchants.iter().position(|x| x.id == "jeweler").unwrap();
+    ctx("a.testnet", 10_000, 0); g.start_game();
+    g.buy(m as u32, 0, 1, 1_000_000);
 }
 
 #[test]

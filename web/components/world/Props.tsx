@@ -7,6 +7,7 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { City } from "./City";
 import { DRIVE_RADIUS, ITEM_COLOR, PAL, biomeAt, canvasText, reserved, seeded, spacing } from "./world";
 import { mineHandles, useStaticColliders, type Round, type Solid } from "./colliders";
 import { registerMine } from "./Truck";
@@ -66,43 +67,6 @@ function scatter(seed: number, want: number, test: (x: number, z: number) => boo
     out.push(make(x, z, r));
   }
   return out;
-}
-
-function windowsTexture(lit: boolean) {
-  const cv = document.createElement("canvas"); cv.width = cv.height = 128;
-  const g = cv.getContext("2d")!, r = seeded(lit ? 2 : 2);
-  g.fillStyle = lit ? "#000" : "#c9ccd2"; g.fillRect(0, 0, 128, 128);
-  for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) {
-    const on = r() > 0.45;
-    g.fillStyle = lit ? (on ? "#ffd27a" : "#000") : "#4a6378";
-    g.fillRect(5 + x * 20.6, 5 + y * 20.6, 12, 13);
-  }
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
-}
-export const windowMat = seeThrough(new THREE.MeshLambertMaterial({ color: "#ffffff" })) as THREE.MeshLambertMaterial;
-const roofMat = seeThrough(new THREE.MeshLambertMaterial({ color: "#8a8f98" }));
-
-/** City blocks on a street grid. Their colliders hurt, so the streets are where you want to be. */
-function City() {
-  const { blocks, solids } = useMemo(() => {
-    const out: Spot[] = [], r = seeded(61), step = 36;
-    for (let i = 4; i <= 28; i++) for (let j = -19; j <= 8; j++) {
-      const x = 18 + i * step, z = 18 + j * step; // the middle of a block on the street grid
-      const cx = x + (r() - 0.5) * 2, cz = z + (r() - 0.5) * 2;
-      if (biomeAt(cx, cz).city < 0.72 || Math.hypot(cx, cz) > DRIVE_RADIUS - 20 || r() < 0.18 || reserved(cx, cz, 6)) continue;
-      const tint = ["#d8d4cc", "#b9c6d4", "#d4b8a6", "#a7b8aa", "#c7c2d6"][Math.floor(r() * 5)];
-      out.push({ x: cx, z: cz, y: 0, sx: 12 + r() * 6, sy: 3.5 + r() * 4.5, sz: 12 + r() * 6, color: tint });
-    }
-    const solids: Solid[] = out.map((b) => ({ kind: "box", x: b.x, y: (b.sy ?? 1) / 2, z: b.z, hx: (b.sx ?? 1) / 2, hy: (b.sy ?? 1) / 2, hz: (b.sz ?? 1) / 2 }));
-    return { blocks: out, solids };
-  }, []);
-  const { geo, mats } = useMemo(() => {
-    const geo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
-    windowMat.map = windowsTexture(false); windowMat.emissiveMap = windowsTexture(true); windowMat.emissive = new THREE.Color("#ffffff"); windowMat.emissiveIntensity = 0;
-    return { geo, mats: [windowMat, windowMat, roofMat, roofMat, windowMat, windowMat] };
-  }, []);
-  useStaticColliders(solids, "building");
-  return <Instances geometry={geo} material={mats} items={blocks} radius={110} />;
 }
 
 /** Richer spots are ringed by more obstacles, with narrow gaps to thread. */
@@ -297,24 +261,33 @@ export function Stall({ i }: { i: number }) {
   return <Near x={m.x} z={m.z}><StallBuilding name={m.name} color={PAL.awning[i]} x={m.x} z={m.z} /></Near>;
 }
 
-/** Nothing shows at a location until someone buys it; then stakes and a sign, then a stall once built. */
+/** An empty plot shows a sale sign. Once bought it's a building site that fills up with every deposit, then a stall. */
+function Site({ i, owned, done }: { i: number; owned: boolean; done: number }) {
+  const l = c.lots[i];
+  const sign = useMemo(() => canvasText(owned ? l.name : `For sale: ${l.name}`, { bg: PAL.plank, fg: "#2a1810", h: 72, size: owned ? 34 : 26, planks: true }), [l.name, owned]);
+  const posts = 0.5 + Math.min(1, done / 0.6) * 3.2, walls = Math.max(0, (done - 0.35) / 0.5), roof = done >= 0.85;
+  const needed = l.needs.flatMap((q, k) => (q ? [{ k, got: done }] : []));
+  return (
+    <group position={[l.x, 0, l.z]} rotation={[0, Math.atan2(l.x, l.z) + Math.PI, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 4]} position={[0, 0.05, 0]}><ringGeometry args={[6.2, 6.5, 4]} /><meshBasicMaterial color={PAL.cream} transparent opacity={0.8} /></mesh>
+      {[[-4.4, -4.4], [4.4, -4.4], [-4.4, 4.4], [4.4, 4.4]].map(([x, z]) => <Plank key={`${x}${z}`} s={[0.22, owned ? posts : 1.1, 0.22]} p={[x, (owned ? posts : 1.1) / 2, z]} color={PAL.plankDark} />)}
+      <SignPost tex={sign} />
+      {owned && <>
+        <mesh position={[0, 0.12, 0]} receiveShadow><boxGeometry args={[9, 0.24, 9]} /><Mat color="#8f8a7f" /></mesh>
+        {walls > 0 && [[0, -4.4, 8.6, 0.2], [-4.4, 0, 0.2, 8.6], [4.4, 0, 0.2, 8.6]].map(([x, z, w, d]) => <Plank key={`w${x}${z}`} s={[w, walls * 3, d]} p={[x, 0.24 + (walls * 3) / 2, z]} />)}
+        {roof && <Plank s={[9.6, 0.2, 9.6]} p={[0, 3.8, 0]} color={PAL.plankDark} />}
+        {needed.map((n, j) => <mesh key={n.k} position={[-3.2 + (j % 4) * 1.5, 0.24 + (0.2 + Math.ceil(n.got * 4) * 0.25) / 2, 2.8 - Math.floor(j / 4) * 1.5]} castShadow><boxGeometry args={[1.1, 0.2 + Math.ceil(n.got * 4) * 0.25, 1.1]} /><Mat color={c.items[n.k].color} flat /></mesh>)}
+      </>}
+    </group>
+  );
+}
+
 export function LotSpot({ i }: { i: number }) {
   const l = c.lots[i];
   const owner = useGame((s) => s.market.stalls[i]?.owner ?? null), built = useGame((s) => s.market.stalls[i]?.built ?? false);
   const you = useGame((s) => s.session?.accountId ?? "you");
-  const sign = useMemo(() => canvasText(l.name, { bg: PAL.plank, fg: "#2a1810", h: 72, size: 34, planks: true }), [l.name]);
-  const yaw = Math.atan2(l.x, l.z);
-  return (
-    <Near x={l.x} z={l.z}>
-      {owner && built ? <StallBuilding name={l.name} color={owner === you ? "#e0a437" : "#7a5ba8"} x={l.x} z={l.z} /> : owner ? (
-        <group position={[l.x, 0, l.z]} rotation={[0, yaw + Math.PI, 0]}>
-          <mesh rotation={[-Math.PI / 2, 0, Math.PI / 4]} position={[0, 0.05, 0]}><ringGeometry args={[6.2, 6.5, 4]} /><meshBasicMaterial color={PAL.cream} transparent opacity={0.8} /></mesh>
-          {[[-4.4, -4.4], [4.4, -4.4], [-4.4, 4.4], [4.4, 4.4]].map(([x, z]) => <Plank key={`${x}${z}`} s={[0.2, 1.1, 0.2]} p={[x, 0.55, z]} color={PAL.plankDark} />)}
-          <SignPost tex={sign} />
-        </group>
-      ) : null}
-    </Near>
-  );
+  const done = useGame((s) => { const st = s.market.stalls[i]; if (!st?.owner) return 0; const need = l.needs.reduce((a, q) => a + q, 0); return Math.round((st.progress.reduce((a, q) => a + q, 0) / need) * 20) / 20; });
+  return <Near x={l.x} z={l.z}>{owner && built ? <StallBuilding name={l.name} color={owner === you ? "#e0a437" : "#7a5ba8"} x={l.x} z={l.z} /> : <Site i={i} owned={Boolean(owner)} done={done} />}</Near>;
 }
 
 const brickTexture = (base: string) => {
@@ -331,8 +304,10 @@ export function Mines() {
   const { spots, sensors, geo, mat } = useMemo(() => {
     const r = seeded(307), spots: Spot[] = [];
     for (const n of c.nodes) {
-      if (n.rich < 60) continue;
-      const count = 6 + Math.round((n.rich - 60) / 5);
+      // Bombs guard what's worth most: rare and legendary materials, and the very richest of the rest.
+      const tier = c.items[n.item].tier;
+      if (tier < 3 && n.rich < 80) continue;
+      const count = tier === 4 ? 14 : tier === 3 ? 10 : 6;
       for (let k = 0; k < count; k++) {
         const a = r() * 6.283, d = 9.5 + r() * 15, x = n.x + Math.cos(a) * d, z = n.z + Math.sin(a) * d, ry = r() * 6;
         // Bombs stay a hazard but never a wall: there's always room for even the widest vehicle to steer between them.

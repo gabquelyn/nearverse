@@ -39,7 +39,7 @@ const host: Record<string, Function> = {
   panic: () => { throw new Error("panic"); },
   panic_utf8: (l: bigint, p: bigint) => { throw new Error(td.decode(bytes(l, p))); },
   log_utf8: (l: bigint, p: bigint) => { logs.push(td.decode(bytes(l, p))); },
-  storage_write: (kl: bigint, kp: bigint, vl: bigint, vp: bigint, r: bigint) => { const k = hex(bytes(kl, kp)); const old = store.get(k); store.set(k, bytes(vl, vp)); if (old) { regs.set(r, old); return 1n; } return 0n; },
+  storage_write: (kl: bigint, kp: bigint, vl: bigint, vp: bigint, r: bigint) => { const k = hex(bytes(kl, kp)); const old = store.get(k); store.set(k, bytes(vl, vp)); largest = Math.max(largest, Number(vl)); if (old) { regs.set(r, old); return 1n; } return 0n; },
   storage_read: (kl: bigint, kp: bigint, r: bigint) => { const v = store.get(hex(bytes(kl, kp))); if (v) { regs.set(r, v); return 1n; } return 0n; },
   storage_remove: (kl: bigint, kp: bigint, r: bigint) => { const k = hex(bytes(kl, kp)); const v = store.get(k); if (v) { regs.set(r, v); store.delete(k); return 1n; } return 0n; },
   storage_has_key: (kl: bigint, kp: bigint) => (store.has(hex(bytes(kl, kp))) ? 1n : 0n),
@@ -50,6 +50,7 @@ const env: Record<string, Function> = {};
 for (const imp of WebAssembly.Module.imports(wasm)) {
   env[imp.name] = host[imp.name] ?? ((..._: unknown[]) => { unimplemented.add(imp.name); throw new Error("host function not mocked: " + imp.name); });
 }
+let largest = 0;
 function call(method: string, args: object, who = "a.testnet", attached = 0n, ms = 100_000n) {
   // A fresh instance each call, like the real runtime.
   const inst = new WebAssembly.Instance(wasm, { env: env as any });
@@ -86,11 +87,12 @@ const later = call("get_market", {}, "a.testnet", 0n, 3_600_000n);
 check("views catch up on time", later.tick === 6);
 const c0 = JSON.parse(rules);
 const freeLot = c0.lots.findIndex((l: { seeded: boolean }) => !l.seeded);
-expectFail("NOT_YOUR_STALL", () => call("build_stall", { lot: freeLot }));
+expectFail("NOT_YOUR_STALL", () => call("stall_deposit", { lot: freeLot, item: 0, qty: 1 }));
 expectFail("NOT_ENOUGH_CREDITS", () => call("buy_vehicle", { vehicle: 1 }));
 call("buy_credits", {}, "a.testnet", 10n ** 24n);
 check("NEAR buys credits and the game keeps it", call("revenue", {}) === String(10n ** 24n));
 call("refuel", { units: 1 });
 check("vehicle price from the contract", call("vehicle_price", { vehicle: 1 }) > 0);
 check("board lists player", call("leaderboard", {}).length === 1);
+console.log(`Largest single saved value: ${(largest / 1024).toFixed(1)} KB`);
 console.log(`\nWasm smoke passed: ${(readFileSync(root + "out/nearverse.wasm").length / 1024).toFixed(0)} KB, ${WebAssembly.Module.imports(wasm).length} host imports.`);

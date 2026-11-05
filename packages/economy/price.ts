@@ -29,6 +29,7 @@ export function powRatio(target: number, stock: number, kq: number): bigint {
 }
 
 export function stockPrice(c: Config, base: number, target: number, stock: number, kq: number): number {
+  if (target === 0) return 0; // this merchant doesn't deal in it
   const raw = (BigInt(base) * powRatio(target, stock, kq)) / SCALE;
   const floor = BigInt(Math.floor((base * c.floor_bps) / 10000));
   const ceil = BigInt(Math.floor((base * c.ceiling_bps) / 10000));

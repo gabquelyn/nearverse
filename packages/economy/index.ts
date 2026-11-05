@@ -7,3 +7,4 @@ export * from "./tick";
 export * from "./actions";
 export * from "./explain";
 export * from "./simulate";
+export * from "./history";

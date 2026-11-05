@@ -10,18 +10,24 @@ impl Nearverse {
     pub fn claim_lot(&mut self, lot: u32) {
         let id = env::predecessor_account_id();
         let mut p = self.load(&id);
-        ok(engine::claim_lot(&self.config, &mut self.market, &mut p, id.as_str(), lot as usize));
+        let refund = ok(engine::claim_lot(&self.config, &mut self.market, &mut p, id.as_str(), lot as usize, env::block_timestamp_ms()));
         self.players.insert(id, p);
+        if let Some((to, credits)) = refund {
+            let to: AccountId = to.parse().unwrap_or_else(|_| env::panic_str("BAD_SELLER"));
+            let mut old = self.load(&to);
+            old.credits += credits;
+            self.players.insert(to, old);
+        }
     }
-    /// Builds on a location you own. Bought or found materials both count.
-    pub fn build_stall(&mut self, lot: u32) {
+    /// Adds materials to your plot. Any amount counts, and the stall opens when the list is complete.
+    pub fn stall_deposit(&mut self, lot: u32, item: u32, qty: u64) -> u64 {
         self.advance();
         let id = env::predecessor_account_id();
         let mut p = self.load(&id);
-        let used = ok(engine::build_stall(&self.config, &mut self.market, &mut p, id.as_str(), lot as usize));
-        let list: Vec<(usize, u64)> = used.into_iter().enumerate().collect();
-        self.burn(&id, &list, "built a stall");
+        let used = ok(engine::deposit_to_stall(&self.config, &mut self.market, &mut p, id.as_str(), lot as usize, item as usize, qty, env::block_timestamp_ms()));
+        self.burn(&id, &[(item as usize, used)], "built a stall");
         self.players.insert(id, p);
+        used
     }
     pub fn stall_sell(&mut self, lot: u32, item: u32, qty: u64, min_total: u64) -> u64 {
         self.advance();

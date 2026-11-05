@@ -57,7 +57,8 @@ export function GoogleSignIn({ action, near }: { action: "start" | "credits" | "
       saveSession({ accountId, secretKey: key.secretKey, kind: "google" });
       rememberWallet(accountId);
       setStage("done");
-      router.push("/play");
+      // A full load, so the game picks up the new wallet instead of the signed-out state it had in memory.
+      location.href = "/play";
     } catch (e) { setFailed(String((e as Error).message)); setStage(fields.username ? "username" : "signin"); } finally { setBusy(false); }
   }
 

@@ -40,6 +40,12 @@ services:
     <<: *ops
     command: npx tsx scripts/smoke-testnet.ts
 
+  # Saves prices once per market hour for the performance chart. See DEPLOY.md, step 11.
+  tracker:
+    <<: *ops
+    command: npx tsx scripts/price-tracker.ts
+    restart: unless-stopped
+
   ghosts:
     <<: *ops
     command: npx tsx scripts/ghost-traders.ts

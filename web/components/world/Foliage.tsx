@@ -48,18 +48,21 @@ export function Grass({ map, biome, count = MAX_GRASS }: { map: THREE.Texture; b
           vec2 nvW = uTruck + mod(aRoot - uTruck + ${(PATCH / 2).toFixed(1)}, ${PATCH.toFixed(1)}) - ${(PATCH / 2).toFixed(1)};
           vec3 nvB = texture2D(uBiome, (nvW + ${(WORLD_SIZE / 2).toFixed(1)}) / ${WORLD_SIZE.toFixed(1)}).rgb;
           vColor.rgb = mix(vColor.rgb, vColor.rgb*.25+vec3(.72,.78,.86), nvB.r);
-          vColor.rgb = mix(vColor.rgb, vec3(.62,.50,.24)*(.7+aTip*.5), nvB.g);`)
+          vColor.rgb = mix(vColor.rgb, vec3(.62,.50,.24)*(.7+aTip*.5), nvB.g);
+          vColor.rgb = mix(vColor.rgb, vec3(.135,.235,.055), smoothstep(4.,21.,length(nvW-uTruck))*(1.-nvB.r)*(1.-nvB.g));`)
         .replace("#include <begin_vertex>", /* glsl */ `#include <begin_vertex>
           vec2 world = uTruck + mod(aRoot - uTruck + ${(PATCH / 2).toFixed(1)}, ${PATCH.toFixed(1)}) - ${(PATCH / 2).toFixed(1)};
           vec3 ground = texture2D(uMap, (world + ${(WORLD_SIZE / 2).toFixed(1)}) / ${WORLD_SIZE.toFixed(1)}).rgb;
           float clump = sin(world.x*.31+sin(world.y*.17)*2.)+sin(world.y*.27+sin(world.x*.13)*2.);
           float grow = (1.-smoothstep(.2,.42,ground.r))*(1.-smoothstep(.15,.35,ground.g))*(1.-smoothstep(.2,.5,ground.b));
-          grow *= .72+.28*clump;
+          grow *= .84+.16*clump;
           vec3 region = texture2D(uBiome, (world + ${(WORLD_SIZE / 2).toFixed(1)}) / ${WORLD_SIZE.toFixed(1)}).rgb;
           grow *= (1.-smoothstep(.2,.5,region.b))*(1.-region.g+region.g*step(.93,fract(aRoot.x*7.3+aRoot.y*3.1))*.7)*(1.-region.r*.45);
           grow = clamp(grow*1.5, 0., 1.5);
           vec2 away = world-uTruck; float dist = length(away);
-          grow *= 1.-smoothstep(25.,36.,dist); // fades out before the patch's square edge
+          // Each blade fades at its own distance, so there is no ring where the grass stops. Colour already matches the ground by then.
+          float nvEdge = fract(aRoot.x*3.7+aRoot.y*5.3);
+          grow *= 1.-smoothstep(11.+nvEdge*10.,23.+nvEdge*12.,dist);
           float gust = sin(world.x*.22+uTime*1.3)*.5+sin(world.y*.31+uTime*1.9+world.x*.1)*.3;
           transformed *= grow;
           transformed.xz += aTip*vec2(.25,.15)*gust*grow;

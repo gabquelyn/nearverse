@@ -1,6 +1,6 @@
 // Writes shared cases. The Rust tests replay these, so any drift between the two engines fails CI.
 import { writeFileSync } from "node:fs";
-import { investInMerchant, collectFromMerchant, rules as c, newMarket, tickOnce, bidAt, askAt, newPlayer, startGame, gather, sell, buy, repair, buildSection, takeDamage, GameError, rng, buyVehicle, selectVehicle, buildStall, claimLot, refuel, burnFuel, addCredits, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity } from "../packages/economy/index";
+import { investInMerchant, collectFromMerchant, rules as c, newMarket, tickOnce, bidAt, askAt, newPlayer, startGame, gather, sell, buy, repair, buildSection, takeDamage, GameError, rng, buyVehicle, selectVehicle, depositToStall, claimLot, refuel, burnFuel, addCredits, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity } from "../packages/economy/index";
 const root = new URL("..", import.meta.url).pathname;
 const vectors: any[] = [];
 const r = rng(42);
@@ -35,8 +35,8 @@ for (let i = 0; i < 2500; i++) {
   else if (a < 0.91) { const v = Math.floor(r() * c.vehicles.length); rec({ t: "select_vehicle", v }, () => selectVehicle(c, p, v)); }
   else {
     const lot = Math.floor(r() * c.lots.length), k = r(), who = "me.testnet";
-    if (k < 0.07) rec({ t: "claim_lot", lot }, () => claimLot(c, mk, p, who, lot));
-    else if (k < 0.14) rec({ t: "build_stall", lot }, () => buildStall(c, mk, p, who, lot));
+    if (k < 0.07) rec({ t: "claim_lot", lot }, () => claimLot(c, mk, p, who, lot, now));
+    else if (k < 0.14) rec({ t: "stall_deposit", lot, item, qty }, () => depositToStall(c, mk, p, who, lot, item, qty, now));
     else if (k < 0.28) rec({ t: "stall_sell", lot, item, qty }, () => sellToStall(c, mk, p, who, lot, item, qty, 0, now));
     else if (k < 0.42) rec({ t: "stall_buy", lot, item, qty }, () => buyFromStall(c, mk, p, who, lot, item, qty, 1e9, now));
     else if (k < 0.5) rec({ t: "stall_stock", lot, item, qty }, () => stockStall(c, mk, p, who, lot, item, qty));

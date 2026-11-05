@@ -56,6 +56,7 @@ function checkTrade(c: Config, item: number, qty: number) {
 export function sell(c: Config, mk: Market, p: Player, merchant: number, item: number, qty: number, minTotal: number, now: number): number {
   need(p); travel(c, p, merchant, now); checkTrade(c, item, qty);
   if (p.items[item] < qty) fail("NOT_ENOUGH_ITEMS");
+  if (c.merchants[merchant].targets[item] === 0) fail("DOES_NOT_TRADE");
   if (merchantClosed(c, mk, merchant)) fail("MERCHANT_CLOSED");
   const s = mk.merchants[merchant];
   let total = 0, stock = s.stock[item];
@@ -69,6 +70,7 @@ export function sell(c: Config, mk: Market, p: Player, merchant: number, item: n
 
 export function buy(c: Config, mk: Market, p: Player, merchant: number, item: number, qty: number, maxTotal: number, now: number): number {
   need(p); travel(c, p, merchant, now); checkTrade(c, item, qty);
+  if (c.merchants[merchant].targets[item] === 0) fail("DOES_NOT_TRADE");
   if (merchantClosed(c, mk, merchant)) fail("MERCHANT_CLOSED");
   const s = mk.merchants[merchant];
   if (s.stock[item] < qty) fail("MERCHANT_OUT_OF_STOCK");
@@ -201,22 +203,35 @@ const ownerOnly = (c: Config, mk: Market, lot: number, who: string) => { const s
 const builtOwner = (c: Config, mk: Market, lot: number, who: string) => { const s = ownerOnly(c, mk, lot, who); if (!s.built) fail("NOT_BUILT"); return s; };
 
 /** Buys a location with credits. Nothing stands there until the owner brings the materials. */
-export function claimLot(c: Config, mk: Market, p: Player, who: string, lot: number) {
+/** True if a half-built plot has gone too long without a deposit, so anyone can take it. */
+export const plotExpired = (c: Config, mk: Market, lot: number, now: number) => {
+  const s = mk.stalls[lot];
+  return Boolean(s?.owner) && !s.built && now > s.last_deposit_ms + c.plot_deadline_ms;
+};
+export function claimLot(c: Config, mk: Market, p: Player, who: string, lot: number, now: number) {
   need(p);
   const s = lotOf(c, mk, lot);
-  if (s.owner !== null) fail("LOT_TAKEN");
+  const lapsed = s.owner !== who && plotExpired(c, mk, lot, now);
+  if (s.owner !== null && !lapsed) fail("LOT_TAKEN");
   spend(p, c.lots[lot].price);
-  s.owner = who; s.built = false; s.spread_bps = c.stall_spread_bps; s.price = 0;
+  const refund = lapsed ? { to: s.owner as string, credits: Math.floor(c.lots[lot].price / 2) } : null;
+  s.owner = who; s.built = false; s.spread_bps = c.stall_spread_bps; s.price = 0; s.progress = c.items.map(() => 0); s.last_deposit_ms = now;
+  return refund;
 }
-/** Builds on a location you own. Bought or found materials both count, and they are used up. */
-export function buildStall(c: Config, mk: Market, p: Player, who: string, lot: number) {
+/** Adds materials to a plot you own, over as many trips as you like. Returns how many were used. The stall opens when the list is complete. */
+export function depositToStall(c: Config, mk: Market, p: Player, who: string, lot: number, item: number, qty: number, now: number) {
   need(p);
   const s = ownerOnly(c, mk, lot, who);
   if (s.built) fail("ALREADY_BUILT");
-  const needs = c.lots[lot].needs;
-  needs.forEach((q, i) => { if (p.items[i] < q) fail("NOT_ENOUGH_ITEMS"); });
-  needs.forEach((q, i) => { p.items[i] -= q; });
-  s.built = true;
+  if (!c.items[item]) fail("BAD_ITEM");
+  if (qty === 0) fail("BAD_QTY");
+  const left = c.lots[lot].needs[item] - s.progress[item];
+  if (left === 0) fail("NOT_NEEDED");
+  const used = Math.min(qty, left);
+  if (p.items[item] < used) fail("NOT_ENOUGH_ITEMS");
+  p.items[item] -= used; s.progress[item] += used; s.last_deposit_ms = now;
+  if (c.lots[lot].needs.every((q, i) => s.progress[i] >= q)) s.built = true;
+  return used;
 }
 const stallOpen = (c: Config, mk: Market, p: Player, who: string, lot: number, item: number, qty: number, now: number) => {
   need(p);
@@ -224,6 +239,7 @@ const stallOpen = (c: Config, mk: Market, p: Player, who: string, lot: number, i
   if (s.owner === null || !s.built) fail("NO_STALL");
   if (s.owner === who) fail("YOUR_OWN_STALL");
   checkTrade(c, item, qty);
+  if (!c.lots[lot].accepts.includes(item)) fail("DOES_NOT_TRADE");
   const place = 100 + lot;
   if (p.last_merchant !== null && p.last_merchant !== place && now < p.last_trade_ms + c.travel_ms) fail("TRAVELING");
   return s;
@@ -253,6 +269,7 @@ export function buyFromStall(c: Config, mk: Market, p: Player, who: string, lot:
 }
 export function stockStall(c: Config, mk: Market, p: Player, who: string, lot: number, item: number, qty: number) {
   need(p); const s = builtOwner(c, mk, lot, who); checkTrade(c, item, qty);
+  if (c.lots[lot] && !c.lots[lot].accepts.includes(item)) fail("DOES_NOT_TRADE");
   if (p.items[item] < qty) fail("NOT_ENOUGH_ITEMS");
   p.items[item] -= qty; s.stock[item] += qty;
 }
@@ -303,6 +320,6 @@ export function sellStallToCity(c: Config, mk: Market, p: Player, who: string, l
   if (s.stock.some((q) => q > 0)) fail("STALL_NOT_EMPTY");
   const value = s.built ? cityBuyback(c, lot) : 0, f = mk.merchants[foremanIndex(c)];
   if (f.cash < value) fail("MERCHANT_OUT_OF_CASH");
-  f.cash -= value; p.coins += value + s.cash; s.owner = null; s.built = false; s.cash = 0; s.price = 0;
+  f.cash -= value; p.coins += value + s.cash; s.owner = null; s.built = false; s.cash = 0; s.price = 0; s.progress = c.items.map(() => 0);
   return value;
 }

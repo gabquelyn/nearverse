@@ -10,8 +10,8 @@ export function newMarket(c: Config): Market {
     merchants: c.merchants.map((m) => ({ stock: [...m.targets], target: [...m.targets], cash: m.start_cash, investors: [] })),
     nodes: c.nodes.map((n) => n.max_stock),
     stalls: c.lots.map((l) => l.seeded
-      ? { owner: `merchant:${c.merchants[l.seed_merchant].id}`, built: true, stock: c.items.map(() => c.seed_stock), cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price }
-      : { owner: null, built: false, stock: c.items.map(() => 0), cash: 0, spread_bps: c.stall_spread_bps, price: 0 }),
+      ? { owner: `merchant:${c.merchants[l.seed_merchant].id}`, built: true, stock: c.items.map((_, i) => (l.accepts.includes(i) ? c.seed_stock : 0)), cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price, progress: [...l.needs], last_deposit_ms: 0 }
+      : { owner: null, built: false, stock: c.items.map(() => 0), cash: 0, spread_bps: c.stall_spread_bps, price: 0, progress: c.items.map(() => 0), last_deposit_ms: 0 }),
   };
 }
 
@@ -43,7 +43,7 @@ export function tickOnce(c: Config, mk: Market): void {
   c.nodes.forEach((n, i) => { mk.nodes[i] = Math.min(n.max_stock, mk.nodes[i] + n.regrow); });
   if (t % c.event_period_ticks === 0) {
     const ev = c.events[(t / c.event_period_ticks - 1) % c.events.length];
-    for (const s of mk.merchants) s.stock[ev.item] = Math.max(1, Math.floor((s.stock[ev.item] * ev.keep_bps) / 10000));
+    for (const s of mk.merchants) if (s.target[ev.item] > 0) s.stock[ev.item] = Math.max(1, Math.floor((s.stock[ev.item] * ev.keep_bps) / 10000));
   }
   mk.tick = t;
 }

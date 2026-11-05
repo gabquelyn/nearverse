@@ -10,7 +10,8 @@ import { glowMat, lampMat, sky, updateSky } from "./daynight";
 import { Ground, Ocean, paintBiomeMap, paintGroundMap } from "./Terrain";
 import { Grass, Trees, Weather, useTrees } from "./Foliage";
 import { Truck } from "./Truck";
-import { Benches, Lamps, LotSpot, Mines, NodeSpot, Obstacles, Scatter, Stall, TitleCrates, windowMat } from "./Props";
+import { Benches, Lamps, LotSpot, Mines, NodeSpot, Obstacles, Scatter, Stall, TitleCrates } from "./Props";
+import { windowMats } from "./City";
 import { Near } from "./Instances";
 import { OtherCars } from "./OtherCars";
 import { Waypoint } from "./Waypoint";
@@ -51,7 +52,7 @@ function DayNight() {
     if (scene.background instanceof THREE.Color) scene.background.copy(tmp);
     lampMat.emissiveIntensity = 0.2 + sky.night * 3;
     glowMat.opacity = sky.night * 0.34;
-    windowMat.emissiveIntensity = sky.night * 1.5;
+    for (const m of windowMats) m.emissiveIntensity = sky.night * 1.5;
   });
   return (
     <>
@@ -69,13 +70,16 @@ function FollowCamera() {
     // The lead follows smoothly, so a sudden stop at an obstacle doesn't jolt the view.
     lead.current = THREE.MathUtils.damp(lead.current, THREE.MathUtils.clamp(truck.speed * 0.3, -3, 8), 2.2, dt);
     // The camera swings round behind the vehicle, so left and right on screen are always the vehicle's left and right.
+    // After a jump in position, such as coming back to where you left off, cut straight there instead of flying across the island.
+    const far = Math.hypot(camera.position.x - truck.pos.x, camera.position.z - truck.pos.z) > 150;
     const turn = Math.atan2(Math.sin(truck.yaw - yaw.current), Math.cos(truck.yaw - yaw.current));
-    yaw.current += turn * (1 - Math.exp(-3.5 * dt));
+    yaw.current += far ? turn : turn * (1 - Math.exp(-3.5 * dt));
     truck.cameraYaw = yaw.current;
     const sin = Math.sin(yaw.current), cos = Math.cos(yaw.current);
     const target = new THREE.Vector3(truck.pos.x + Math.sin(truck.yaw) * lead.current, 0, truck.pos.z + Math.cos(truck.yaw) * lead.current);
     const back = (portrait ? 30 : 27) * view.zoom;
     const off = new THREE.Vector3(-sin * back, (portrait ? 40 : 28) * view.zoom, -cos * back);
+    if (far) camera.position.set(target.x + off.x, off.y, target.z + off.z);
     camera.position.x = THREE.MathUtils.damp(camera.position.x, target.x + off.x, 5, dt);
     camera.position.y = THREE.MathUtils.damp(camera.position.y, off.y, 5, dt);
     camera.position.z = THREE.MathUtils.damp(camera.position.z, target.z + off.z, 5, dt);
@@ -92,21 +96,25 @@ function FollowCamera() {
 function Zones() {
   const hold = useRef(0), tick = useRef(0);
   useFrame((_, dt) => {
-    const { setZone, act, market, session, zone: current } = useGame.getState();
+    const { setZone, act, market, zone: current } = useGame.getState();
     const { x, z } = truck.pos;
     if (tick.current++ % 4 === 0) {
-      const me = session?.accountId ?? "you";
       let zone: { kind: "node" | "stall" | "plot" | "lot"; index: number } | null = null;
       for (let i = 0; i < c.nodes.length; i++) if (Math.abs(x - c.nodes[i].x) < 7 && Math.abs(z - c.nodes[i].z) < 7) { zone = { kind: "node", index: i }; break; }
       for (let i = 0; i < c.merchants.length; i++) { const m = c.merchants[i], l = Math.hypot(m.x, m.z); if (Math.hypot(x - (m.x - m.x / l), z - (m.z - m.z / l)) < 5.6) zone = { kind: "stall", index: i }; }
-      for (let i = 0; i < c.lots.length; i++) { const m = c.lots[i], st = market.stalls[i]; if (Math.abs(x - m.x) < 7 && Math.abs(z - m.z) < 7 && st?.owner && (st.built || st.owner === me)) zone = { kind: "lot", index: i }; }
+      for (let i = 0; i < c.lots.length; i++) { const m = c.lots[i], st = market.stalls[i]; if (Math.abs(x - m.x) < 7 && Math.abs(z - m.z) < 7 && st) zone = { kind: "lot", index: i }; }
       setZone(zone);
     }
-    if (current?.kind === "node" && keys.has("KeyE")) {
-      hold.current += dt;
-      if (gatherBar.el) gatherBar.el.style.width = `${Math.min(100, (hold.current / 1.2) * 100)}%`;
-      if (hold.current >= 1.2) { hold.current = 0; if (gatherBar.el) gatherBar.el.style.width = "0%"; if (act({ t: "gather", node: current.index })) sfx.load(); }
-    } else if (hold.current) { hold.current = 0; if (gatherBar.el) gatherBar.el.style.width = "0%"; }
+    if (current?.kind === "node") {
+      // The bar fills while the last batch settles, so it can't reach the end before the next load is allowed.
+      const wait = Math.max(0, useGame.getState().player.last_gather_ms + c.gather_cooldown_ms - Date.now()), settled = 1 - Math.min(1, wait / c.gather_cooldown_ms);
+      const holding = keys.has("KeyE");
+      hold.current = holding ? hold.current + dt : 0;
+      const done = Math.min(hold.current / 1.2, settled);
+      if (gatherBar.el) { gatherBar.el.style.width = `${(holding ? done : wait > 0 ? settled : 0) * 100}%`; gatherBar.el.classList.toggle("settling", wait > 0); }
+      if (gatherBar.note) { const text = wait > 0 ? "Stacking the last load in the truck" : ""; if (gatherBar.note.textContent !== text) gatherBar.note.textContent = text; }
+      if (holding && hold.current >= 1.2 && wait === 0) { hold.current = 0; if (gatherBar.el) gatherBar.el.style.width = "0%"; if (act({ t: "gather", node: current.index })) sfx.load(); }
+    } else if (hold.current) hold.current = 0;
   });
   return null;
 }

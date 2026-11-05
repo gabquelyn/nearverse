@@ -16,12 +16,11 @@ export const Tour = memo(function Tour() {
   }, [setToured]);
   if (step < 0) return null;
   const steps = [
-    { title: "Welcome to Nearverse", text: "Hunt for hidden resources across a huge island, sell them, and own a piece of the market." },
     { title: "Drive", text: touch ? "Push the stick up to go and down to reverse, and left or right to turn. Use + and − to zoom." : "Use WASD or the arrow keys. Shift boosts, Space jumps and R takes you home. Use + and − or the scroll wheel to zoom." },
-    { title: "Hunt", text: `Resources aren't on the map. You'll get a notice when one is close, and a glowing marker shows where to stop. Then hold ${touch ? "Load" : "E"}. Far spots are guarded by bombs, but pay a coin bonus.` },
-    { title: "Sell", text: `The map shows merchants. They pay more when they're short of stock, and every sale moves the price. ${touch ? "Tap" : "Hover over"} a price to see why it's that number.` },
+    { title: "Hunt", text: `Resources aren't on the map. You'll get a notice when one is close, and a glowing marker shows where to stop. Then hold ${touch ? "Load" : "E"}. Rarer materials are harder to find, and the rarest are guarded by bombs.` },
+    { title: "Sell", text: `The map shows merchants. They pay more when they're short of stock, and every trade moves the price, up or down. Each merchant deals in its own list. Open Market for the best prices and a chart of any material. ${touch ? "Tap" : "Hover over"} a price to see why it's that number.` },
     { title: "Keep moving", text: "Fuel and repairs come out of the coins you earn, from the details panel. Credits buy new vehicles and stall locations." },
-    { title: "Own a piece", text: "Buy a stall and earn from what it sells, or invest in a merchant for a share of its sales. A broke merchant stays closed until someone invests." },
+    { title: "Own a piece", text: "Buy a plot, build it up over as many trips as you like, and earn from what your stall sells, or invest in a merchant for a share of its sales. A broke merchant stays closed until someone invests." },
   ];
   const finish = () => { setStep(-1); setToured(); try { localStorage.setItem(KEY, "1"); } catch { /* shown again next visit */ } };
   const s = steps[step];

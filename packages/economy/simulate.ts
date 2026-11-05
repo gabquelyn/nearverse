@@ -93,7 +93,7 @@ export function stepHour(sim: Sim): HourSample {
   tickOnce(c, mk);
   const sample: HourSample = {
     tick: mk.tick,
-    prices: c.items.map((_, it) => Math.round(c.merchants.reduce((a, __, m) => a + ask(c, mk, m, it), 0) / c.merchants.length)),
+    prices: c.items.map((_, it) => { const dealers = c.merchants.flatMap((m, j) => (m.targets[it] > 0 ? [j] : [])); return dealers.length ? Math.round(dealers.reduce((a, m) => a + ask(c, mk, m, it), 0) / dealers.length) : 0; }),
     cash: mk.merchants.map((m) => m.cash),
     targets: c.items.map((_, it) => mk.merchants.reduce((a, m) => a + m.target[it], 0)),
     event: activeEvent(c, mk.tick)?.title ?? null,

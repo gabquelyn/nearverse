@@ -5,7 +5,8 @@ import { SESSION_METHODS } from "@/lib/near/methods";
 import { readEmailProof } from "@/lib/near/email";
 import { accountExists, deriveKey, findAccount, keyOnAccount, validPublicKey, validUsername, verifyGoogle } from "@/lib/near/custody";
 
-const FUNDING = "0.25 NEAR", ALLOWANCE = "0.25 NEAR";
+const FUNDING = "0.25 NEAR", ALLOWANCE = "10 NEAR";
+const GAS_RESERVE = 0.02; // NEAR left for the transaction itself
 const no = (error: string, status = 400) => NextResponse.json({ error }, { status });
 
 export async function POST(req: Request) {
@@ -48,7 +49,10 @@ export async function POST(req: Request) {
         const near = Number(body.near);
         if (!(near > 0 && near <= 100)) return no("Enter an amount of NEAR up to 100.");
         if (!await mine(body.accountId)) return no("That isn't your account.", 403);
-        await as(body.accountId as string).call(contract, "buy_credits", {}, { gas: "60 Tgas", attachedDeposit: `${near} NEAR` as never });
+        // Checked first, because the network reports a short balance only as "Server error".
+        const available = Number(await as(body.accountId as string).getBalance(body.accountId as string));
+        if (near + GAS_RESERVE > available) return no(`Your wallet has ${available} NEAR. Buy with at most ${Math.max(0, available - GAS_RESERVE).toFixed(2)} NEAR, or get more test NEAR from your profile.`);
+        await as(body.accountId as string).call(contract, "buy_credits", {}, { gas: "100 Tgas", attachedDeposit: `${near} NEAR` as never });
         return NextResponse.json({ ok: true });
       }
       case "export": {
@@ -61,6 +65,10 @@ export async function POST(req: Request) {
       default: return no("Unknown action.");
     }
   } catch (e) {
-    return no(`NEAR didn't accept that: ${String((e as Error).message).slice(0, 160)}`, 502);
+    const err = e as { message?: string; details?: unknown; data?: unknown };
+    let extra = "";
+    try { extra = JSON.stringify(err.details ?? err.data ?? "").replace(/[{}"\\]/g, " ").replace(/\s+/g, " ").trim(); } catch { /* the message alone will do */ }
+    console.error("wallet action failed:", body.action, err.message, extra);
+    return no(`NEAR didn't accept that: ${[err.message, extra].filter(Boolean).join(": ").slice(0, 240)}`, 502);
   }
 }

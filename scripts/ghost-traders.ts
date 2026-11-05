@@ -20,7 +20,7 @@ for (let i = 1; i <= COUNT; i++) {
   }
   const near = new Near({ network: "testnet", rpcUrl: process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com", privateKey: keys[id] as `ed25519:${string}`, defaultSignerId: id });
   const me = await near.view<{ started: boolean } | null>(contract, "get_player", { account_id: id });
-  if (!me?.started) await near.call(contract, "start_game", {}, { gas: "60 Tgas" });
+  if (!me?.started) await near.call(contract, "start_game", {}, { gas: "100 Tgas" });
   ghosts.push({ id, near });
 }
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
@@ -55,18 +55,22 @@ async function drive(g: { id: string; near: Near }, index: number) {
       await topUp(g);
       const p = await g.near.view<{ items: number[]; fuel: number }>(contract!, "get_player", { account_id: g.id });
       const held = p.items.map((q, i) => ({ q, i })).filter((x) => x.q >= 3);
-      if (p.fuel < 4) { await g.near.call(contract!, "refuel", { units: 10 }, { gas: "60 Tgas" }); console.log(g.id, "refueled"); }
+      if (p.fuel < 4) { await g.near.call(contract!, "refuel", { units: 10 }, { gas: "100 Tgas" }); console.log(g.id, "refueled"); }
       else {
         const merchants = rules.merchants as (Spot & { name: string })[], nodes = rules.nodes as (Spot & { name: string; rich: number; yield_qty: number; item: number })[];
         const nearNodes = [...nodes].sort(by(at)).slice(0, 6);
         // Rules first, then the model may choose instead. If it can't, the rules stand.
         let selling = held.length > 0 && Math.random() < 0.5;
-        let target: Spot = selling ? pick([...merchants].sort(by(at)).slice(0, 2)) : pick(nearNodes);
-        let sellItem: { q: number; i: number } | null = selling ? pick(held) : null, why = "";
         const market = await g.near.view<Market>(contract!, "get_market", {});
+        const dealsIn = (j: number, i: number) => market.merchants[j].target[i] > 0;
+        // Each merchant deals in its own list, so only sell what someone nearby takes.
+        const sellable = held.filter((h) => merchants.some((_, j) => dealsIn(j, h.i)));
+        selling = selling && sellable.length > 0;
+        let sellItem: { q: number; i: number } | null = selling ? pick(sellable) : null, why = "";
+        let target: Spot = sellItem ? pick(merchants.filter((_, j) => dealsIn(j, sellItem!.i)).sort(by(at)).slice(0, 2)) : pick(nearNodes);
         const km = (s: Spot) => `${Math.round(Math.hypot(s.x - at.x, s.z - at.z))} m away`;
         const options = [
-          ...held.flatMap((h) => merchants.map((m, j) => ({ id: `s${j}-${h.i}`, label: `sell ${Math.min(h.q, 6)} ${rules.items[h.i].name} to ${m.name}, paying ${(bid(rules, market, j, h.i) / 100).toFixed(2)} each, ${km(m)}` }))),
+          ...sellable.flatMap((h) => merchants.flatMap((m, j) => !dealsIn(j, h.i) ? [] : [{ id: `s${j}-${h.i}`, label: `sell ${Math.min(h.q, 6)} ${rules.items[h.i].name} to ${m.name}, paying ${(bid(rules, market, j, h.i) / 100).toFixed(2)} each, ${km(m)}` }])),
           ...nearNodes.map((n) => ({ id: `g${nodes.indexOf(n)}`, label: `load ${n.yield_qty} ${rules.items[n.item].name} at a spot ${km(n)}, with a ${n.rich} coin bonus` })),
         ];
         const choice = await decide(name, `You hold ${p.items.map((q, i) => `${q} ${rules.items[i].name}`).join(", ")}.`, options);
@@ -81,11 +85,11 @@ async function drive(g: { id: string; near: Near }, index: number) {
         await sleep(ms);
         at = target;
         if (selling) {
-          const h = sellItem ?? pick(held), merchant = merchants.indexOf(target as never);
-          await g.near.call(contract!, "sell", { merchant, item: h.i, qty: Math.min(h.q, 6), min_total: 0 }, { gas: "60 Tgas" });
+          const h = sellItem!, merchant = merchants.indexOf(target as never);
+          await g.near.call(contract!, "sell", { merchant, item: h.i, qty: Math.min(h.q, 6), min_total: 0 }, { gas: "100 Tgas" });
           console.log(g.id, "sold", rules.items[h.i].id, why && `(${why})`);
         } else {
-          await g.near.call(contract!, "gather", { node: nodes.indexOf(target as never) }, { gas: "60 Tgas" });
+          await g.near.call(contract!, "gather", { node: nodes.indexOf(target as never) }, { gas: "100 Tgas" });
           console.log(g.id, "gathered", why && `(${why})`);
         }
         trades++;

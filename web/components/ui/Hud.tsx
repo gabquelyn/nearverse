@@ -14,8 +14,10 @@ import { useOutside } from "@/lib/useOutside";
 import { link, others, realtimeEnabled } from "@/lib/realtime";
 import { MarketButton } from "./LiveMarket";
 import { Coach } from "./Coach";
+import { GoalLine } from "./Goal";
 import { Tour } from "./Tour";
 import { Nearby, ZoomButtons } from "./Nearby";
+import { samplePrices } from "@/lib/priceLog";
 
 const Stats = memo(function Stats() {
   const player = useGame((s) => s.player), tick = useGame((s) => s.market.tick), act = useGame((s) => s.act);
@@ -32,12 +34,12 @@ const Stats = memo(function Stats() {
       <div className="plate"><small>Fuel {fuelPct}%</small><div className="gauge"><i className={fuelPct < 20 ? "low" : ""} style={{ width: `${fuelPct}%` }} /></div>
         <small>{vehicle.name} {health}%</small><div className="gauge"><i className={health < 30 ? "low" : ""} style={{ width: `${health}%` }} /></div></div>
       <div className="plate" style={{ flexGrow: 3 }}><small>Truck bed {cargoUsed(c, player)}/{vehicle.capacity}</small>
-        <div className="cargo">{c.items.map((it, i) => <span key={it.id} title={it.name}><i className="swatch" style={{ background: `var(--${it.id})` }} />{player.items[i]}</span>)}</div>
+        <div className="cargo" data-testid="cargo">{player.items.some((q) => q > 0) ? c.items.map((it, i) => player.items[i] > 0 ? <span key={it.id} title={it.name}><i className="swatch" style={{ background: it.color }} />{it.name} {player.items[i]}</span> : null) : <span className="muted">Empty</span>}</div>
         <div className="garage">
           <button className="btn small" disabled={rf.missing === 0} onClick={() => act({ t: "refuel", units: rf.missing })}>{rf.missing ? `Refuel: ${coins(rf.cost)}` : "Tank full"}</button>
           <button className="btn small" disabled={rq.missing === 0} onClick={() => act({ t: "repair" })}>{rq.missing ? `Repair: ${coins(rq.cost)}` : "No damage"}</button>
         </div></div>
-      <div className="plate job"><small>Job this shift</small><br />{progress >= c.quest_gathers ? "Done. Reward paid." : `Find ${c.quest_gathers - progress} loads of ${c.items[quest.item].name.toLowerCase()} ${quest.region === "Home" ? "near Home" : `in the ${quest.region}`} for ${c.quest_reward_qty} ${c.items[window_ % c.items.length].name.toLowerCase()}`}</div>
+      <div className="plate job"><GoalLine /><small className="sidejob">Side job: {progress >= c.quest_gathers ? "Done. Reward paid." : `Find ${c.quest_gathers - progress} loads of ${c.items[quest.item].name.toLowerCase()} ${quest.region === "Home" ? "near Home" : `in the ${quest.region}`} for ${c.quest_reward_qty} ${c.items[window_ % c.items.length].name.toLowerCase()}`}</small></div>
     </div>
   );
 });
@@ -62,13 +64,14 @@ const Toast = memo(function Toast() {
 function GatherPrompt({ index }: { index: number }) {
   const node = c.nodes[index];
   const left = useGame((s) => s.market.nodes[index]), burn = useGame((s) => fuelBurn(c, s.player, node.fuel_cost));
-  const bar = useRef<HTMLElement>(null);
-  useEffect(() => { gatherBar.el = bar.current; return () => { gatherBar.el = null; }; }, []);
+  const bar = useRef<HTMLElement>(null), note = useRef<HTMLDivElement>(null);
+  useEffect(() => { gatherBar.el = bar.current; gatherBar.note = note.current; return () => { gatherBar.el = null; gatherBar.note = null; }; }, []);
   return (
     <div className="prompt">
       You found a {node.name.toLowerCase()}: hold {isTouch() ? "Load" : "E"} to load {node.yield_qty} {c.items[node.item].name.toLowerCase()}
       <div style={{ fontWeight: 400, fontSize: 13 }}>{left} left, uses {burn} fuel{node.wear ? ` and ${node.wear} truck wear` : ""}</div>
       <div className="bar"><i ref={bar} style={{ width: 0 }} /></div>
+      <div ref={note} className="loadnote" aria-live="polite" />
     </div>
   );
 }
@@ -99,10 +102,11 @@ const Clock = memo(function Clock() {
 
 /** Says plainly when moves are slow, the connection dropped, or the game key needs renewing. */
 const Status = memo(function Status() {
-  const slow = useGame((s) => s.slow), offline = useGame((s) => s.offline), expired = useGame((s) => s.keyExpired), session = useGame((s) => s.session);
+  const slow = useGame((s) => s.slow), offline = useGame((s) => s.offline), expired = useGame((s) => s.keyExpired), session = useGame((s) => s.session), known = useGame((s) => s.playerKnown), reason = useGame((s) => s.netError);
   const renew = async () => { if (session!.kind === "google") { location.href = "/signin"; return; } const auth = await import("@/lib/near/login"); await auth.requestRenewKey(session!.accountId); };
-  if (expired) return <div className="statusbar warn" role="alert">Your game key has run out.<button className="btn small action" onClick={() => renew().catch(() => useGame.getState().say("Couldn't start the approval. Try again.", true))}>Approve a new one</button></div>;
-  if (offline) return <div className="statusbar warn" role="alert">Connection lost. Reconnecting.</div>;
+  if (expired) return <div className="statusbar warn" role="alert">Your game key needs renewing to keep saving your moves.<button className="btn small action" onClick={() => renew().catch(() => useGame.getState().say("Couldn't start the approval. Try again.", true))}>Renew it</button></div>;
+  if (offline) return <div className="statusbar warn" role="alert" data-testid="net-error">Can&apos;t reach the NEAR network. Retrying.{reason && <small> {reason}</small>}</div>;
+  if (session && !known) return <div className="statusbar" role="status">Loading your game from the network.</div>;
   return slow ? <div className="statusbar" role="status">Still confirming your last move.</div> : null;
 });
 
@@ -125,6 +129,13 @@ const Mode = memo(function Mode() {
   const mode = useGame((s) => s.mode), hasSession = useGame((s) => Boolean(s.session));
   return <div className="modebar">{mode === "practice" ? "Practice mode: saved in this browser." : hasSession ? "Playing live. Moves save as you go." : "Viewing the live world."} WASD or arrows to drive, Shift boost, Space jump, H honk, M map, R back home.</div>;
 });
+
+/** Keeps this browser's price history going while you play, one sample per market hour. */
+function PriceSampler() {
+  const tick = useGame((s) => s.market.tick);
+  useEffect(() => { samplePrices(useGame.getState().market); }, [tick]);
+  return null;
+}
 
 const KEY = "nearverse.hudOpen";
 
@@ -152,7 +163,9 @@ export const Hud = memo(function Hud() {
         <Link className="btn small phone-only" href="/profile">Profile</Link>
         {canFull && <button className="btn small ghost" onClick={fullscreen}>Full screen</button>}
       </div>
+      {!open && <div className="goalchip"><GoalLine /></div>}
       {open && <><Stats /><nav className="links" aria-label="Pages"><Clock /><Link href="/profile">Shop and profile</Link><Link href="/judge">Judge view</Link></nav><TopMap /><Banner /><Mode /></>}
+      <PriceSampler />
       <Status />
       <Tour />
       <Coach />

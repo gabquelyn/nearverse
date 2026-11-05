@@ -6,9 +6,9 @@ A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` trac
 
 ## How NEAR is used
 
-- **NEP-245 multi token:** one contract (`contracts/nearverse`) holds wood, iron, slate and clay. Fuel is not a token: it is bought with credits. Gathering mints, selling burns, and all standard `mt_*` transfer and view methods are present. Approvals are not implemented.
+- **NEP-245 multi token:** one contract (`contracts/nearverse`) holds all 24 materials, from wood and stone up to sapphire and meteorite. Fuel is not a token: it is bought with credits. Gathering mints, selling burns, and all standard `mt_*` transfer and view methods are present. Approvals are not implemented.
 - **Credits are the game's revenue:** `buy_credits` takes attached NEAR at 1 NEAR = 1000 credits, and the contract keeps it. Only the owner can withdraw it, through `withdraw_revenue`. Credits pay for vehicles and stall locations, and cover fuel and repairs if your coins run out. No stall sells repairs or fuel.
-- **Player-owned markets:** stalls come two ways: a location bought with credits and built from materials, or a ready-built stall bought with coins from a merchant or another player. Owners stock it and earn coins in its till. They can list it for sale or sell it back to the city. Withdrawing coins as NEAR is planned for later.
+- **Player-owned markets:** stalls come two ways: a location bought with credits and built up from materials over as many trips as you like, or a ready-built stall bought with coins from a merchant or another player. Owners stock it and earn coins in its till. They can list it for sale or sell it back to the city. Withdrawing coins as NEAR is planned for later.
 - **Upkeep paid from play:** fuel and repairs cost coins, so a sold load pays for the next trip. A full tank costs a Pickup 15.00 coins and a full repair 10.00, scaled by each vehicle's tank and endurance. With too few coins, the same amount comes out of credits, so nobody gets stranded.
 - **Investors in NPC merchants:** a merchant under 5% of its starting cash closes completely, with no trade and no income. Anyone can invest coins in it for good, which reopens it once it's back over the line, and earns a share of 20% of what it sells, split by stake (`merchant_invest`, `merchant_collect`).
 - **Vehicles priced from their stats:** the contract computes each price in credits from capacity, endurance, fuel use, flair and size, using weights in `config/items.yaml`.
@@ -33,11 +33,11 @@ A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` trac
 
 | Other cars over Ably | The token route and drawing are tested with injected positions. Not yet run against a live Ably account |
 
-Contract account on testnet: `nearverse-game-v2.testnet`. Hosted demo: https://nearverse-murex.vercel.app
+Contract account on testnet: `nearverse-game-v3.testnet`. Hosted demo: https://nearverse-murex.vercel.app
 
 ## How supply and demand set prices
 
-Each merchant prices every material from its own stock, using `config/merchants.rules.yaml`. The contract does this calculation itself, and the tooltips use the same numbers.
+Each merchant deals in its own list of materials and prices each one from its own stock, using `config/merchants.rules.yaml`. Stalls do the same from their stock. The contract does this calculation itself, and the tooltips use the same numbers.
 
 `price = base × (target stock ÷ current stock)^k`, held between 35% and 300% of base. `k` is how sharply a merchant reacts.
 
@@ -48,6 +48,14 @@ Each merchant prices every material from its own stock, using `config/merchants.
 3. When players buy, its stock falls and its price rises. That's demand.
 4. Each market hour (10 real minutes), stock drifts back toward target, by 0.8% of the gap for the Hoarder, 2% for the Foreman and 3.5% for the Flipper. Stock left too high or too low for a market day moves the target itself, by 5%, within 60–160% of the original.
 5. Market events cut or swell one material's stock at every merchant.
+
+6. Rare materials move most. Merchants hold few of them, so one sale is a large share of their target: one meteorite against a target of 2 moves the price far more than one wood against a target of 300.
+
+**Materials and scarcity.** There are 24 materials in 4 tiers, set in `config/items.yaml`. Rarer materials have fewer spots, smaller loads, slower regrowth and higher prices, and each region of the island has its own. Bombs guard the rare and legendary spots.
+
+**Building in stages.** Buy a plot with credits, then deposit any amount of its materials over any number of trips. Progress is saved on-chain, and the stall opens when the list is complete. Rarer locations need rarer materials. Each deposit restarts a 3-day deadline. If it runs out, anyone can buy the plot: the deposits are lost and the old owner gets half their credits back. Owners can also give up a half-built plot, with nothing returned.
+
+**Seeing the market.** The **Market** button shows the best price for every material, with a route to that dealer, and a chart of any material's price over time at each dealer, with your own sales marked. Chart history comes from a small tracker (`scripts/price-tracker.ts`) when it's set up, and from your own browser otherwise.
 
 **A worked example.** Iron has a base price of 20.00, and the Hoarder wants 160 with `k` = 0.5:
 
@@ -69,7 +77,7 @@ Nothing to install. Each step names the requirement it shows.
 2. Press **Run a week**, then **Flood the market with iron**. See the iron line drop as a week plays out in a minute (fast-forward). Press **Bankrupt the Flipper**, and under *Shops* see it close, then see investors reopen it. This runs in the browser and sends no transactions.
 3. Hover or tap a price under *Play by buttons*. See the reasoning, such as stock against target and the merchant's margin, built from `config/merchants.rules.yaml` (rules in one file, reasoning in a tooltip).
 4. Press **Start game**, then a **Timber stand** button under *Play by buttons*. See it under Activity with a transaction link, with no popup or gas prompt (no prompts in the game loop).
-5. Open that link, or call `mt_balance_of` on `nearverse-game-v2.testnet` for your account with `token_id` `wood`. See the wood as a NEP-245 balance (one contract for every item).
+5. Open that link, or call `mt_balance_of` on `nearverse-game-v3.testnet` for your account with `token_id` `wood`. See the wood as a NEP-245 balance (one contract for every item).
 6. Open https://nearverse-murex.vercel.app/signin and sign in with Google or an email code. Choose a username, and see a wallet created with no seed phrase (social login). Or press **Play as a guest**. Drive with WASD or arrows, or the stick and Gas on a phone. Other players and labeled ghost traders appear as cars when the server has an Ably key and traders are running.
 
 NEAR Auth sign-in, with Google, Apple, email or a passkey, works when you run the app on `http://localhost:3000`: see [DEPLOY.md](DEPLOY.md).
@@ -97,12 +105,12 @@ Use `WEB_PORT=8080 docker compose up --build` if port 3000 is taken.
 
 1. Run `docker compose up --build`. Wait for the container to report healthy. Open http://localhost:3000/api/health and see `"mode":"practice"`.
 2. Open http://localhost:3000/judge. See a "Judge view" heading and a practice mode note.
-3. Press **Skip to the end**. See a week of prices across four materials, merchant cash, and a list of what merchants learned.
+3. Press **Skip to the end**. See a week of prices for the materials you pick, merchant cash, and a list of what merchants learned.
 4. Press **Run a week**, then **Flood the market with iron** while it plays. See the iron line drop.
 5. Under *Play by buttons*, press the first **Timber stand** button. See "Gathered 3 wood" under Activity.
 6. In the price table, hover a price. See its reasoning, such as "Wood 7.20: stock on target (+0%), spread (−10%)."
 7. Press **Sell** on wood. See coins rise, and hover again to see that the merchant's stock rose.
-8. On the same page, under *Vehicle shop*, see each vehicle's stats and price. Each shows a picture and a price in credits. Under *Stalls*, pick a location, buy it with credits, and see which materials it needs.
+8. On the same page, under *Vehicle shop*, see each vehicle's stats and price. Each shows a picture and a price in credits. Under *Stall locations*, pick a location, buy it with credits, and see which materials it needs.
 9. Open http://localhost:3000/ and press **Start driving**. Drive with WASD or arrows. Resources are hidden, and the closest ones are within about 150 m of home. When a prompt says you found one, hold **E** to load. See cubes appear in the truck bed. Follow roads to find merchants. Drive hard into a boulder or tree and see truck health drop, then press **Repair** at the top. The map at the top shows your location, the regions and every place you can sell, but never resources. Press **Nearest stall** or **Go home** for a route. Press **Tab** to hide all the details for a clear view. Add `?quality=low` to the address on a slow machine, or `?perf=1` to see the frame rate.
 
 ### B. Deploy and use it on testnet
@@ -128,6 +136,8 @@ Full steps are in [DEPLOY.md](DEPLOY.md): create accounts, deploy the contract, 
 - **The contract pays storage** for player records, which is fine for a testnet game but would need a fee on mainnet.
 - Crash damage, driving fuel and location are reported by the browser, so a modified client could skip those costs or build a stall without driving there.
 - Resource positions are hidden from the map, not secret: this is open source, so they can be read from `packages/economy/generated/rules.json`, and a script could gather without driving.
+- The discovery log and your sales on the chart are kept in your browser, because the contract stores what you hold and not where it came from.
+- Performance targets are 60 fps on a mid laptop and 30+ on a mid phone. Detail drops automatically to hold them, and they need checking on real devices.
 - `leaderboard` scans up to 200 players. Approvals in NEP-245 aren't implemented.
 - Phones get a right-hand thumb stick that steers from the vehicle's point of view, plus Gas, in landscape. Android switches by itself after a tap. iPhones ask you to turn the phone, because Safari doesn't let pages lock the screen.
 - The profile page has a faucet of 0.2 test NEAR per account every 10 minutes, paid by the treasury. It pauses when the treasury falls below 3 NEAR, and its limits live in server memory, so a restart resets them.

@@ -1,7 +1,10 @@
 "use client";
 import { create } from "zustand";
-import { rules as c, activeEvent, investInMerchant, collectFromMerchant, newMarket, newPlayer, advanceTo, startGame, gather, sell, buy, repair, refuel, burnFuel, addCredits, claimLot, buildSection, takeDamage, buyVehicle, selectVehicle, buildStall, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity, stallBidAt, stallAskAt, GameError, quoteSell, quoteBuy, ask, netWorth, tickOnce, coins, type Market, type Player } from "@nearverse/economy";
+import { rules as c, activeEvent, investInMerchant, collectFromMerchant, newMarket, newPlayer, advanceTo, startGame, gather, sell, buy, repair, refuel, burnFuel, addCredits, claimLot, buildSection, takeDamage, buyVehicle, selectVehicle, depositToStall, sellToStall, buyFromStall, stockStall, unstockStall, fundStall, collectStall, setStallSpread, listStall, buyListedStall, sellStallToCity, stallBidAt, stallAskAt, GameError, quoteSell, quoteBuy, ask, netWorth, tickOnce, coins, type Market, type Player } from "@nearverse/economy";
 import { addSale, dropSale } from "../salesLog";
+import { samplePrices } from "../priceLog";
+import { noteFind } from "../foundLog";
+import { chime } from "../chime";
 import * as near from "../near/client";
 
 export const MESSAGES: Record<string, string> = {
@@ -12,6 +15,8 @@ export const MESSAGES: Record<string, string> = {
   NOT_ENOUGH_CREDITS: "You need more credits. Buy them with NEAR in your profile.",
   NOT_BUILT: "Build the stall first.",
   ALREADY_BUILT: "This stall is already built.",
+  DOES_NOT_TRADE: "They don't deal in that material.",
+  NOT_NEEDED: "This plot has all it needs of that material.",
   NODE_EMPTY: "This spot is picked clean. It regrows each market hour.",
   CARGO_FULL: "The truck bed is full. Sell or build first.",
   TRAVELING: "You just traded elsewhere. Merchants are a short drive apart.",
@@ -44,7 +49,7 @@ export const MESSAGES: Record<string, string> = {
 export type Action =
   | { t: "gather"; node: number } | { t: "sell"; merchant: number; item: number; qty: number }
   | { t: "buy"; merchant: number; item: number; qty: number } | { t: "repair" } | { t: "refuel"; units: number } | { t: "burn_fuel"; units: number } | { t: "claim_lot"; lot: number } | { t: "damage"; points: number } | { t: "buy_vehicle"; vehicle: number } | { t: "select_vehicle"; vehicle: number }
-  | { t: "build_stall"; lot: number } | { t: "stall_sell"; lot: number; item: number; qty: number } | { t: "stall_buy"; lot: number; item: number; qty: number }
+  | { t: "stall_deposit"; lot: number; item: number; qty: number } | { t: "stall_sell"; lot: number; item: number; qty: number } | { t: "stall_buy"; lot: number; item: number; qty: number }
   | { t: "stall_stock"; lot: number; item: number; qty: number } | { t: "stall_unstock"; lot: number; item: number; qty: number } | { t: "stall_fund"; lot: number; cents: number }
   | { t: "stall_collect"; lot: number } | { t: "stall_spread"; lot: number; bps: number } | { t: "stall_list"; lot: number; price: number } | { t: "stall_buy_listed"; lot: number } | { t: "stall_city"; lot: number } | { t: "build"; blueprint: number } | { t: "invest"; merchant: number; cents: number } | { t: "merchant_collect"; merchant: number };
 export interface LogEntry { id: number; text: string; hash?: string | null; failed?: boolean }
@@ -66,14 +71,42 @@ const saveSoon = () => {
 };
 let queue: Promise<unknown> = Promise.resolve();
 let pending = 0;
+// A network read can lag behind a move that just landed. Reads are held back briefly after a move, and any read that started before a move is thrown away, so a done action never appears undone.
+let moveCount = 0, readsFrom = 0, lastGatherLanded = 0, genesisKnown = false, pollCount = 0;
+let starting: Promise<boolean> | null = null;
+// A hung read holds one of the browser's few connections, so never stack more on top of it, or moves can't get through.
+const inFlight = new Set<string>();
+const once = <T,>(name: string, read: () => Promise<T>) => {
+  if (inFlight.has(name)) return Promise.reject(new Error("Still waiting for the last read."));
+  inFlight.add(name);
+  return read().finally(() => inFlight.delete(name));
+};
+const limited = <T,>(read: Promise<T>, ms = 8000) => Promise.race([read, new Promise<never>((_, no) => setTimeout(() => no(new Error("The network took too long to answer.")), ms))]);
+const SETTLE_MS = 3000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, Math.max(0, ms))); // a huge negative delay wraps round to weeks in a browser
 
 interface State {
+  playerKnown: boolean; netError: string;
   ready: boolean; mode: Mode; market: Market; player: Player; genesis: number; session: near.Session | null;
   log: LogEntry[]; toast: { id: number; text: string; bad?: boolean; retry?: Action } | null; activity: { id: number; text: string }[]; toured: boolean; setToured(): void; slow: boolean; offline: boolean; keyExpired: boolean; closedZone: string | null; closeZone(): void; clearToast(): void; away: string[] | null;
   zone: { kind: "node" | "stall" | "plot" | "lot"; index: number } | null; waypoint: Waypoint | null; mapOpen: boolean; setWaypoint(w: Waypoint | null): void; setMapOpen(open: boolean): void; worldReady: boolean; setWorldReady(): void; board: { account_id: string; net_worth: number; sections_built: number }[];
   init(): Promise<void>; startDriving(): Promise<boolean>; act(a: Action): boolean; poll(): Promise<void>; say(text: string, bad?: boolean, retry?: Action): void;
   setZone(z: State["zone"]): void; dismissAway(): void; resetPractice(): void; advanceHours(n: number): void;
   buyCredits(near: number): Promise<void>; useGuest(): Promise<void>; signOut(): void;
+}
+
+/** The network can take a moment to show a new player, so show the starting tank and truck straight away instead of empty gauges. */
+function showStarted(set: (v: Partial<State>) => void, get: () => State) {
+  if (get().player.started) return;
+  const p = newPlayer(c); startGame(c, p); set({ player: p });
+}
+
+/** Gas comes from the player's wallet, so keep it topped up with free test NEAR without asking them to notice. */
+async function topUpWallet(get: () => State) {
+  const id = get().session?.accountId;
+  if (!id) return;
+  const balance = await near.fetchBalance(id);
+  if (balance !== null && Number(balance) < 0.08) await near.dripNear(id).catch(() => {});
 }
 
 const zoneKey = (z: State["zone"]) => (z ? `${z.kind}${z.index}` : null);
@@ -86,7 +119,7 @@ function pulse(prev: Market, now: Market) {
   c.merchants.forEach((m, j) => c.items.forEach((it, i) => {
     const qty = now.merchants[j].stock[i] - prev.merchants[j].stock[i], cash = now.merchants[j].cash - prev.merchants[j].cash;
     if (now.tick === prev.tick && qty && Math.sign(qty) === -Math.sign(cash)) trades.push(qty > 0 ? `${qty} ${it.name.toLowerCase()} sold to the ${m.name}` : `${-qty} ${it.name.toLowerCase()} bought from the ${m.name}`);
-    const a = ask(c, prev, j, i), b = ask(c, now, j, i), d = (b - a) / a;
+    const a = ask(c, prev, j, i), b = ask(c, now, j, i), d = a ? (b - a) / a : 0;
     if (Math.abs(d) > Math.abs(move.d)) move = { d, text: `${it.name} ${d > 0 ? "up" : "down"} ${Math.abs(Math.round(d * 100))}% at the ${m.name}` };
   }));
   return { trades, move: Math.abs(move.d) >= 0.05 ? move.text : null };
@@ -97,7 +130,7 @@ function report(prev: Market | null, now: Market): string[] | null {
   const out: string[] = [];
   let best = { d: 0, text: "" };
   c.items.forEach((it, i) => c.merchants.forEach((m, j) => {
-    const a = ask(c, prev, j, i), b = ask(c, now, j, i), d = (b - a) / a;
+    const a = ask(c, prev, j, i), b = ask(c, now, j, i), d = a ? (b - a) / a : 0;
     if (Math.abs(d) > Math.abs(best.d)) best = { d, text: `${it.name} ${d > 0 ? "rose" : "fell"} ${Math.abs(Math.round(d * 100))}% at the ${m.name}'s stall.` };
   }));
   if (Math.abs(best.d) >= 0.03) out.push(best.text);
@@ -122,7 +155,7 @@ function describe(a: Action, result: number): string {
     case "damage": return `Crashed: truck lost ${a.points} health`;
     case "buy_vehicle": return `Bought a ${c.vehicles[a.vehicle].name} for ${result} credits`;
     case "select_vehicle": return `Now driving the ${c.vehicles[a.vehicle].name}`;
-    case "build_stall": return `Built a stall at ${c.lots[a.lot].name}`;
+    case "stall_deposit": return `Added ${result} ${c.items[a.item].name.toLowerCase()} to ${c.lots[a.lot].name}`;
     case "stall_sell": return `Sold ${a.qty} ${c.items[a.item].name.toLowerCase()} at ${c.lots[a.lot].name} for ${coins(result)}`;
     case "stall_buy": return `Bought ${a.qty} ${c.items[a.item].name.toLowerCase()} at ${c.lots[a.lot].name} for ${coins(result)}`;
     case "stall_stock": return `Stocked ${a.qty} ${c.items[a.item].name.toLowerCase()} at ${c.lots[a.lot].name}`;
@@ -141,7 +174,7 @@ function describe(a: Action, result: number): string {
 
 export const useGame = create<State>((set, get) => ({
   ready: false, mode: "practice", market: newMarket(c), player: newPlayer(c), genesis: 0, session: null,
-  log: [], toast: null, activity: [], toured: false, setToured() { set({ toured: true }); }, slow: false, offline: false, keyExpired: false, closedZone: null, away: null,
+  playerKnown: false, netError: "", log: [], toast: null, activity: [], toured: false, setToured() { set({ toured: true }); }, slow: false, offline: false, keyExpired: false, closedZone: null, away: null,
   closeZone() { set({ closedZone: zoneKey(get().zone) }); },
   clearToast() { set({ toast: null }); },
   zone: null, worldReady: false, setWorldReady() { set({ worldReady: true }); }, board: [], waypoint: null, mapOpen: false,
@@ -154,11 +187,17 @@ export const useGame = create<State>((set, get) => ({
       const session = near.loadSession();
       if (near.tookOldKey()) { location.href = "/signin"; return; }
       set({ mode: "chain", session });
-      await get().poll();
+      // Reading keeps going whatever happens below, so nothing can leave the game frozen on its first reading.
+      setInterval(() => get().poll(), 4000);
+      // A slow network shouldn't hold the start button back. Polling carries on and fills in the rest.
+      await Promise.race([get().poll().catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
       let prev: Market | null = null;
       try { prev = JSON.parse(localStorage.getItem(SEEN) ?? "null"); } catch { /* no prior visit */ }
-      set({ ready: true, away: report(prev, get().market) });
-      setInterval(() => get().poll(), 4000);
+      // The last visit may have been to an older contract with different materials and merchants. That only costs the "while you were away" note.
+      let away: string[] | null = null;
+      try { away = report(prev, get().market); } catch { /* nothing to compare */ }
+      set({ ready: true, away });
+      setInterval(() => topUpWallet(get), 60_000);
     } else {
       const save = readSave();
       const genesis = save?.genesis ?? Date.now();
@@ -177,22 +216,38 @@ export const useGame = create<State>((set, get) => ({
   },
 
   async poll() {
-    if (!near.chainEnabled() || pending > 0) return;
-    try {
-      const [market, genesis, player, board] = await Promise.all([near.fetchMarket(), near.fetchGenesis(), get().session ? near.fetchPlayer(get().session!.accountId) : null, near.fetchLeaderboard()]);
-      if (pending > 0) return;
-      if (!market) return;
+    if (!near.chainEnabled() || pending > 0 || Date.now() < readsFrom) return;
+    const movesBefore = moveCount, id = get().session?.accountId;
+    const fresh = () => pending === 0 && moveCount === movesBefore && Date.now() >= readsFrom;
+    // Each read stands alone, so a slow one can't hold up your own player. Your player comes first because everything depends on it.
+    const playerRead = id ? limited(once("player", () => near.fetchPlayer(id))).then((player) => {
+      if (!fresh() || get().session?.accountId !== id) return;
+      set({ playerKnown: true, player: player ? { ...player, last_gather_ms: Math.min(player.last_gather_ms, Date.now()) } : (get().player.started ? get().player : newPlayer(c)) });
+    }) : Promise.resolve();
+    const marketRead = limited(once("market", () => near.fetchMarket())).then((market) => {
+      if (!fresh() || !market) return;
       const seen = get().market, change = get().ready ? pulse(seen, market) : { trades: [], move: null };
       const event = activeEvent(c, market.tick), wasEvent = activeEvent(c, seen.tick);
-      set({ market, genesis, board, offline: false, activity: [...change.trades.map((text) => ({ id: ++activityId, text })), ...get().activity].slice(0, 20), ...(get().session ? { player: player ?? newPlayer(c) } : {}) });
+      set({ market, offline: false, activity: [...change.trades.map((text) => ({ id: ++activityId, text })), ...get().activity].slice(0, 20) });
       pollFailures = 0;
       const now = Date.now();
       if (event && event.title !== wasEvent?.title) get().say(event.title);
       else if (change.move && now - lastOwnMove > 6000 && now - lastAlert > 30_000) { lastAlert = now; get().say(change.move); }
-    } catch { pollFailures++; if (pollFailures >= 3) set({ offline: true }); /* keep the last known state; the next poll retries */ }
+    });
+    // These change rarely, so they needn't be read every time. That also keeps us within the network's request limits.
+    if (!genesisKnown) limited(near.fetchGenesis()).then((genesis) => { genesisKnown = true; set({ genesis }); }).catch(() => {});
+    if (pollCount++ % 8 === 0) limited(once("board", () => near.fetchLeaderboard())).then((board) => set({ board })).catch(() => {});
+    const [, market] = await Promise.allSettled([playerRead, marketRead]);
+    // Keep the last known state; the next poll retries. The reason is kept so the status bar can say what's wrong.
+    if (market.status === "rejected") { pollFailures++; if (!String(market.reason?.message).startsWith("Still waiting")) set({ netError: near.errorDetail(market.reason).slice(0, 140) }); if (pollFailures >= 3) set({ offline: true }); }
+    else if (market.status === "fulfilled") set({ netError: "" });
   },
 
-  async startDriving() {
+  startDriving() {
+    // One start at a time, however many things ask for it.
+    starting ??= run().finally(() => { starting = null; });
+    return starting;
+    async function run(): Promise<boolean> {
     const s = get();
     if (s.player.started) return true;
     if (s.mode === "practice") {
@@ -201,17 +256,23 @@ export const useGame = create<State>((set, get) => ({
       return true;
     }
     try {
-      const session = s.session ?? await near.createGuest();
+      // Never replace a wallet this browser already has with a new guest one.
+      const session = s.session ?? near.loadSession() ?? await near.createGuest();
       set({ session });
-      const existing = await near.fetchPlayer(session.accountId);
-      if (!existing?.started) await near.callGame(session, "start_game", {});
-      await get().poll();
+      const existing = await limited(near.fetchPlayer(session.accountId), 15_000);
+      if (existing?.started) set({ player: existing, playerKnown: true });
+      else {
+        await limited(near.callGame(session, "start_game", {}), 30_000).catch((e) => { if (near.errorCode(e) !== "ALREADY_STARTED") throw e; });
+        showStarted(set, get); set({ playerKnown: true });
+      }
+      void get().poll();
       return true;
     } catch (e) {
       console.error("Couldn't start the game:", e);
       if (near.errorCode(e) === "OLD_KEY") { near.saveSession(null); location.href = "/signin"; return false; }
       get().say(`Couldn't start: ${near.errorDetail(e)}`, true);
       return false;
+    }
     }
   },
 
@@ -238,7 +299,7 @@ export const useGame = create<State>((set, get) => ({
         }
         case "buy_vehicle": result = buyVehicle(c, p, a.vehicle); args = { method: "buy_vehicle", args: { vehicle: a.vehicle } }; break;
         case "select_vehicle": selectVehicle(c, p, a.vehicle); args = { method: "select_vehicle", args: { vehicle: a.vehicle } }; break;
-        case "build_stall": buildStall(c, mk, p, who, a.lot); args = { method: "build_stall", args: { lot: a.lot } }; break;
+        case "stall_deposit": result = depositToStall(c, mk, p, who, a.lot, a.item, a.qty, now); args = { method: "stall_deposit", args: { lot: a.lot, item: a.item, qty: a.qty } }; break;
         case "stall_sell": {
           const st = s.market.stalls[a.lot]; let q = 0; for (let i = 0; i < a.qty; i++) q += stallBidAt(c, a.item, st.spread_bps, st.stock[a.item] + i);
           const min = Math.floor(q * 0.97);
@@ -261,13 +322,17 @@ export const useGame = create<State>((set, get) => ({
         case "repair": repair(c, p); args = { method: "repair", args: {} }; break;
         case "refuel": refuel(c, p, a.units); args = { method: "refuel", args: { units: a.units } }; break;
         case "burn_fuel": burnFuel(c, p, a.units); args = { method: "burn_fuel", args: { units: a.units } }; break;
-        case "claim_lot": claimLot(c, mk, p, who, a.lot); args = { method: "claim_lot", args: { lot: a.lot } }; break;
+        case "claim_lot": claimLot(c, mk, p, who, a.lot, now); args = { method: "claim_lot", args: { lot: a.lot } }; break;
         case "invest": investInMerchant(c, mk, p, who, a.merchant, a.cents); args = { method: "merchant_invest", args: { merchant: a.merchant, cents: a.cents } }; break;
         case "merchant_collect": result = collectFromMerchant(mk, p, who, a.merchant); args = { method: "merchant_collect", args: { merchant: a.merchant } }; break;
         case "build": buildSection(c, mk, p, a.blueprint); args = { method: "build_section", args: { blueprint: a.blueprint } }; break;
       }
     } catch (e) {
-      if (e instanceof GameError) { get().say(MESSAGES[e.code] ?? e.code, true); return false; }
+      if (e instanceof GameError) {
+        // On the live game a signed-in player's record may still be on its way, so fetch it instead of telling them off.
+        if (e.code === "NOT_STARTED" && s.mode === "chain") { if (a.t !== "burn_fuel" && a.t !== "damage") get().say("Getting your game ready. Try again in a moment."); void get().startDriving(); return false; }
+        get().say(MESSAGES[e.code] ?? e.code, true); return false;
+      }
       throw e;
     }
     const text = describe(a, result);
@@ -275,8 +340,15 @@ export const useGame = create<State>((set, get) => ({
     set(text ? { market: mk, player: p, log: [entry, ...s.log].slice(0, 30) } : { market: mk, player: p });
     if (a.t !== "burn_fuel") lastOwnMove = now;
     const saleId = ++logId;
-    if (a.t === "sell") addSale(who, { id: saleId, t: now, cents: result, item: c.items[a.item].name, buyer: c.merchants[a.merchant].name, kind: "sale" });
-    if (a.t === "stall_sell") addSale(who, { id: saleId, t: now, cents: result, item: c.items[a.item].name, buyer: c.lots[a.lot].name, kind: "sale" });
+    if (a.t === "sell" || a.t === "buy" || a.t === "stall_sell" || a.t === "stall_buy") samplePrices(mk, now);
+    if (a.t === "stall_deposit" && mk.stalls[a.lot].built) get().say(`${c.lots[a.lot].name} is finished. Your stall is open.`);
+    if (a.t === "gather") {
+      const it = c.items[c.nodes[a.node].item], first = noteFind(who, it.id, result, now);
+      if (it.tier >= 3) { chime(); get().say(`${it.tier === 4 ? "Legendary" : "Rare"} find: ${result} ${it.name.toLowerCase()}!`); set({ activity: [{ id: ++activityId, text: `You found ${it.name.toLowerCase()}, worth about ${Math.round(it.base_price / 100)} coins each` }, ...get().activity].slice(0, 20) }); }
+      else if (first) get().say(`New material: ${it.name}. It's in your discovery log.`);
+    }
+    if (a.t === "sell") addSale(who, { id: saleId, t: now, cents: result, qty: a.qty, item: c.items[a.item].name, buyer: c.merchants[a.merchant].name, kind: "sale" });
+    if (a.t === "stall_sell") addSale(who, { id: saleId, t: now, cents: result, qty: a.qty, item: c.items[a.item].name, buyer: c.lots[a.lot].name, kind: "sale" });
     if (a.t === "stall_collect" && result > 0) addSale(who, { id: saleId, t: now, cents: result, item: "stall till", buyer: c.lots[a.lot].name, kind: "stall" });
     if (a.t === "merchant_collect") addSale(who, { id: saleId, t: now, cents: result, item: "investment", buyer: c.merchants[a.merchant].name, kind: "investment" });
     if (s.mode === "practice") {
@@ -285,14 +357,23 @@ export const useGame = create<State>((set, get) => ({
     }
     // Optimistic: the game answers now and a queue confirms on-chain in order, in the background.
     const session = s.session!;
-    pending++;
+    pending++; moveCount++;
     queue = queue.then(async () => {
+      let failed = false;
       const slow = setTimeout(() => set({ slow: true }), 8000);
       try {
         // Never let one stuck move hold up the rest or stop the game correcting itself.
-        const { hash } = await Promise.race([near.callGame(session, args!.method, args!.args), new Promise<never>((_, no) => setTimeout(() => no(new Error("timed out")), 30_000))]);
+        const send = () => Promise.race([near.callGame(session, args!.method, args!.args), new Promise<never>((_, no) => setTimeout(() => no(new Error("timed out")), 30_000))]);
+        // Loads can be held up behind other moves, so space them out here. The player has already seen theirs go in.
+        if (a.t === "gather") await sleep(lastGatherLanded + c.gather_cooldown_ms + 600 - Date.now());
+        const { hash } = await send().catch(async (e) => {
+          if (a.t !== "gather" || near.errorCode(e) !== "COOLDOWN") throw e;
+          await sleep(2000); return send();
+        });
+        if (a.t === "gather") lastGatherLanded = Date.now();
         set({ log: get().log.map((l) => (l.id === entry.id ? { ...l, hash } : l)) });
       } catch (err) {
+        failed = true;
         set({ log: get().log.map((l) => (l.id === entry.id ? { ...l, failed: true } : l)) });
         dropSale(who, saleId);
         const code = near.errorCode(err);
@@ -301,13 +382,16 @@ export const useGame = create<State>((set, get) => ({
         else if (a.t !== "burn_fuel") get().say(MESSAGES[code] ?? MESSAGES.NETWORK, true, code === "NETWORK" ? a : undefined);
       } finally {
         clearTimeout(slow); set({ slow: false });
-        pending--; if (pending === 0) await get().poll();
+        pending--;
+        // A refused move corrects the screen straight away. A good one waits for reads to catch up.
+        if (failed) { readsFrom = 0; if (pending === 0) await get().poll(); }
+        else { readsFrom = Date.now() + SETTLE_MS; if (pending === 0) setTimeout(() => get().poll(), SETTLE_MS + 50); }
       }
     });
     return true;
   },
 
-  say(text, bad, retry) { const id = ++logId; set({ toast: { id, text, bad, retry } }); setTimeout(() => { if (get().toast?.id === id) set({ toast: null }); }, retry ? 8000 : 3600); },
+  say(text, bad, retry) { const id = ++logId; set({ toast: { id, text, bad, retry } }); setTimeout(() => { if (get().toast?.id === id) set({ toast: null }); }, retry || bad ? 8000 : 3600); },
   setZone(zone) { const z = get().zone; if (z?.kind !== zone?.kind || z?.index !== zone?.index) set({ zone, closedZone: null }); },
   dismissAway() { set({ away: null }); },
   resetPractice() { try { localStorage.removeItem(SAVE); } catch { /* nothing saved */ } set({ market: newMarket(c), player: newPlayer(c), genesis: Date.now(), log: [] }); },
@@ -324,8 +408,21 @@ export const useGame = create<State>((set, get) => ({
     const credits = Math.floor(amount * c.credits_per_near);
     if (s.mode === "practice") {
       const p = JSON.parse(JSON.stringify(s.player)) as Player;
-      try { addCredits(p, credits); } catch (e) { get().say(MESSAGES[(e as GameError).code] ?? "Start the game first.", true); return; }
+      try { if (!p.started) startGame(c, p); addCredits(p, credits); } catch (e) { get().say(MESSAGES[(e as GameError).code] ?? "Start the game first.", true); return; }
       set({ player: p }); saveSoon(); get().say(`Added ${credits} practice credits. No real NEAR was spent.`); return;
+    }
+    if (!s.session) { location.href = "/signin"; return; }
+    const wallet = Number(await near.fetchBalance(s.session.accountId).catch(() => null) ?? NaN);
+    if (wallet < amount + 0.02) { get().say(`Your wallet has ${wallet} NEAR. Buy with at most ${Math.max(0, wallet - 0.02).toFixed(2)} NEAR, or get more test NEAR first.`, true); return; }
+    // Credits need a player record, so someone buying before their first drive starts the game here.
+    const existing = await near.fetchPlayer(s.session.accountId).catch(() => null);
+    if (!existing?.started) {
+      try { await near.callGame(s.session, "start_game", {}); showStarted(set, get); await get().poll(); }
+      catch (e) {
+        const code = near.errorCode(e);
+        if (code === "OLD_KEY") { near.saveSession(null); location.href = "/signin"; return; }
+        if (code !== "ALREADY_STARTED") { get().say(`Couldn't start: ${near.errorDetail(e)}`, true); return; }
+      }
     }
     if (s.session?.kind === "google") { location.href = `/signin?google=credits&near=${amount}`; return; }
     if (s.session?.kind === "login") {

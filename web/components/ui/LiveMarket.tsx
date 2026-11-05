@@ -6,6 +6,8 @@ import { rules as c, coins } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
 import { shortAccount } from "@/lib/near/client";
 import { useOutside } from "@/lib/useOutside";
+import { PriceBoard } from "./PriceBoard";
+import { PriceChart } from "./PriceChart";
 
 export const LiveMarket = memo(function LiveMarket() {
   const merchants = useGame((s) => s.market.merchants), activity = useGame((s) => s.activity), board = useGame((s) => s.board), mode = useGame((s) => s.mode), me = useGame((s) => s.session?.accountId);
@@ -31,13 +33,16 @@ export const LiveMarket = memo(function LiveMarket() {
 });
 
 export function MarketButton() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false), [tab, setTab] = useState<"Overview" | "Best prices" | "Chart">("Overview"), [item, setItem] = useState(0);
   useOutside(open, ".livepanel", () => setOpen(false));
   return (
     <>
       <button className="btn small" aria-expanded={open} onClick={() => setOpen((o) => !o)}>Market</button>
       {/* Drawn on the game layer, so the button row's position can't squeeze it. */}
-      {open && createPortal(<section className="livepanel" aria-label="Live market"><LiveMarket /></section>, document.querySelector(".game") ?? document.body)}
+      {open && createPortal(<section className={`livepanel ${tab === "Overview" ? "" : "wide"}`} aria-label="Live market">
+        <div className="row tabs" role="tablist">{(["Overview", "Best prices", "Chart"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} className={`btn small ${tab === t ? "action" : "ghost"}`} onClick={() => setTab(t)}>{t}</button>)}</div>
+        {tab === "Overview" ? <LiveMarket /> : tab === "Best prices" ? <PriceBoard onChart={(i) => { setItem(i); setTab("Chart"); }} /> : <PriceChart item={item} setItem={setItem} />}
+      </section>, document.querySelector(".game") ?? document.body)}
     </>
   );
 }

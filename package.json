@@ -19,6 +19,7 @@
     "build": "npm run gen && npm run build -w web",
     "deploy:testnet": "tsx --env-file-if-exists=.env scripts/deploy-testnet.ts",
     "ghosts": "tsx --env-file-if-exists=.env scripts/ghost-traders.ts",
+    "tracker": "tsx --env-file-if-exists=.env scripts/price-tracker.ts",
     "smoke:testnet": "tsx --env-file-if-exists=.env scripts/smoke-testnet.ts",
     "test:all": "bash scripts/test-all.sh"
   },

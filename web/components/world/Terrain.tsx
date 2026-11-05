@@ -61,7 +61,7 @@ function bakedNoise() {
     data[i + 1] = c2(x, y) * 255; data[i + 3] = 255;
   }
   noiseTex = new THREE.DataTexture(data, S, S);
-  noiseTex.wrapS = noiseTex.wrapT = THREE.RepeatWrapping; noiseTex.magFilter = noiseTex.minFilter = THREE.LinearFilter; noiseTex.needsUpdate = true;
+  noiseTex.wrapS = noiseTex.wrapT = THREE.RepeatWrapping; noiseTex.magFilter = THREE.LinearFilter; noiseTex.minFilter = THREE.LinearMipmapLinearFilter; noiseTex.generateMipmaps = true; noiseTex.anisotropy = 8; noiseTex.needsUpdate = true;
   return noiseTex;
 }
 
@@ -88,7 +88,9 @@ export function Ground({ map, biome }: { map: THREE.Texture; biome: THREE.Textur
         float wob = (nvFbm(vWP.xz*.45)-.5)*.5;
         vec3 sp = texture2D(uMap, mapUv).rgb, bio = texture2D(uBiome, mapUv).rgb;
         float n = nvFbm(vWP.xz*.9), fine = nvNoise(vWP.xz*7.);
-        vec3 grass = mix(vec3(.17,.27,.10), vec3(.28,.37,.13), n) * (.85+fine*.3);
+        // Fine streaks like distant blades, so the ground keeps its texture when you zoom out and where the blades end.
+        float blades = nvNoise(vWP.xz*vec2(21.,4.))*.5+nvNoise(vWP.zx*vec2(17.,3.))*.5;
+        vec3 grass = mix(vec3(.10,.19,.04), vec3(.17,.28,.07), n) * (.66+fine*.3+blades*.42);
         vec3 dirt = mix(vec3(.42,.28,.17), vec3(.54,.37,.23), n) * (.88+fine*.22);
         vec3 snow = mix(vec3(.82,.88,.96), vec3(.95,.97,1.), n) * (.96+fine*.05);
         vec3 snowRoad = mix(vec3(.52,.56,.63), vec3(.66,.70,.76), n);
@@ -105,7 +107,7 @@ export function Ground({ map, biome }: { map: THREE.Texture; biome: THREE.Textur
         ground = mix(ground, dune, smoothstep(.45,.55,bio.g+wob*.3));
         vec3 road = mix(dirt, snowRoad, bio.r);
         road = mix(road, duneRoad, bio.g);
-        vec3 col = mix(ground, road, smoothstep(.35,.65,sp.r+wob));
+        vec3 col = mix(ground, road, smoothstep(.42,.58,sp.r+wob*.7));
         col = mix(col, cityCol, smoothstep(.5,.6,bio.b));
         col = mix(col, asphalt, smoothstep(.45,.6,sp.r)*smoothstep(.5,.6,bio.b));
         vec2 tile = vWP.xz*.5; tile.x += step(1.,mod(floor(tile.y),2.))*.5;

@@ -4,7 +4,7 @@
   color-scheme: dark;
   --bg: #0e2229; --surface: #142e38; --surface-2: #1c3d4a; --line: #33596a; --text: #f2efe3; --muted: #aac2c6;
   --accent: #f5bd47; --action: #ff7f5f; --on-accent: #17241f; --danger: #d9412c; --good: #4fd6a3;
-  --wood: #bb8a00; --iron: #1a8fe8; --slate: #c95cb0; --clay: #d9391c; --fuel: #0fa07c;
+  --fuel: #0fa07c;
   --display: "Bowlby One", Impact, sans-serif; --body: "Atkinson Hyperlegible", system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
@@ -227,3 +227,41 @@ canvas:focus { outline: none; }
 }
 @keyframes turnphone { 30%, 70% { transform: rotate(90deg); } }
 @media (prefers-reduced-motion: reduce) { .turn .phone { animation: none; transform: rotate(90deg); } }
+
+.livepanel .tabs { margin-bottom: 10px; }
+.priceboard { max-height: 56vh; overflow: auto; }
+.priceboard td small { color: var(--muted); }
+.linkish { background: none; border: 0; color: var(--text); padding: 2px 0; font: inherit; text-align: left; cursor: pointer; }
+.linkish:hover b { text-decoration: underline; }
+.pricechart select { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px; font: inherit; }
+.pricechart text { font-family: var(--body); }
+.legend-btn { background: none; border: 0; color: var(--text); font: inherit; font-size: 14px; padding: 3px 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.legend-btn.off { color: var(--muted); text-decoration: line-through; opacity: .65; }
+.saledot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--text); margin-right: 5px; }
+.chartnote { min-height: 24px; margin: 4px 0; font-size: 14px; }
+.cargo { display: flex; flex-wrap: wrap; gap: 2px 10px; max-height: 66px; overflow: auto; font-size: 13px; }
+.foundtier h3 { margin: 12px 0 6px; }
+.foundgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.found { display: flex; gap: 8px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.found.missing { opacity: .7; border-style: dashed; }
+.found.missing .swatch { box-shadow: inset 0 0 0 1px var(--muted); }
+.found span { display: grid; }
+.found small { color: var(--muted); }
+.buildbar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; margin: 6px 0; }
+.buildbar i { display: block; height: 100%; background: var(--accent); }
+.needs button { margin-left: auto; }
+.needs li { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+.livepanel.wide { width: min(720px, calc(100vw - 24px)); }
+@media (orientation: landscape) and (max-height: 520px) { .livepanel.wide { width: calc(100vw - 24px); left: 12px; transform: none; } }
+.goal small, .sidejob { color: var(--muted); }
+.goal p { margin: 2px 0 6px; }
+.sidejob { display: block; margin-top: 6px; font-size: 13px; }
+.goalchip { position: absolute; left: 12px; top: 12px; width: min(340px, 44vw); background: rgba(14, 34, 41, .92); border: 1px solid var(--accent); border-radius: 8px; padding: 6px 10px; font-size: 14px; pointer-events: auto; z-index: 5; }
+.loadnote { font-weight: 400; font-size: 13px; min-height: 18px; margin-top: 3px; color: var(--muted); }
+.prompt .bar i.settling { background: var(--muted); }
+.welcome { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(6, 18, 23, .72); overflow: auto; }
+.welcomecard { width: min(560px, 100%); background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 20px 22px; }
+.welcomecard h2 { margin: 0 0 8px; color: var(--accent); }
+.welcomecard ul { margin: 12px 0 18px; padding-left: 20px; }
+.welcomecard li { margin: 6px 0; }
+@media (max-height: 520px) { .welcomecard { padding: 12px 16px; font-size: 14px; } .welcomecard ul { margin: 6px 0 10px; } .goalchip { top: 46px; font-size: 13px; } }

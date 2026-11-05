@@ -13,13 +13,13 @@ export const view = { zoom: 1 };
 /** The phone thumb stick. x is the vehicle's right, y is its forward, each from -1 to 1. */
 export const stick = { x: 0, y: 0 };
 /** Written straight to the page, so loading a spot doesn't re-render the interface every frame. */
-export const gatherBar: { el: HTMLElement | null } = { el: null };
+export const gatherBar: { el: HTMLElement | null; note: HTMLElement | null } = { el: null, note: null };
 
 export const PAL = {
   bark: "#5a3a2b", plank: "#b9794a", plankDark: "#7d4c30", stone: "#a0988e", stoneDark: "#6f6a70", iron: "#3d4656", paint: "#c8372b", ink: "#1b2230", cream: "#f6e6c8",
   lamp: "#ffd27a", awning: ["#2f6db0", "#c8372b", "#2e7d57"],
 };
-export const ITEM_COLOR: Record<string, string> = { wood: "#a9713d", iron: "#6f8199", slate: "#6a6a80", clay: "#b9583a", fuel: "#2f8f7e" };
+export const ITEM_COLOR: Record<string, string> = { ...Object.fromEntries(c.items.map((it) => [it.id, it.color])), fuel: "#2f8f7e" };
 
 /** Coastline radius at an angle. The same formula is in the ground and ocean shaders. */
 export const coast = (a: number) => 1030 + Math.sin(a * 3 + 1.2) * 12 + Math.sin(a * 7 + 0.4) * 7 + Math.sin(a * 13 + 2.2) * 4;

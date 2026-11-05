@@ -41,7 +41,7 @@ pub struct Vehicle { pub id: String, pub name: String, pub blurb: String, pub ca
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug)]
-pub struct Lot { pub id: String, pub name: String, pub x: i32, pub z: i32, pub price: u64, pub needs: Vec<u64>, pub seeded: bool, pub seed_merchant: u32 }
+pub struct Lot { pub id: String, pub name: String, pub x: i32, pub z: i32, pub price: u64, pub needs: Vec<u64>, pub accepts: Vec<u32>, pub seeded: bool, pub seed_merchant: u32 }
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug)]
@@ -51,7 +51,7 @@ pub struct Config {
     pub adapt_every_ticks: u64, pub adapt_band_bps: u64, pub adapt_step_bps: u64, pub adapt_min_bps: u64, pub adapt_max_bps: u64,
     pub blueprint_period_ticks: u64, pub event_period_ticks: u64, pub event_duration_ticks: u64, pub events: Vec<EventRule>,
     pub nodes: Vec<NodeRule>, pub start_coins: u64, pub start_fuel: u64, pub start_credits: u64, pub credits_per_near: u64, pub coins_per_fuel: u64, pub coins_per_repair: u64, pub rich_bonus_per_point: u64, pub meters_per_fuel: u64,
-    pub gather_cooldown_ms: u64, pub travel_ms: u64, pub max_trade_qty: u64, pub quest_period_ticks: u64, pub quest_gathers: u64, pub quest_reward_qty: u64,
+    pub plot_deadline_ms: u64, pub gather_cooldown_ms: u64, pub travel_ms: u64, pub max_trade_qty: u64, pub quest_period_ticks: u64, pub quest_gathers: u64, pub quest_reward_qty: u64,
     pub blueprints: Vec<Blueprint>,
     pub vehicles: Vec<Vehicle>, pub price_per_capacity: i64, pub price_per_endurance: i64, pub price_per_fuel_percent: i64, pub price_per_flair: i64, pub price_per_size: i64,
     pub lots: Vec<Lot>, pub stall_k_quarters: u8, pub stall_target: u64, pub stall_spread_bps: u64, pub stall_min_spread_bps: u64, pub stall_max_spread_bps: u64, pub city_buyback_bps: u64,
@@ -68,7 +68,7 @@ pub struct MerchantState { pub stock: Vec<u64>, pub target: Vec<u64>, pub cash: 
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug, PartialEq)]
-pub struct StallState { pub owner: Option<String>, pub built: bool, pub stock: Vec<u64>, pub cash: u64, pub spread_bps: u64, pub price: u64 }
+pub struct StallState { pub owner: Option<String>, pub built: bool, pub stock: Vec<u64>, pub cash: u64, pub spread_bps: u64, pub price: u64, pub progress: Vec<u64>, pub last_deposit_ms: u64 }
 
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug, PartialEq)]
@@ -111,6 +111,7 @@ pub fn pow_ratio(target: u64, stock: u64, kq: u8) -> u128 {
 }
 
 pub fn stock_price(c: &Config, base: u64, target: u64, stock: u64, kq: u8) -> u64 {
+    if target == 0 { return 0; } // this merchant doesn't deal in it
     let raw = (base as u128 * pow_ratio(target, stock, kq)) / SCALE;
     let floor = (base as u128 * c.floor_bps as u128) / 10000;
     let ceil = (base as u128 * c.ceiling_bps as u128) / 10000;
@@ -147,9 +148,9 @@ pub fn new_market(c: &Config) -> Market {
         merchants: c.merchants.iter().map(|m| MerchantState { stock: m.targets.clone(), target: m.targets.clone(), cash: m.start_cash, investors: vec![] }).collect(),
         nodes: c.nodes.iter().map(|n| n.max_stock).collect(),
         stalls: c.lots.iter().map(|l| if l.seeded {
-            StallState { owner: Some(format!("merchant:{}", c.merchants[l.seed_merchant as usize].id)), built: true, stock: vec![c.seed_stock; c.items.len()], cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price }
+            StallState { owner: Some(format!("merchant:{}", c.merchants[l.seed_merchant as usize].id)), built: true, stock: (0..c.items.len()).map(|i| if l.accepts.contains(&(i as u32)) { c.seed_stock } else { 0 }).collect(), cash: c.seed_cash, spread_bps: c.stall_spread_bps, price: c.seed_price, progress: l.needs.clone(), last_deposit_ms: 0 }
         } else {
-            StallState { owner: None, built: false, stock: vec![0; c.items.len()], cash: 0, spread_bps: c.stall_spread_bps, price: 0 }
+            StallState { owner: None, built: false, stock: vec![0; c.items.len()], cash: 0, spread_bps: c.stall_spread_bps, price: 0, progress: vec![0; c.items.len()], last_deposit_ms: 0 }
         }).collect(),
     }
 }
@@ -189,6 +190,7 @@ pub fn tick_once(c: &Config, mk: &mut Market) {
         let ev = &c.events[((t / c.event_period_ticks - 1) % c.events.len() as u64) as usize];
         for s in mk.merchants.iter_mut() {
             let it = ev.item as usize;
+            if s.target[it] == 0 { continue; }
             s.stock[it] = (s.stock[it] * ev.keep_bps / 10000).max(1);
         }
     }
@@ -279,6 +281,7 @@ fn check_trade(c: &Config, item: usize, qty: u64) -> R<()> {
 pub fn sell(c: &Config, mk: &mut Market, p: &mut Player, merchant: usize, item: usize, qty: u64, min_total: u64, now: u64) -> R<u64> {
     need(p)?; travel(c, p, merchant, now)?; check_trade(c, item, qty)?;
     if p.items[item] < qty { return Err("NOT_ENOUGH_ITEMS"); }
+    if c.merchants[merchant].targets[item] == 0 { return Err("DOES_NOT_TRADE"); }
     if merchant_closed(c, mk, merchant) { return Err("MERCHANT_CLOSED"); }
     let tick = mk.tick;
     let s = &mut mk.merchants[merchant];
@@ -294,6 +297,7 @@ pub fn sell(c: &Config, mk: &mut Market, p: &mut Player, merchant: usize, item: 
 #[allow(clippy::too_many_arguments)]
 pub fn buy(c: &Config, mk: &mut Market, p: &mut Player, merchant: usize, item: usize, qty: u64, max_total: u64, now: u64) -> R<u64> {
     need(p)?; travel(c, p, merchant, now)?; check_trade(c, item, qty)?;
+    if c.merchants[merchant].targets[item] == 0 { return Err("DOES_NOT_TRADE"); }
     if merchant_closed(c, mk, merchant) { return Err("MERCHANT_CLOSED"); }
     let s = &mut mk.merchants[merchant];
     if s.stock[item] < qty { return Err("MERCHANT_OUT_OF_STOCK"); }
@@ -454,28 +458,45 @@ fn built_owner<'a>(mk: &'a mut Market, lot: usize, who: &str) -> R<&'a mut Stall
 }
 
 /// Buys a location with credits. Nothing stands there until the owner brings the materials.
-pub fn claim_lot(c: &Config, mk: &mut Market, p: &mut Player, who: &str, lot: usize) -> R<()> {
+/// True if a half-built plot has gone too long without a deposit, so anyone can take it.
+pub fn plot_expired(c: &Config, mk: &Market, lot: usize, now: u64) -> bool {
+    let s = &mk.stalls[lot];
+    s.owner.is_some() && !s.built && now > s.last_deposit_ms + c.plot_deadline_ms
+}
+
+/// Buys a free or lapsed plot. Returns who to refund half the price to, if it lapsed.
+pub fn claim_lot(c: &Config, mk: &mut Market, p: &mut Player, who: &str, lot: usize, now: u64) -> R<Option<(String, u64)>> {
     need(p)?;
-    let s = mk.stalls.get_mut(lot).ok_or("BAD_LOT")?;
-    if s.owner.is_some() { return Err("LOT_TAKEN"); }
+    if lot >= mk.stalls.len() { return Err("BAD_LOT"); }
+    let lapsed = mk.stalls[lot].owner.as_deref() != Some(who) && plot_expired(c, mk, lot, now);
+    if mk.stalls[lot].owner.is_some() && !lapsed { return Err("LOT_TAKEN"); }
     spend(p, c.lots[lot].price)?;
+    let s = &mut mk.stalls[lot];
+    let refund = if lapsed { s.owner.clone().map(|o| (o, c.lots[lot].price / 2)) } else { None };
     s.owner = Some(who.to_string());
     s.built = false;
     s.spread_bps = c.stall_spread_bps;
     s.price = 0;
-    Ok(())
+    s.progress = vec![0; c.items.len()];
+    s.last_deposit_ms = now;
+    Ok(refund)
 }
 
-/// Builds on a location you own. Bought or found materials both count, and they are used up.
-pub fn build_stall(c: &Config, mk: &mut Market, p: &mut Player, who: &str, lot: usize) -> R<Vec<u64>> {
+/// Adds materials to a plot you own, over as many trips as you like. Returns how many were used. The stall opens when the list is complete.
+#[allow(clippy::too_many_arguments)]
+pub fn deposit_to_stall(c: &Config, mk: &mut Market, p: &mut Player, who: &str, lot: usize, item: usize, qty: u64, now: u64) -> R<u64> {
     need(p)?;
     let s = owner_only(mk, lot, who)?;
     if s.built { return Err("ALREADY_BUILT"); }
-    let needs = &c.lots[lot].needs;
-    if needs.iter().enumerate().any(|(i, q)| p.items[i] < *q) { return Err("NOT_ENOUGH_ITEMS"); }
-    for (i, q) in needs.iter().enumerate() { p.items[i] -= *q; }
-    s.built = true;
-    Ok(needs.clone())
+    if item >= c.items.len() { return Err("BAD_ITEM"); }
+    if qty == 0 { return Err("BAD_QTY"); }
+    let left = c.lots[lot].needs[item] - s.progress[item];
+    if left == 0 { return Err("NOT_NEEDED"); }
+    let used = qty.min(left);
+    if p.items[item] < used { return Err("NOT_ENOUGH_ITEMS"); }
+    p.items[item] -= used; s.progress[item] += used; s.last_deposit_ms = now;
+    if c.lots[lot].needs.iter().zip(&s.progress).all(|(q, d)| d >= q) { s.built = true; }
+    Ok(used)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -484,6 +505,7 @@ fn stall_open(c: &Config, mk: &Market, p: &Player, who: &str, lot: usize, item: 
     let s = mk.stalls.get(lot).ok_or("BAD_LOT")?;
     match s.owner.as_deref() { None => return Err("NO_STALL"), Some(_) if !s.built => return Err("NO_STALL"), Some(o) if o == who => return Err("YOUR_OWN_STALL"), _ => {} }
     check_trade(c, item, qty)?;
+    if !c.lots[lot].accepts.contains(&(item as u32)) { return Err("DOES_NOT_TRADE"); }
     let place = 100 + lot as u32;
     if let Some(last) = p.last_merchant { if last != place && now < p.last_trade_ms + c.travel_ms { return Err("TRAVELING"); } }
     Ok(())
@@ -522,6 +544,7 @@ pub fn stock_stall(c: &Config, mk: &mut Market, p: &mut Player, who: &str, lot: 
     need(p)?;
     let s = built_owner(mk, lot, who)?;
     check_trade(c, item, qty)?;
+    if !c.lots[lot].accepts.contains(&(item as u32)) { return Err("DOES_NOT_TRADE"); }
     if p.items[item] < qty { return Err("NOT_ENOUGH_ITEMS"); }
     p.items[item] -= qty; s.stock[item] += qty;
     Ok(())
@@ -601,6 +624,6 @@ pub fn sell_stall_to_city(c: &Config, mk: &mut Market, p: &mut Player, who: &str
     mk.merchants[f].cash -= value;
     p.coins += value + cash;
     let s = &mut mk.stalls[lot];
-    s.owner = None; s.built = false; s.cash = 0; s.price = 0;
+    s.owner = None; s.built = false; s.cash = 0; s.price = 0; s.progress = vec![0; c.items.len()];
     Ok(value)
 }

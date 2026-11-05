@@ -198,13 +198,28 @@ NEAR_AI_API_KEY=
 
 `NEAR_AI_MODEL` picks another model, and `NEAR_AI_DAILY_CALLS` sets the daily limit, 6000 by default. If the logs say the model answered with an error, check the model name against your dashboard. Traders use their rules whenever the model can't answer.
 
+## 11. Optional: price history for the performance chart
+
+The chart works without this, using what each browser has seen. This step gives every player the same history from the start.
+
+1. Create a free project at [supabase.com](https://supabase.com/).
+2. In its SQL editor, run `scripts/price-history.sql`.
+3. Under project settings, copy the project URL and the secret (service role) key. Add them to `.env` and to Vercel as `PRICE_DB_URL` and `PRICE_DB_KEY`. They stay on the server and are never sent to browsers.
+4. Next to your ghost traders, run:
+
+```bash
+docker compose --profile ops up -d --build tracker
+```
+
+See a line saying prices were saved with `docker compose --profile ops logs tracker`. It saves once per market hour, which is 10 real minutes.
+
 ## Moving to a new contract
 
 The rules are saved in the contract when it's created, so changing them means a new account. Everything on the old contract stays behind, and players sign in again for a new game key. To move:
 
 ```bash
-near create-account nearverse-game-v2.testnet --useFaucet
-near account export-account nearverse-game-v2.testnet
+near create-account nearverse-game-v3.testnet --useFaucet
+near account export-account nearverse-game-v3.testnet
 ```
 
 Top it up to about 10 NEAR from [near-faucet.io](https://near-faucet.io/). In `.env`, set `NEARVERSE_DEPLOYER_ACCOUNT` and `NEARVERSE_DEPLOYER_PRIVATE_KEY` to the new account, then run:
@@ -214,7 +229,7 @@ docker compose run --build --rm test
 docker compose run --build --rm deploy
 ```
 
-Set `GAME_CONTRACT=nearverse-game-v2.testnet` in `.env` and on Vercel, redeploy the site, then run `docker compose run --rm smoke`. Ghost traders use new sub-accounts of the new deployer, so remove their old keys first with `docker compose --profile ops down -v`. Any revenue on the old contract can still be withdrawn by its owner.
+Set `GAME_CONTRACT=nearverse-game-v3.testnet` in `.env` and on Vercel, redeploy the site, then run `docker compose run --rm smoke`. Ghost traders use new sub-accounts of the new deployer, so remove their old keys first with `docker compose --profile ops down -v`. Any revenue on the old contract can still be withdrawn by its owner.
 
 ## Before judging
 
