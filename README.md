@@ -84,7 +84,7 @@ Nothing to install. Each step names the requirement it shows.
 5. Open that link, or call `mt_balance_of` on `nearverse-game-v3.testnet` for your account with `token_id` `wood`. See the wood as a NEP-245 balance (one contract for every item).
 6. Open https://nearverse-murex.vercel.app/signin and sign in with Google or an email code. Choose a username, and see a wallet created with no seed phrase (social login). Or press **Play as a guest**. Drive with WASD or arrows, or the stick and Gas on a phone. Other players and labeled ghost traders appear as cars when the server has an Ably key and traders are running.
 
-NEAR Auth sign-in, with Google, Apple, email or a passkey, works when you run the app on `http://localhost:3000`: see [DEPLOY.md](DEPLOY.md).
+NEAR Auth sign-in, with Google, email or a passkey, works when you run the app on `http://localhost:3000`: see [DEPLOY.md](DEPLOY.md).
 
 ## Run it
 

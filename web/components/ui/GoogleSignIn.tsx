@@ -101,7 +101,7 @@ export function GoogleSignIn({ action, near }: { action: "start" | "credits" | "
         <label htmlFor="signin-email">Email address</label>
         <div className="row"><input id="signin-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /><button className="btn" disabled={busy}>{busy ? "Sending" : "Continue with email"}</button></div>
       </form> : <form className="emailform" onSubmit={(e) => { e.preventDefault(); checkCode(code); }}>
-        <p className="pinlabel">Enter the 8-digit code we sent to <b>{email}</b></p>
+        <p className="pinlabel">Enter the 8-digit code we sent to (confirm from spam) <b>{email}</b></p>
         <PinField length={8} value={code} onChange={setCode} onDone={checkCode} label="8-digit code" disabled={busy} />
         <button className="btn action" disabled={busy || code.length !== 8}>{busy ? "Checking" : "Verify"}</button>
         <button type="button" className="linkish" onClick={() => { setChallenge(""); setCode(""); setFailed(null); }}>Use a different email</button>
