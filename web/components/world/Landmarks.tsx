@@ -1,18 +1,15 @@
 "use client";
-// Wooden bridges, tunnels through hills, the railway with its stations, and fuel stations.
+// Wooden bridges, the railway with its stations, and fuel stations.
 // Each is one merged mesh that only draws near the truck, so a whole bridge costs one draw call.
 import { useMemo } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Instances, Near, type Spot } from "./Instances";
-import { BRIDGE_HEIGHT, BRIDGE_RAMP, PAL, biomeAt, bridgeLength, canvasText, seeded } from "./world";
+import { BRIDGE_HEIGHT, BRIDGE_RAMP, PAL, bridgeLength, canvasText, seeded } from "./world";
 import { useStaticColliders, type Solid } from "./colliders";
-import { seeThrough } from "./effects";
 import { LAYOUT } from "./layout";
 
-const paint = seeThrough(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
-const plainPaint = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
-const glow = new THREE.MeshBasicMaterial({ color: "#ffd98a" });
+const paint = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
 
 /** A coloured box in a list, ready to merge. Position is its centre. */
 function box(list: THREE.BufferGeometry[], sx: number, sy: number, sz: number, x: number, y: number, z: number, color: string, pitch = 0, tiltZ = 0) {
@@ -49,58 +46,7 @@ function Bridge({ x, z, yaw, w }: { x: number; z: number; yaw: number; w: number
     return { geo: merged(parts), rails: [-4.6, 4.6].map((side) => solidAt(x, z, yaw, side, 0, h + 0.5, 0.15, 0.7, half)) };
   }, [x, z, yaw, w]);
   useStaticColliders(rails, null);
-  return <Near x={x} z={z} radius={170}><mesh geometry={geo} material={plainPaint} position={[x, 0, z]} rotation={[0, yaw, 0]} castShadow receiveShadow /></Near>;
-}
-
-const LEN = 40, WIDE = 34, TALL = 15, CORRIDOR = 5.6, ROOF = 6.5;
-
-function Tunnel({ x, z, yaw }: { x: number; z: number; yaw: number }) {
-  const { hill, inside, lamps, solids } = useMemo(() => {
-    const b = biomeAt(x, z), low = new THREE.Color(b.snow > 0.5 ? "#c5d2dc" : b.desert > 0.5 ? "#b08a55" : "#4a6330"), high = new THREE.Color(b.snow > 0.5 ? "#f2f6fa" : b.desert > 0.5 ? "#c9a56b" : "#67804a"), rock = new THREE.Color("#7c7670");
-    const N = 40, pos: number[] = [], col: number[] = [], r = seeded(Math.abs(x + z * 3));
-    const bump = Array.from({ length: (N + 1) * (N + 1) }, () => r() * 0.9);
-    const height = (i: number, j: number) => {
-      const s = (i / N - 0.5) * 2 * WIDE, a = (j / N - 0.5) * 2 * LEN, q = 1 - (s / WIDE) ** 2 - (a / LEN) ** 2;
-      if (q <= 0) return null;
-      const y = TALL * Math.sqrt(q) + bump[j * (N + 1) + i];
-      return Math.abs(s) < CORRIDOR && y < ROOF ? null : y; // the road's way in stays open
-    };
-    const at = (i: number, j: number, y: number) => [(i / N - 0.5) * 2 * WIDE, y, (j / N - 0.5) * 2 * LEN];
-    const tint = new THREE.Color();
-    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-      const v = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]].map(([u, w]) => ({ u, w, y: height(u, w) }));
-      if (v.some((p) => p.y === null)) continue;
-      for (const k of [0, 3, 1, 1, 3, 2]) {
-        const p = v[k]; pos.push(...at(p.u, p.w, p.y!));
-        tint.copy(low).lerp(high, Math.min(1, p.y! / TALL)).lerp(rock, r() * 0.18); col.push(tint.r, tint.g, tint.b);
-      }
-    }
-    const hill = new THREE.BufferGeometry();
-    hill.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); hill.setAttribute("color", new THREE.Float32BufferAttribute(col, 3)); hill.computeVertexNormals();
-    const parts: THREE.BufferGeometry[] = [], len = 37;
-    box(parts, CORRIDOR * 2 + 2, 0.06, len * 2, 0, 0.04, 0, "#26282c"); // the road inside
-    for (const side of [-1, 1]) box(parts, 1, 6.5, len * 2, side * (CORRIDOR + 0.5), 3.25, 0, "#55504b");
-    for (const end of [-1, 1]) {
-      for (const side of [-1, 1]) box(parts, 1.6, 7.4, 1.8, side * (CORRIDOR + 0.6), 3.7, end * len, "#8d867c");
-      box(parts, CORRIDOR * 2 + 3, 1.5, 1.8, 0, 7.2, end * len, "#8d867c");
-    }
-    box(parts, CORRIDOR * 2 + 2, 0.5, len * 2, 0, 6.6, 0, "#3d3a37");
-    const glowParts: THREE.BufferGeometry[] = [];
-    for (let a = -len + 4; a < len; a += 9) for (const side of [-1, 1]) box(glowParts, 0.2, 0.25, 1.4, side * (CORRIDOR - 0.1), 4.7, a, "#ffffff");
-    const solids: Solid[] = [-1, 1].flatMap((side) => [solidAt(x, z, yaw, side * (CORRIDOR + 11), 0, 4, 11, 4, len)]);
-    return { hill, inside: merged(parts), lamps: merged(glowParts), solids };
-  }, [x, z]);
-  const hillMat = useMemo(() => seeThrough(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide })), []);
-  useStaticColliders(solids, "hillside");
-  return (
-    <Near x={x} z={z} radius={300}>
-      <group position={[x, 0, z]} rotation={[0, yaw, 0]}>
-        <mesh geometry={hill} material={hillMat} castShadow />
-        <mesh geometry={inside} material={paint} />
-        <mesh geometry={lamps} material={glow} />
-      </group>
-    </Near>
-  );
+  return <Near x={x} z={z} radius={170}><mesh geometry={geo} material={paint} position={[x, 0, z]} rotation={[0, yaw, 0]} castShadow receiveShadow /></Near>;
 }
 
 function Station({ x, z, yaw, name, train }: { x: number; z: number; yaw: number; name: string; train: boolean }) {
@@ -182,7 +128,6 @@ export function Landmarks() {
   return (
     <>
       {LAYOUT.bridges.map((b) => <Bridge key={`${b.x},${b.z}`} {...b} />)}
-      {LAYOUT.tunnels.map((t) => <Tunnel key={`${t.x},${t.z}`} {...t} />)}
       <Railway />
       {LAYOUT.fuels.map((f) => <FuelStation key={`${f.x},${f.z}`} {...f} />)}
     </>

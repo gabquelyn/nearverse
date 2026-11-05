@@ -16,7 +16,7 @@ import { windowMats } from "./City";
 import { Near } from "./Instances";
 import { OtherCars } from "./OtherCars";
 import { Waypoint } from "./Waypoint";
-import { FocusTracker, Tracks, WindLines } from "./effects";
+import { Tracks, WindLines } from "./effects";
 import { sfx } from "./sound";
 import { LEVELS, perf } from "./perf";
 
@@ -240,7 +240,6 @@ export default function Scene() {
       {fonts && <World />}
       <Waypoint />
       <OtherCars />
-      <FocusTracker />
       {fonts && <><Tracks /><WindLines /></>}
       <FollowCamera />
       <Zones />

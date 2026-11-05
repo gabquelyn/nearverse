@@ -98,7 +98,6 @@ export function reserved(x: number, z: number, margin = 3) {
   if (Math.hypot(x, z) < 34 + margin) return true;
   if (waterDist(x, z) < 2 + margin) return true;
   if (distToSeg(x, z, RAIL.from, RAIL.to) < 5 + margin) return true;
-  for (const t of LAYOUT.tunnels) if (Math.hypot(x - t.x, z - t.z) < 44 + margin) return true;
   for (const f of LAYOUT.fuels) if (Math.hypot(x - f.x, z - f.z) < 16 + margin) return true;
   for (const p of [RAIL.from, RAIL.to]) if (Math.hypot(x - p.x, z - p.z) < 26 + margin) return true;
   for (const s of stops) if (Math.hypot(x - s.x, z - s.z) < 11 + margin) return true;

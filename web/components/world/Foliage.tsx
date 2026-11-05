@@ -8,7 +8,6 @@ import { rng } from "@nearverse/economy";
 import { LEVELS, MAX_GRASS, MAX_LEAVES, perf } from "./perf";
 import { PAL, WORLD_SIZE, biomeAt, reserved, seeded, spacing, truck } from "./world";
 import { Instances, type Spot } from "./Instances";
-import { seeThrough } from "./effects";
 import { useStaticColliders, type Solid } from "./colliders";
 
 const time = { value: 0 };
@@ -145,7 +144,6 @@ export function Trees({ trees }: { trees: TreeSpot[] }) {
         transformed.x += sin(uTime*1.1+nvO.x*.4+position.y*1.6)*.07; transformed.z += cos(uTime*.9+nvO.z*.4+position.x*1.6)*.07;
         #endif`);
     }) as never;
-    seeThrough(leafMat);
     const depthMat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: alpha, alphaTest: 0.5, side: THREE.DoubleSide });
     const trunkGeo = new THREE.CylinderGeometry(0.2, 0.42, 4, 7, 1).translate(0, 2, 0);
     return { canopy, trunk, solid, leafGeo: clusterGeometry(), leafMat, depthMat, trunkGeo, barkMat: new THREE.MeshLambertMaterial({ color: PAL.bark, flatShading: true }) };

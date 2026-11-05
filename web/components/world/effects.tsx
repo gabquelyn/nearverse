@@ -1,51 +1,9 @@
 "use client";
-// Finishing touches learned from studying folio-2025: tyre tracks, wind streaks, and foliage that thins out over the truck.
+// Finishing touches learned from studying folio-2025: tyre tracks, wind streaks.
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { truck } from "./world";
-
-const shared = { focus: { value: new THREE.Vector2(-9999, -9999) }, radius: { value: 90 } };
-
-let materialCount = 0;
-
-/** Thins a material around the truck on screen, with a dither, so trees and buildings never hide it. */
-export function seeThrough(mat: THREE.Material) {
-  const before = mat.onBeforeCompile;
-  mat.onBeforeCompile = (s, r) => {
-    before?.call(mat, s, r);
-    s.uniforms.uFocus = shared.focus; s.uniforms.uFocusR = shared.radius;
-    s.vertexShader = s.vertexShader.replace("#include <common>", "#include <common>\nvarying float vNvH;").replace("#include <project_vertex>", `#include <project_vertex>
-      #ifdef USE_INSTANCING
-      vNvH = (modelMatrix * instanceMatrix * vec4(transformed, 1.)).y;
-      #else
-      vNvH = (modelMatrix * vec4(transformed, 1.)).y;
-      #endif`);
-    s.fragmentShader = s.fragmentShader.replace("#include <common>", "#include <common>\nvarying float vNvH; uniform vec2 uFocus; uniform float uFocusR;").replace("#include <clipping_planes_fragment>", `#include <clipping_planes_fragment>
-      float nvD = length(gl_FragCoord.xy - uFocus) / uFocusR;
-      if (nvD < 1. && vNvH > 1.8) {
-        vec2 nvC = mod(floor(gl_FragCoord.xy), 4.);
-        float nvT = fract((nvC.x * 5. + nvC.y * 3.) / 8. + nvC.x * nvC.y * .0625);
-        if (nvT > smoothstep(.45, 1., nvD)) discard;
-      }`);
-  };
-  const id = ++materialCount; // each material keeps its own compiled program
-  mat.customProgramCacheKey = () => `seethrough-${id}`;
-  return mat;
-}
-
-/** Keeps the see-through circle on the truck. */
-export function FocusTracker() {
-  const { camera, gl } = useThree();
-  const v = useMemo(() => new THREE.Vector3(), []), size = useMemo(() => new THREE.Vector2(), []);
-  useFrame(() => {
-    gl.getDrawingBufferSize(size);
-    v.set(truck.pos.x, 1, truck.pos.z).project(camera);
-    shared.focus.value.set((v.x * 0.5 + 0.5) * size.x, (v.y * 0.5 + 0.5) * size.y);
-    shared.radius.value = size.y * 0.24;
-  });
-  return null;
-}
 
 const MARKS = 260;
 /** Tyre tracks that fade, on any ground. Each new mark updates one slot, so this costs almost nothing. */

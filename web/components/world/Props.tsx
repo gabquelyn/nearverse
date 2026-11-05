@@ -13,7 +13,6 @@ import { mineHandles, useStaticColliders, type Round, type Solid } from "./colli
 import { registerMine } from "./Truck";
 import { Instances, Near, type Spot } from "./Instances";
 import { glowMat, lampMat } from "./daynight";
-import { seeThrough } from "./effects";
 
 function rb(s: [number, number, number], r = 0.08) { return new RoundedBoxGeometry(s[0], s[1], s[2], 2, Math.min(r, Math.min(...s) / 2 - 0.001)); }
 const Mat = ({ color, rough = 0.85, flat }: { color: string; rough?: number; flat?: boolean }) => <meshStandardMaterial color={color} roughness={rough} flatShading={flat} />;
@@ -45,7 +44,7 @@ function vertexColored(geo: THREE.BufferGeometry, color: string) {
   g.deleteAttribute("uv");
   return g;
 }
-const paintedMat = seeThrough(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+const paintedMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
 const pineGeo = mergeGeometries([
   vertexColored(new THREE.CylinderGeometry(0.2, 0.34, 1.4, 6).translate(0, 0.7, 0), PAL.bark),
   vertexColored(new THREE.ConeGeometry(1.9, 2.5, 7).translate(0, 2.3, 0), "#2c5a48"),

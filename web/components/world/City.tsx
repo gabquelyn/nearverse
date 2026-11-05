@@ -7,7 +7,6 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { Instances, Near, type Spot } from "./Instances";
 import { DRIVE_RADIUS, biomeAt, reserved, seeded } from "./world";
 import { useStaticColliders, type Solid } from "./colliders";
-import { seeThrough } from "./effects";
 
 const CENTER = { x: 630, z: -230 };
 
@@ -29,11 +28,9 @@ function wallTexture(kind: "office" | "apartment" | "shop" | "plain", lit: boole
 }
 
 function wallMat(kind: "office" | "apartment" | "shop" | "plain", tileW: number, tileH: number) {
-  const m = seeThrough(new THREE.MeshLambertMaterial({ color: "#ffffff" })) as THREE.MeshLambertMaterial;
+  const m = new THREE.MeshLambertMaterial({ color: "#ffffff" });
   m.map = wallTexture(kind, false); m.emissiveMap = wallTexture(kind, true); m.emissive = new THREE.Color("#ffffff"); m.emissiveIntensity = 0;
-  const before = m.onBeforeCompile;
-  m.onBeforeCompile = (s, r) => {
-    before.call(m, s, r);
+  m.onBeforeCompile = (s) => {
     s.vertexShader = s.vertexShader.replace("#include <uv_vertex>", /* glsl */ `#include <uv_vertex>
       #ifdef USE_INSTANCING
       vec3 nvScale = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
@@ -82,9 +79,8 @@ function planCity(): Plan {
   };
 
   const tower = (x: number, z: number) => {
-    // Low enough not to hide the car from the chase camera. Only a rare tower stands taller, away from the main roads.
-    const tall = r() < 0.12 && !reserved(x, z, 45);
-    const c = pick(OFFICE), w = rng(13, 18), d = rng(13, 18), h = 3 * Math.floor(tall ? rng(6, 9) : rng(2, 4));
+    // Low enough that the chase camera sees over them to the car.
+    const c = pick(OFFICE), w = rng(13, 18), d = rng(13, 18), h = 3 * Math.floor(rng(2, 4));
     body(p.shop, x, z, 22, 4.5, 22, "#c9c5ba");
     body(p.office, x, z, w, h, d, c, 4.5);
     const top = 4.5 + h, up = 3;
@@ -193,16 +189,16 @@ export function City() {
       car: mergeGeometries([coloured(new THREE.BoxGeometry(1.9, 0.62, 4.2).translate(0, 0.72, 0), "#ffffff"), coloured(new THREE.BoxGeometry(1.6, 0.55, 2.1).translate(0, 1.3, -0.15), "#26323c"), ...wheels])!,
       tree: mergeGeometries([coloured(new THREE.CylinderGeometry(0.16, 0.24, 2.4, 7).translate(0, 1.2, 0), "#5a3a2b"), coloured(new THREE.IcosahedronGeometry(1.5, 1).translate(0, 3.2, 0), "#4f7f3c"), coloured(new THREE.IcosahedronGeometry(1, 1).translate(0.6, 4, 0.2), "#659349")])!,
       pole: mergeGeometries([coloured(new THREE.CylinderGeometry(0.08, 0.1, 4.2, 6).translate(0, 2.1, 0), "#30353c"), coloured(new THREE.BoxGeometry(0.42, 1.1, 0.34).translate(0, 4.5, 0), "#1c2026"), coloured(new THREE.SphereGeometry(0.11, 6, 5).translate(0, 4.8, -0.18), "#e0463c"), coloured(new THREE.SphereGeometry(0.11, 6, 5).translate(0, 4.5, -0.18), "#e6b13c"), coloured(new THREE.SphereGeometry(0.11, 6, 5).translate(0, 4.2, -0.18), "#3fb868")])!,
-      painted: seeThrough(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })),
+      painted: new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
     };
   }, []);
   const { box, gable, awn, mats, detail, face } = useMemo(() => {
     const box = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
-    const roof = seeThrough(new THREE.MeshLambertMaterial({ color: "#8a8f98" }));
+    const roof = new THREE.MeshLambertMaterial({ color: "#8a8f98" });
     const walls = { office: wallMat("office", 24, 24), apartment: wallMat("apartment", 24, 24), shop: wallMat("shop", 8, 6), plain: wallMat("plain", 12, 8) };
     windowMats.length = 0; windowMats.push(walls.office, walls.apartment, walls.shop);
     const faces = (w: THREE.Material) => [w, w, roof, roof, w, w];
-    return { box, gable: prism(true), awn: wedge(), detail: seeThrough(new THREE.MeshLambertMaterial({ color: "#ffffff", flatShading: true, side: THREE.DoubleSide })),
+    return { box, gable: prism(true), awn: wedge(), detail: new THREE.MeshLambertMaterial({ color: "#ffffff", flatShading: true, side: THREE.DoubleSide }),
       mats: { office: faces(walls.office), apartment: faces(walls.apartment), shop: faces(walls.shop), plain: faces(walls.plain) }, face: clockFace() };
   }, []);
   useStaticColliders(plan.solids, "building");

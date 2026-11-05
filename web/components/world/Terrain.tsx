@@ -23,7 +23,6 @@ export function paintGroundMap(): THREE.Texture {
   g.lineWidth = l(4.5); g.beginPath(); g.moveTo(u(LAYOUT.rail.from[0]), u(LAYOUT.rail.from[1])); g.lineTo(u(LAYOUT.rail.to[0]), u(LAYOUT.rail.to[1])); g.stroke();
   for (const [x, z] of [LAYOUT.rail.from, LAYOUT.rail.to]) { g.beginPath(); g.arc(u(x), u(z), l(30), 0, 7); g.fill(); }
   for (const f of LAYOUT.fuels) { g.beginPath(); g.arc(u(f.x), u(f.z), l(15), 0, 7); g.fill(); }
-  for (const t of LAYOUT.tunnels) { g.save(); g.strokeStyle = "#f00"; g.lineWidth = l(9); g.beginPath(); g.moveTo(u(t.x - Math.sin(t.yaw) * 44), u(t.z - Math.cos(t.yaw) * 44)); g.lineTo(u(t.x + Math.sin(t.yaw) * 44), u(t.z + Math.cos(t.yaw) * 44)); g.stroke(); g.restore(); }
   const rim = g.createRadialGradient(u(0), u(0), l(DRIVE_RADIUS - 2), u(0), u(0), l(DRIVE_RADIUS + 4));
   rim.addColorStop(0, "#000"); rim.addColorStop(1, "#00f");
   g.fillStyle = rim; g.fillRect(0, 0, S, S);
