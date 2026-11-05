@@ -42,7 +42,7 @@ export function FocusTracker() {
     gl.getDrawingBufferSize(size);
     v.set(truck.pos.x, 1, truck.pos.z).project(camera);
     shared.focus.value.set((v.x * 0.5 + 0.5) * size.x, (v.y * 0.5 + 0.5) * size.y);
-    shared.radius.value = size.y * 0.15;
+    shared.radius.value = size.y * 0.24;
   });
   return null;
 }

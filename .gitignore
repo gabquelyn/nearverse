@@ -15,4 +15,3 @@ submission*.json
 .claude
 *.tsbuildinfo
 playwright-report
-DEPLOY.md 

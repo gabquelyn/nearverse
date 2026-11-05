@@ -3,6 +3,7 @@
 // They are all a few shared parts, scaled and tinted, so hundreds of buildings cost about a dozen draw calls.
 import { useMemo } from "react";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Instances, Near, type Spot } from "./Instances";
 import { DRIVE_RADIUS, biomeAt, reserved, seeded } from "./world";
 import { useStaticColliders, type Solid } from "./colliders";
@@ -65,10 +66,10 @@ function wedge() {
 const OFFICE = ["#9fb4c6", "#b6c2cc", "#8aa3b8", "#a9b9b2", "#c0c4cf"], APARTMENT = ["#c98a68", "#d8c8a8", "#b86f58", "#c9d2c4", "#e0d6c4", "#a9a0b8"];
 const SHOP = ["#e6b45c", "#d7705a", "#6aa7b8", "#8cb56a", "#c98abb", "#efe3c4"], WARE = ["#8d949c", "#a1846a", "#7d8a84", "#9a9aa2"], ROOFS = ["#7c3d30", "#55606e", "#8f5b3a", "#3f5a4e"], HOUSE = ["#efe6d2", "#d7dfe6", "#e5c9b0", "#c7d4bd"];
 
-interface Plan { office: Spot[]; apartment: Spot[]; shop: Spot[]; plain: Spot[]; box: Spot[]; gable: Spot[]; wedge: Spot[]; solids: Solid[]; clock: { x: number; z: number } | null }
+interface Plan { cars: Spot[]; trees: Spot[]; poles: Spot[]; office: Spot[]; apartment: Spot[]; shop: Spot[]; plain: Spot[]; box: Spot[]; gable: Spot[]; wedge: Spot[]; solids: Solid[]; clock: { x: number; z: number } | null }
 
 function planCity(): Plan {
-  const p: Plan = { office: [], apartment: [], shop: [], plain: [], box: [], gable: [], wedge: [], solids: [], clock: null };
+  const p: Plan = { cars: [], trees: [], poles: [], office: [], apartment: [], shop: [], plain: [], box: [], gable: [], wedge: [], solids: [], clock: null };
   const r = seeded(61), step = 36, pick = (l: string[]) => l[Math.floor(r() * l.length)], rng = (a: number, b: number) => a + r() * (b - a);
   const body = (list: Spot[], x: number, z: number, sx: number, sy: number, sz: number, color: string, y = 0) => {
     list.push({ x, y, z, sx, sy, sz, color });
@@ -81,16 +82,18 @@ function planCity(): Plan {
   };
 
   const tower = (x: number, z: number) => {
-    const c = pick(OFFICE), w = rng(13, 18), d = rng(13, 18), h = 3 * Math.floor(rng(8, 17));
-    body(p.shop, x, z, 22, 5, 22, "#c9c5ba");
-    body(p.office, x, z, w, h, d, c, 5);
-    const top = 5 + h, up = 3 * Math.floor(rng(1, 4));
+    // Low enough not to hide the car from the chase camera. Only a rare tower stands taller, away from the main roads.
+    const tall = r() < 0.12 && !reserved(x, z, 45);
+    const c = pick(OFFICE), w = rng(13, 18), d = rng(13, 18), h = 3 * Math.floor(tall ? rng(6, 9) : rng(2, 4));
+    body(p.shop, x, z, 22, 4.5, 22, "#c9c5ba");
+    body(p.office, x, z, w, h, d, c, 4.5);
+    const top = 4.5 + h, up = 3;
     body(p.office, x, z, w * 0.62, up, d * 0.62, c, top);
     roofTop(x, top + up, z, w * 0.62, d * 0.62, "#5b6068");
     if (r() < 0.5) part(x, top + up + 0.5, z, 0.3, rng(5, 11), 0.3, "#c4c8cc");
   };
   const apartments = (x: number, z: number) => {
-    const c = pick(APARTMENT), w = rng(16, 23), d = rng(13, 21), h = 3 * Math.floor(rng(4, 9));
+    const c = pick(APARTMENT), w = rng(16, 23), d = rng(13, 21), h = 3 * Math.floor(rng(3, 6));
     body(p.apartment, x, z, w, h, d, c);
     roofTop(x, h, z, w, d, "#6e6660");
     if (r() < 0.6) { const tx = x + rng(-w, w) * 0.25, tz = z + rng(-d, d) * 0.25; part(tx, h + 0.5, tz, 2.6, 3, 2.6, "#7a5a3e"); p.gable.push({ x: tx, y: h + 3.5, z: tz, sx: 3, sy: 1, sz: 3, color: "#55606e" }); }
@@ -126,9 +129,9 @@ function planCity(): Plan {
     part(x, 6, z - 9.3, 25, 0.4, 2.6, "#b9a98c"); part(x, 6, z + 9.3, 25, 0.4, 2.6, "#b9a98c");
   };
   const clockTower = (x: number, z: number) => {
-    body(p.apartment, x, z, 8, 34, 8, "#b89e80");
-    part(x, 34, z, 9, 0.8, 9, "#6e5a48");
-    p.gable.push({ x, y: 34.8, z, sx: 9, sy: 7, sz: 9, color: "#3f5a4e" });
+    body(p.apartment, x, z, 8, 26, 8, "#b89e80");
+    part(x, 26, z, 9, 0.8, 9, "#6e5a48");
+    p.gable.push({ x, y: 26.8, z, sx: 9, sy: 6, sz: 9, color: "#3f5a4e" });
     p.clock = { x, z };
   };
 
@@ -137,6 +140,26 @@ function planCity(): Plan {
     const x = 18 + i * step, z = 18 + j * step, cx = x + (r() - 0.5) * 1.5, cz = z + (r() - 0.5) * 1.5;
     if (biomeAt(cx, cz).city < 0.72 || Math.hypot(cx, cz) > DRIVE_RADIUS - 24 || r() < 0.12 || reserved(cx, cz, 13)) continue;
     spots.push({ x: cx, z: cz, d: Math.hypot(cx - CENTER.x, cz - CENTER.z) });
+  }
+  // Street life: trees and lights on the corners, cars parked along the kerb, bus shelters and signs here and there.
+  const CAR = ["#b33c34", "#2d6f8e", "#e7e2d8", "#3a3f46", "#c98a1e", "#3f7d4e", "#9aa3ad"];
+  for (const s of spots) {
+    const corners: [number, number][] = [[-13, -13], [13, -13], [-13, 13], [13, 13]];
+    corners.forEach(([ox, oz], k) => {
+      const x = s.x + ox, z = s.z + oz;
+      if (reserved(x, z, 0)) return;
+      const q = r();
+      if (k % 2 === 0 && q < 0.6) { p.trees.push({ x, y: 0, z, ry: r() * 6, sx: rng(0.85, 1.2), sy: rng(0.9, 1.3), sz: rng(0.85, 1.2) }); p.solids.push({ kind: "box", x, y: 1.5, z, hx: 0.3, hy: 1.5, hz: 0.3 }); }
+      else if (k % 2 === 1 && q < 0.55) { p.poles.push({ x, y: 0, z, ry: (k === 1 ? 0 : Math.PI) }); p.solids.push({ kind: "box", x, y: 2, z, hx: 0.18, hy: 2, hz: 0.18 }); }
+    });
+    if (r() < 0.65) {
+      const side = r() < 0.5 ? -1 : 1, x = s.x + side * 13, z = s.z + rng(-7, 7);
+      if (!reserved(x, z, 0)) { p.cars.push({ x, y: 0, z, ry: r() < 0.5 ? 0 : Math.PI, color: pick(CAR) }); p.solids.push({ kind: "box", x, y: 0.7, z, hx: 1, hy: 0.7, hz: 2.2 }); }
+    }
+    if (r() < 0.14) {
+      const x = s.x + rng(-6, 6), z = s.z - 13.2;
+      if (!reserved(x, z, 0)) { part(x, 0, z, 4, 0.12, 1.6, "#a8a49a"); part(x, 2.4, z, 4.3, 0.12, 1.8, "#3d5668"); part(x - 1.9, 0, z - 0.7, 0.12, 2.4, 0.12, "#3d4656"); part(x + 1.9, 0, z - 0.7, 0.12, 2.4, 0.12, "#3d4656"); part(x, 0.1, z - 0.74, 3.8, 2.2, 0.06, "#aac7dd"); }
+    }
   }
   spots.sort((a, b) => a.d - b.d);
   spots.forEach((s, n) => {
@@ -159,6 +182,20 @@ const clockFace = () => {
 
 export function City() {
   const plan = useMemo(planCity, []);
+  const { car, tree, pole, painted } = useMemo(() => {
+    const coloured = (g: THREE.BufferGeometry, color: string) => {
+      const n = g.toNonIndexed(), col = new THREE.Color(color), a = new Float32Array(n.attributes.position.count * 3);
+      for (let i = 0; i < n.attributes.position.count; i++) a.set([col.r, col.g, col.b], i * 3);
+      n.setAttribute("color", new THREE.BufferAttribute(a, 3)); n.deleteAttribute("uv"); return n;
+    };
+    const wheels = [[-0.9, -1.35], [0.9, -1.35], [-0.9, 1.35], [0.9, 1.35]].map(([x, z]) => coloured(new THREE.CylinderGeometry(0.34, 0.34, 0.24, 10).rotateZ(Math.PI / 2).translate(x, 0.34, z), "#17191c"));
+    return {
+      car: mergeGeometries([coloured(new THREE.BoxGeometry(1.9, 0.62, 4.2).translate(0, 0.72, 0), "#ffffff"), coloured(new THREE.BoxGeometry(1.6, 0.55, 2.1).translate(0, 1.3, -0.15), "#26323c"), ...wheels])!,
+      tree: mergeGeometries([coloured(new THREE.CylinderGeometry(0.16, 0.24, 2.4, 7).translate(0, 1.2, 0), "#5a3a2b"), coloured(new THREE.IcosahedronGeometry(1.5, 1).translate(0, 3.2, 0), "#4f7f3c"), coloured(new THREE.IcosahedronGeometry(1, 1).translate(0.6, 4, 0.2), "#659349")])!,
+      pole: mergeGeometries([coloured(new THREE.CylinderGeometry(0.08, 0.1, 4.2, 6).translate(0, 2.1, 0), "#30353c"), coloured(new THREE.BoxGeometry(0.42, 1.1, 0.34).translate(0, 4.5, 0), "#1c2026"), coloured(new THREE.SphereGeometry(0.11, 6, 5).translate(0, 4.8, -0.18), "#e0463c"), coloured(new THREE.SphereGeometry(0.11, 6, 5).translate(0, 4.5, -0.18), "#e6b13c"), coloured(new THREE.SphereGeometry(0.11, 6, 5).translate(0, 4.2, -0.18), "#3fb868")])!,
+      painted: seeThrough(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })),
+    };
+  }, []);
   const { box, gable, awn, mats, detail, face } = useMemo(() => {
     const box = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
     const roof = seeThrough(new THREE.MeshLambertMaterial({ color: "#8a8f98" }));
@@ -178,8 +215,11 @@ export function City() {
       <Instances geometry={box} material={detail} items={plan.box} radius={150} />
       <Instances geometry={gable} material={detail} items={plan.gable} radius={200} />
       <Instances geometry={awn} material={detail} items={plan.wedge} radius={120} />
+      <Instances geometry={car} material={painted} items={plan.cars} radius={120} />
+      <Instances geometry={tree} material={painted} items={plan.trees} radius={120} />
+      <Instances geometry={pole} material={painted} items={plan.poles} radius={100} />
       {plan.clock && <Near x={plan.clock.x} z={plan.clock.z} radius={300}>
-        {[0, 1, 2, 3].map((k) => { const a = (k * Math.PI) / 2; return <mesh key={k} position={[plan.clock!.x + Math.sin(a) * 4.03, 28, plan.clock!.z + Math.cos(a) * 4.03]} rotation={[0, a, 0]}><circleGeometry args={[3, 28]} /><meshBasicMaterial map={face} /></mesh>; })}
+        {[0, 1, 2, 3].map((k) => { const a = (k * Math.PI) / 2; return <mesh key={k} position={[plan.clock!.x + Math.sin(a) * 4.03, 21, plan.clock!.z + Math.cos(a) * 4.03]} rotation={[0, a, 0]}><circleGeometry args={[3, 28]} /><meshBasicMaterial map={face} /></mesh>; })}
       </Near>}
     </>
   );

@@ -4,6 +4,10 @@ A drivable 3D treasure hunt and trading game for the NEAR Hackathon `games` trac
 
 **Problem it addresses:** most on-chain games are a token with a game attached, and players have to deal with wallets, gas and popups. Here the game comes first. After one sign-in, every action is signed silently, and the economy runs on rules anyone can read in one file.
 
+## The world
+
+Rivers and lakes cross the island. You can drive through them, slowly and at three times the fuel, or take a wooden bridge. Some of the rarest materials sit in pools, so you have to drive in to load them. There's a railway with two stations, fuel stations along the roads, and a city of low buildings with parked cars, street trees and traffic lights. All of it is in the browser: the layout in `web/components/world/layout.ts` keeps clear of resource spots, merchants and plots, which are fixed in the contract.
+
 ## How NEAR is used
 
 - **NEP-245 multi token:** one contract (`contracts/nearverse`) holds all 24 materials, from wood and stone up to sapphire and meteorite. Fuel is not a token: it is bought with credits. Gathering mints, selling burns, and all standard `mt_*` transfer and view methods are present. Approvals are not implemented.

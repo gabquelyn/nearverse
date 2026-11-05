@@ -5,9 +5,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
-import { gatherBar, keys, truck, view } from "./world";
+import { biomeAt, gatherBar, keys, truck, view, waterDist } from "./world";
 import { glowMat, lampMat, sky, updateSky } from "./daynight";
-import { Ground, Ocean, paintBiomeMap, paintGroundMap } from "./Terrain";
+import { Ground, Ocean, paintBiomeMap, paintGroundMap, paintWaterMap } from "./Terrain";
+import { Landmarks } from "./Landmarks";
 import { Grass, Trees, Weather, useTrees } from "./Foliage";
 import { Truck } from "./Truck";
 import { Benches, Lamps, LotSpot, Mines, NodeSpot, Obstacles, Scatter, Stall, TitleCrates } from "./Props";
@@ -98,6 +99,10 @@ function Zones() {
   useFrame((_, dt) => {
     const { setZone, act, market, zone: current } = useGame.getState();
     const { x, z } = truck.pos;
+    if (tick.current % 30 === 0) {
+      const b = biomeAt(x, z), dist = waterDist(x, z);
+      sfx.ambience({ water: Math.max(0, Math.min(1, 1 - dist / 45)), city: b.city, wind: Math.max(b.snow, b.desert) * 0.9 + 0.1 });
+    }
     if (tick.current++ % 4 === 0) {
       let zone: { kind: "node" | "stall" | "plot" | "lot"; index: number } | null = null;
       for (let i = 0; i < c.nodes.length; i++) if (Math.abs(x - c.nodes[i].x) < 7 && Math.abs(z - c.nodes[i].z) < 7) { zone = { kind: "node", index: i }; break; }
@@ -199,12 +204,13 @@ function Governor() {
 function World() {
   const map = useMemo(() => paintGroundMap(), []);
   const biome = useMemo(() => paintBiomeMap(), []);
+  const water = useMemo(() => paintWaterMap(), []);
   const trees = useTrees();
   return (
     <>
-      <Ground map={map} biome={biome} />
+      <Ground map={map} biome={biome} water={water} />
       <Ocean />
-      <Grass map={map} biome={biome} />
+      <Grass map={map} biome={biome} water={water} />
       <Weather />
       <Physics gravity={[0, -24, 0]} timeStep="vary">
         <RigidBody type="fixed" friction={1}><CuboidCollider args={[1300, 1, 1300]} position={[0, -1, 0]} /></RigidBody>
@@ -215,6 +221,7 @@ function World() {
         {c.nodes.map((n, i) => <Near key={i} x={n.x} z={n.z}><NodeSpot i={i} /></Near>)}
         <Trees trees={trees} />
         <Obstacles />
+        <Landmarks />
         <Mines />
         <Warmup />
       </Physics>

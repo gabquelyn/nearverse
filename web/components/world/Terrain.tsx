@@ -3,6 +3,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
+import { LAYOUT } from "./layout";
 import { rules as c, rng } from "@nearverse/economy";
 import { COAST_GLSL, DRIVE_RADIUS, ROADS, WORLD_SIZE, biomeAt } from "./world";
 import { sky } from "./daynight";
@@ -18,6 +19,11 @@ export function paintGroundMap(): THREE.Texture {
   for (const [a, b] of ROADS) { g.beginPath(); g.moveTo(u(a.x), u(a.z)); g.lineTo(u(b.x), u(b.z)); g.stroke(); }
   for (const n of [...c.lots, ...c.merchants]) { g.beginPath(); g.arc(u(n.x), u(n.z), l(10), 0, 7); g.fill(); }
   g.fillStyle = "#0f0"; g.beginPath(); g.arc(u(0), u(0), l(25), 0, 7); g.fill();
+  // Paved pads and a gravel bed, so nothing grows through the stations and the track.
+  g.lineWidth = l(4.5); g.beginPath(); g.moveTo(u(LAYOUT.rail.from[0]), u(LAYOUT.rail.from[1])); g.lineTo(u(LAYOUT.rail.to[0]), u(LAYOUT.rail.to[1])); g.stroke();
+  for (const [x, z] of [LAYOUT.rail.from, LAYOUT.rail.to]) { g.beginPath(); g.arc(u(x), u(z), l(30), 0, 7); g.fill(); }
+  for (const f of LAYOUT.fuels) { g.beginPath(); g.arc(u(f.x), u(f.z), l(15), 0, 7); g.fill(); }
+  for (const t of LAYOUT.tunnels) { g.save(); g.strokeStyle = "#f00"; g.lineWidth = l(9); g.beginPath(); g.moveTo(u(t.x - Math.sin(t.yaw) * 44), u(t.z - Math.cos(t.yaw) * 44)); g.lineTo(u(t.x + Math.sin(t.yaw) * 44), u(t.z + Math.cos(t.yaw) * 44)); g.stroke(); g.restore(); }
   const rim = g.createRadialGradient(u(0), u(0), l(DRIVE_RADIUS - 2), u(0), u(0), l(DRIVE_RADIUS + 4));
   rim.addColorStop(0, "#000"); rim.addColorStop(1, "#00f");
   g.fillStyle = rim; g.fillRect(0, 0, S, S);
@@ -72,16 +78,32 @@ const NOISE = /* glsl */ `
   float nvFbm(vec2 p){ return texture2D(uNoise, p/32.).r; }
 `;
 
-export function Ground({ map, biome }: { map: THREE.Texture; biome: THREE.Texture }) {
+/** Where the rivers and lakes are. The soft edge becomes the bank. */
+export function paintWaterMap(): THREE.Texture {
+  const S = 1024, u = (v: number) => ((v + WORLD_SIZE / 2) / WORLD_SIZE) * S, l = (v: number) => (v / WORLD_SIZE) * S;
+  const raw = document.createElement("canvas"); raw.width = raw.height = S;
+  const g = raw.getContext("2d")!; g.fillStyle = "#000"; g.fillRect(0, 0, S, S); g.strokeStyle = g.fillStyle = "#fff"; g.lineCap = g.lineJoin = "round";
+  for (const r of LAYOUT.rivers) { g.lineWidth = l(r.w); g.beginPath(); r.pts.forEach((p, i) => (i ? g.lineTo(u(p[0]), u(p[1])) : g.moveTo(u(p[0]), u(p[1])))); g.stroke(); }
+  for (const k of LAYOUT.lakes) { g.beginPath(); g.arc(u(k.x), u(k.z), l(k.r), 0, 7); g.fill(); }
+  const cv = document.createElement("canvas"); cv.width = cv.height = S;
+  const out = cv.getContext("2d")!;
+  try { out.filter = "blur(2.5px)"; } catch { /* unsupported: harder banks */ }
+  out.drawImage(raw, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.flipY = false; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.anisotropy = 4;
+  return t;
+}
+const waterClock = { value: 0 };
+
+export function Ground({ map, biome, water }: { map: THREE.Texture; biome: THREE.Texture; water: THREE.Texture }) {
   const { geo, mat } = useMemo(() => {
     const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE); // one flat quad: the shader paints it and cuts the coastline
     geo.rotateX(-Math.PI / 2);
     const tex = map;
     const mat = new THREE.MeshLambertMaterial();
     mat.onBeforeCompile = (s) => {
-      s.uniforms.uMap = { value: tex }; s.uniforms.uBiome = { value: biome }; s.uniforms.uNoise = { value: bakedNoise() };
+      s.uniforms.uMap = { value: tex }; s.uniforms.uBiome = { value: biome }; s.uniforms.uNoise = { value: bakedNoise() }; s.uniforms.uWater = { value: water }; s.uniforms.uClock = waterClock;
       s.vertexShader = s.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vWP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvWP=(modelMatrix*vec4(position,1.)).xyz;");
-      s.fragmentShader = s.fragmentShader.replace("#include <common>", `#include <common>\nvarying vec3 vWP; uniform sampler2D uMap; uniform sampler2D uBiome; ${NOISE}
+      s.fragmentShader = s.fragmentShader.replace("#include <common>", `#include <common>\nvarying vec3 vWP; uniform sampler2D uMap; uniform sampler2D uBiome; uniform sampler2D uWater; uniform float uClock; ${NOISE}
         ${COAST_GLSL}`).replace("#include <color_fragment>", /* glsl */ `#include <color_fragment>
         if (length(vWP.xz) > coastR(atan(vWP.z, vWP.x))) discard;
         vec2 mapUv = (vWP.xz + ${(WORLD_SIZE / 2).toFixed(1)}) / ${WORLD_SIZE.toFixed(1)};
@@ -117,11 +139,22 @@ export function Ground({ map, biome }: { map: THREE.Texture; biome: THREE.Textur
         col = mix(col, pave, smoothstep(.45,.55,sp.g+wob*.25));
         vec3 sand = mix(vec3(.78,.67,.46), vec3(.88,.79,.58), n);
         col = mix(col, sand, smoothstep(.3,.6,sp.b+wob*.4));
+        float wet = texture2D(uWater, mapUv).r + (fine-.5)*.05;
+        if (wet > .08) {
+          vec3 bank = mix(vec3(.36,.29,.20), vec3(.50,.43,.30), n);
+          col = mix(col, bank, smoothstep(.1,.36,wet));
+          float flow = nvFbm(vWP.xz*.55+vec2(uClock*.5,uClock*.22))*.6 + nvNoise(vWP.xz*3.-vec2(uClock*.9,uClock*.5))*.4;
+          vec3 water = mix(vec3(.05,.24,.31), vec3(.13,.42,.47), smoothstep(.3,.75,flow));
+          water = mix(vec3(.16,.40,.40), water, smoothstep(.45,.75,wet)); // shallow near the banks
+          water += pow(smoothstep(.55,.8,flow),3.)*.28;
+          col = mix(col, water, smoothstep(.4,.5,wet));
+        }
         col *= 1.-(1.-smoothstep(0.,4.,coastR(atan(vWP.z, vWP.x))-length(vWP.xz)))*.28;
         diffuseColor.rgb = col;`);
     };
     return { geo, mat };
   }, [map]);
+  useFrame((_, dt) => { waterClock.value += dt; });
   return <mesh geometry={geo} material={mat} receiveShadow frustumCulled={false} />;
 }
 

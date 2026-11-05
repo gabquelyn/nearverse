@@ -16,7 +16,7 @@ const truckXZ = { value: new THREE.Vector2() };
 
 const PATCH = 72; // a dense square of grass that wraps around the truck, so it covers the whole island cheaply
 
-export function Grass({ map, biome, count = MAX_GRASS }: { map: THREE.Texture; biome: THREE.Texture; count?: number }) {
+export function Grass({ map, biome, water, count = MAX_GRASS }: { map: THREE.Texture; biome: THREE.Texture; water: THREE.Texture; count?: number }) {
   const { geo, mat } = useMemo(() => {
     const rand = rng(4);
     const pos = new Float32Array(count * 9), col = new Float32Array(count * 9), tip = new Float32Array(count * 3), root = new Float32Array(count * 6), nor = new Float32Array(count * 9);
@@ -40,10 +40,10 @@ export function Grass({ map, biome, count = MAX_GRASS }: { map: THREE.Texture; b
     geo.setAttribute("aRoot", new THREE.BufferAttribute(root, 2));
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     mat.onBeforeCompile = (s) => {
-      s.uniforms.uTime = time; s.uniforms.uTruck = truckXZ; s.uniforms.uMap = { value: map }; s.uniforms.uBiome = { value: biome };
+      s.uniforms.uTime = time; s.uniforms.uTruck = truckXZ; s.uniforms.uMap = { value: map }; s.uniforms.uBiome = { value: biome }; s.uniforms.uWater = { value: water };
       // Light both sides of a blade the same, or the back faces render black.
       s.fragmentShader = s.fragmentShader.replace("#include <normal_fragment_begin>", "vec3 normal = normalize(vNormal); vec3 nonPerturbedNormal = normal;");
-      s.vertexShader = s.vertexShader.replace("#include <common>", "#include <common>\nattribute float aTip; attribute vec2 aRoot; uniform float uTime; uniform vec2 uTruck; uniform sampler2D uMap; uniform sampler2D uBiome;")
+      s.vertexShader = s.vertexShader.replace("#include <common>", "#include <common>\nattribute float aTip; attribute vec2 aRoot; uniform float uTime; uniform vec2 uTruck; uniform sampler2D uWater; uniform sampler2D uMap; uniform sampler2D uBiome;")
         .replace("#include <color_vertex>", /* glsl */ `#include <color_vertex>
           vec2 nvW = uTruck + mod(aRoot - uTruck + ${(PATCH / 2).toFixed(1)}, ${PATCH.toFixed(1)}) - ${(PATCH / 2).toFixed(1)};
           vec3 nvB = texture2D(uBiome, (nvW + ${(WORLD_SIZE / 2).toFixed(1)}) / ${WORLD_SIZE.toFixed(1)}).rgb;
@@ -58,6 +58,7 @@ export function Grass({ map, biome, count = MAX_GRASS }: { map: THREE.Texture; b
           grow *= .84+.16*clump;
           vec3 region = texture2D(uBiome, (world + ${(WORLD_SIZE / 2).toFixed(1)}) / ${WORLD_SIZE.toFixed(1)}).rgb;
           grow *= (1.-smoothstep(.2,.5,region.b))*(1.-region.g+region.g*step(.93,fract(aRoot.x*7.3+aRoot.y*3.1))*.7)*(1.-region.r*.45);
+          grow *= 1.-smoothstep(.08,.3,texture2D(uWater, (world + ${(WORLD_SIZE / 2).toFixed(1)}) / ${WORLD_SIZE.toFixed(1)}).r); // none in the water
           grow = clamp(grow*1.5, 0., 1.5);
           vec2 away = world-uTruck; float dist = length(away);
           // Each blade fades at its own distance, so there is no ring where the grass stops. Colour already matches the ground by then.

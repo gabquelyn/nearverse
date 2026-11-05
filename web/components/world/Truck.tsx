@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { rules as c } from "@nearverse/economy";
 import { useGame } from "@/lib/state/game";
-import { DRIVE_RADIUS, ITEM_COLOR, keys, stick, truck } from "./world";
+import { DRIVE_RADIUS, ITEM_COLOR, deckAt, keys, stick, truck, waterDist } from "./world";
 import { perf } from "./perf";
 import { sfx } from "./sound";
 import { sky } from "./daynight";
@@ -27,6 +27,7 @@ function saveSpot(x: number, z: number, yaw: number) {
   if (!useGame.getState().player.started) return;
   try { localStorage.setItem(SPOT, JSON.stringify({ x, z, yaw })); } catch { /* starts from home next time */ }
 }
+const REST_Y = 0.6; // the truck body's height on flat ground
 const FUEL_BATCH = 10; // report driving fuel in small batches, not per metre
 
 /** Cargo cubes, one draw call. Subscribes only to what's in the bed. */
@@ -57,14 +58,14 @@ const Puffs = memo(function Puffs({ src }: { src: { emit: (x: number, z: number,
   const ref = useRef<THREE.InstancedMesh>(null!);
   const d = useMemo(() => new THREE.Object3D(), []);
   const ps = useMemo(() => Array.from({ length: PUFFS }, () => ({ life: 0, max: 1, x: 0, y: -9, z: 0, s: 1, vx: 0, vy: 0.9, vz: 0 })), []);
-  const dust = useMemo(() => new THREE.Color("#c99b73"), []), smoke = useMemo(() => new THREE.Color("#2e2a2e"), []), spark = useMemo(() => new THREE.Color("#ffb13d"), []);
+  const splash = useMemo(() => new THREE.Color("#d8eef2"), []), dust = useMemo(() => new THREE.Color("#c99b73"), []), smoke = useMemo(() => new THREE.Color("#2e2a2e"), []), spark = useMemo(() => new THREE.Color("#ffb13d"), []);
   const next = useRef(0);
   useEffect(() => {
     for (let i = 0; i < PUFFS; i++) ref.current.setColorAt(i, dust);
     src.emit = (x, z, y, kind) => {
       const i = next.current++ % PUFFS, q = ps[i];
       q.x = x + (Math.random() - 0.5) * 0.4; q.z = z + (Math.random() - 0.5) * 0.4; q.y = y; q.max = q.life = kind ? 1.5 : 0.8; q.s = kind ? 0.5 : 0.35; q.vx = 0; q.vz = 0; q.vy = 0.9;
-      ref.current.setColorAt(i, kind ? smoke : dust); if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true;
+      ref.current.setColorAt(i, kind === 2 ? splash : kind ? smoke : dust); if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true;
     };
     src.burst = (x, z, big) => {
       for (let n = 0; n < (big ? 22 : 9); n++) {
@@ -74,7 +75,7 @@ const Puffs = memo(function Puffs({ src }: { src: { emit: (x: number, z: number,
       }
       if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true;
     };
-  }, [src, ps, dust, smoke]);
+  }, [src, ps, dust, smoke, splash]);
   useFrame((_, dt) => {
     ps.forEach((q, i) => {
       if (q.life > 0) { q.life -= dt; q.x += q.vx * dt; q.z += q.vz * dt; q.y += q.vy * dt; if (q.vx || q.vz) { q.vy -= 12 * dt; if (q.y < 0.1) { q.y = 0.1; q.vy *= -0.4; } } else q.s += dt * 0.8; }
@@ -91,7 +92,7 @@ export function Truck() {
   const model = useMemo(() => buildVehicle(v0), [v0]);
   const body = useRef<RapierRigidBody>(null!);
   const [resume] = useState(readSpot);
-  const lastSave = useRef(0);
+  const lastSave = useRef(0), warnedWet = useRef(false);
   useEffect(() => { if (resume) { truck.pos.set(resume.x, 1, resume.z); truck.yaw = resume.yaw; } }, [resume]);
   const headlight = useRef<THREE.SpotLight>(null!), lightTarget = useRef<THREE.Object3D>(null!);
   const smoothSteer = useRef(0), impactSpeed = useRef(0), lastHit = useRef(0), puffClock = useRef(0), fuelOwed = useRef(0), warned = useRef(false);
@@ -105,7 +106,8 @@ export function Truck() {
     const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q), side = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const v = b.linvel(), t = b.translation();
     if (performance.now() - lastSave.current > 2000 && !perf.warming) { lastSave.current = performance.now(); saveSpot(t.x, t.z, truck.yaw); }
-    const speed = v.x * fwd.x + v.z * fwd.z, grounded = t.y < 1.2;
+    const speed = v.x * fwd.x + v.z * fwd.z, deck = deckAt(t.x, t.z), grounded = t.y < 1.2 + deck, wet = deck === 0 && t.y < 1.2 && waterDist(t.x, t.z) < 0;
+    truck.wet = wet;
     // The phone stick works from the vehicle's point of view: up goes, down reverses, left and right turn. Turning needs movement, so a sideways push also rolls forward.
     const up = keys.has("KeyW") || keys.has("ArrowUp") || stick.y > 0.35 || (Math.abs(stick.x) > 0.35 && stick.y > -0.35), down = keys.has("KeyS") || keys.has("ArrowDown") || stick.y < -0.35;
     const left = keys.has("KeyA") || keys.has("ArrowLeft"), right = keys.has("KeyD") || keys.has("ArrowRight"), boost = keys.has("ShiftLeft") || keys.has("ShiftRight");
@@ -114,13 +116,15 @@ export function Truck() {
       // Arcade handling: set velocity directly so it feels the same at any frame rate. Collisions still push back.
       const hurt = !player.started ? 1 : player.fuel <= 0 ? 0.3 : healthPct >= 0.3 ? 1 : player.durability > 0 ? 0.65 : 0.35;
       let along = speed;
-      const limit = (boost ? 40 : 27) * hurt * (1.08 - 0.04 * v0.size);
+      const limit = (boost ? 40 : 27) * hurt * (1.08 - 0.04 * v0.size) * (wet ? 0.55 : 1); // water drags the truck down
       if (up && along < limit) along += (boost ? 40 : 24) * d;
       else if (down && along > -9) along -= 24 * d;
       else if (!up && !down) along *= Math.exp(-1.1 * d);
       if (along > limit) along = Math.max(limit, along - 30 * d);
       const lateral = (v.x * side.x + v.z * side.z) * Math.exp(-8 * d);
-      b.setLinvel({ x: fwd.x * along + side.x * lateral, y: v.y, z: fwd.z * along + side.z * lateral }, true);
+      // Bridges lift the truck by the deck's height rather than by collisions, which snagged where ramp meets deck.
+      const lift = deck > 0 && t.y < REST_Y + deck ? Math.min(14, (REST_Y + deck - t.y) / Math.max(d, 0.016)) : v.y;
+      b.setLinvel({ x: fwd.x * along + side.x * lateral, y: lift, z: fwd.z * along + side.z * lateral }, true);
     }
     const steer = THREE.MathUtils.clamp((left ? 1 : 0) - (right ? 1 : 0) - stick.x, -1, 1);
     smoothSteer.current = THREE.MathUtils.lerp(smoothSteer.current, steer, 1 - Math.exp(-d * 10));
@@ -129,7 +133,8 @@ export function Truck() {
     truck.pos.set(t.x, t.y, t.z); truck.speed = speed; truck.yaw = Math.atan2(fwd.x, fwd.z);
     impactSpeed.current = Math.max(Math.hypot(v.x, v.z), impactSpeed.current - d * 40);
     if (player.started && Math.abs(speed) > 1 && player.fuel > 0) {
-      fuelOwed.current += ((Math.abs(speed) * d) / c.meters_per_fuel) * (v0.fuel_bps / 10000);
+      fuelOwed.current += ((Math.abs(speed) * d) / c.meters_per_fuel) * (v0.fuel_bps / 10000) * (wet ? 3 : 1);
+      if (wet && !warnedWet.current) { warnedWet.current = true; useGame.getState().say("Driving through water burns fuel 3 times as fast. Look for a bridge."); }
       if (fuelOwed.current >= FUEL_BATCH) { const units = Math.floor(fuelOwed.current); fuelOwed.current -= units; useGame.getState().act({ t: "burn_fuel", units }); warned.current = false; }
     }
     if (player.started && player.fuel <= 0 && !warned.current) { warned.current = true; useGame.getState().say("Out of fuel. Refuel, any time, from the panel at the top.", true); }
@@ -150,7 +155,8 @@ export function Truck() {
     if (headlight.current) headlight.current.intensity = sky.night * 90;
     puffClock.current -= d;
     if (puffClock.current <= 0) {
-      if (grounded && Math.abs(speed) > 9) { fx.emit(t.x - fwd.x * 1.9 + side.x * (Math.random() > 0.5 ? 0.9 : -0.9), t.z - fwd.z * 1.9 + side.z * (Math.random() > 0.5 ? 0.9 : -0.9), 0.25, 0); puffClock.current = 0.08; }
+      if (grounded && wet && Math.abs(speed) > 2) { fx.emit(t.x - fwd.x * 1.4 + side.x * (Math.random() > 0.5 ? 1 : -1), t.z - fwd.z * 1.4 + side.z * (Math.random() > 0.5 ? 1 : -1), 0.25, 2); puffClock.current = 0.05; }
+      else if (grounded && Math.abs(speed) > 9) { fx.emit(t.x - fwd.x * 1.9 + side.x * (Math.random() > 0.5 ? 0.9 : -0.9), t.z - fwd.z * 1.9 + side.z * (Math.random() > 0.5 ? 0.9 : -0.9), 0.25, 0); puffClock.current = 0.08; }
       if (player.started && healthPct < 0.35) { fx.emit(t.x + fwd.x * 1.2, t.z + fwd.z * 1.2, t.y + 1.2, 1); puffClock.current = player.durability <= 0 ? 0.08 : 0.2; }
     }
   });

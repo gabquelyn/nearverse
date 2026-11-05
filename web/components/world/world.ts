@@ -1,12 +1,13 @@
 // Shared world layout and helpers. Physics runs on flat ground inside DRIVE_RADIUS; beyond it the island falls into the sea.
 import * as THREE from "three";
 import { rules as c } from "@nearverse/economy";
+import { LAYOUT } from "./layout";
 
 export const HOME: [number, number] = [0, 0];
 export const PLOT: [number, number] = [0, -14];
 export const DRIVE_RADIUS = 1000;
 export const WORLD_SIZE = 2240; // the painted ground maps cover -1120..1120
-export const truck = { pos: new THREE.Vector3(0, 2, 0), yaw: 0, speed: 0, cameraYaw: 0 };
+export const truck = { pos: new THREE.Vector3(0, 2, 0), yaw: 0, speed: 0, cameraYaw: 0, wet: false };
 export const keys = new Set<string>();
 /** How far back the camera sits: 1 is normal, higher is a wider view. */
 export const view = { zoom: 1 };
@@ -63,13 +64,43 @@ export const ROADS: [Place, Place][] = [
     return [best, s] as [Place, Place];
   }),
 ];
-const distToSeg = (x: number, z: number, a: Place, b: Place) => {
+export const distToSeg = (x: number, z: number, a: Place, b: Place) => {
   const dx = b.x - a.x, dz = b.z - a.z, t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz)));
   return Math.hypot(x - a.x - dx * t, z - a.z - dz * t);
 };
+/** Distance to the nearest water's edge: negative in the water. */
+export function waterDist(x: number, z: number) {
+  let best = 1e9;
+  for (const r of LAYOUT.rivers) for (let i = 0; i < r.pts.length - 1; i++) {
+    const a = r.pts[i], b = r.pts[i + 1];
+    if (Math.abs(x - a[0]) > best + 70 && Math.abs(x - b[0]) > best + 70) continue;
+    best = Math.min(best, distToSeg(x, z, { x: a[0], z: a[1] }, { x: b[0], z: b[1] }) - r.w / 2);
+  }
+  for (const l of LAYOUT.lakes) best = Math.min(best, Math.hypot(x - l.x, z - l.z) - l.r);
+  return best;
+}
+const RAIL = { from: { x: LAYOUT.rail.from[0], z: LAYOUT.rail.from[1] }, to: { x: LAYOUT.rail.to[0], z: LAYOUT.rail.to[1] } };
+/** How high a bridge deck is here, or 0 off a bridge. Physics needs this to know the truck is still on the ground. */
+export const BRIDGE_HEIGHT = 1.1, BRIDGE_RAMP = 11;
+export const bridgeLength = (w: number) => w + 8;
+export function deckAt(x: number, z: number) {
+  for (const b of LAYOUT.bridges) {
+    const dx = x - b.x, dz = z - b.z;
+    if (Math.abs(dx) > 40 || Math.abs(dz) > 40) continue;
+    const along = Math.abs(dx * Math.sin(b.yaw) + dz * Math.cos(b.yaw)), side = Math.abs(dx * Math.cos(b.yaw) - dz * Math.sin(b.yaw)), half = bridgeLength(b.w) / 2;
+    if (side > 5 || along > half + BRIDGE_RAMP) continue;
+    return along <= half ? BRIDGE_HEIGHT : BRIDGE_HEIGHT * (1 - (along - half) / BRIDGE_RAMP);
+  }
+  return 0;
+}
 /** True where nothing solid should be placed, so roads and work areas stay drivable. */
 export function reserved(x: number, z: number, margin = 3) {
   if (Math.hypot(x, z) < 34 + margin) return true;
+  if (waterDist(x, z) < 2 + margin) return true;
+  if (distToSeg(x, z, RAIL.from, RAIL.to) < 5 + margin) return true;
+  for (const t of LAYOUT.tunnels) if (Math.hypot(x - t.x, z - t.z) < 44 + margin) return true;
+  for (const f of LAYOUT.fuels) if (Math.hypot(x - f.x, z - f.z) < 16 + margin) return true;
+  for (const p of [RAIL.from, RAIL.to]) if (Math.hypot(x - p.x, z - p.z) < 26 + margin) return true;
   for (const s of stops) if (Math.hypot(x - s.x, z - s.z) < 11 + margin) return true;
   for (const n of c.nodes) if (Math.abs(x - n.x) < 9 + margin && Math.abs(z - n.z) < 9 + margin) return true;
   for (const [a, b] of ROADS) if (distToSeg(x, z, a, b) < 4 + margin) return true;
