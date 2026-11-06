@@ -127,6 +127,6 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 
 Written during the hackathon window, with no template. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen and fontsource (Bowlby One, Atkinson Hyperlegible).
 
-Inspired by bruno-simon.com, studied through its MIT-licensed source for techniques such as leaf-card foliage, a grass patch that follows the player, tyre tracks and wind lines. No code or assets were copied. Much of the code was written with Claude, an AI coding assistant.
+No code or assets were copied. Help was recieved from Claude, an AI coding assistant, to put ideas together.
 
 License: MIT.
