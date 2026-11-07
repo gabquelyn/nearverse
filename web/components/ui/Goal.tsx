@@ -4,6 +4,7 @@ import { memo, useMemo } from "react";
 import { rules as c, bestPrices, coins, dealerName, merchantClosed, plotExpired, priceSnapshot, refuelQuote, repairQuote, vehicleOf, type Market, type Player } from "@nearverse/economy";
 import { PRACTICE_ID, useGame } from "@/lib/state/game";
 import { truck } from "../world/world";
+import { Fold } from "./Fold";
 
 export interface Goal { text: string; route?: { x: number; z: number; label: string } }
 
@@ -58,10 +59,12 @@ export const GoalLine = memo(function GoalLine() {
   // Fixed once per change of state, so the suggested spot doesn't flicker while you drive.
   const goal = useMemo(() => nextGoal(player, market, me, Date.now(), { x: truck.pos.x, z: truck.pos.z }), [player, market, me]);
   return (
-    <div className="goal" data-testid="goal">
-      <small>Your next goal</small>
-      <p>{goal.text}</p>
-      {goal.route && going !== goal.route.label && <button className="btn small action" onClick={() => setWaypoint(goal.route!)}>Show me the way</button>}
-    </div>
+    <Fold label="Goal" text={goal.text} className="goal" testId="goal">
+      {(fold) => <>
+        <small>Your next goal</small>
+        <p>{goal.text}</p>
+        {goal.route && going !== goal.route.label && <button className="btn small action" onClick={() => { setWaypoint(goal.route!); fold(); }}>Show me the way</button>}
+      </>}
+    </Fold>
   );
 });
