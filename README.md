@@ -26,6 +26,7 @@ Nearverse puts the game first. Sign in with Google or email and start driving. A
 - **Hunt.** Drive across an island of forest, snowfields, desert and city, through day and night. Resources aren't on the map. The rarest are guarded by bombs or sit in rock-ringed pools, and driving through water is slow and burns fuel three times as fast.
 - **Trade.** Sell to merchants and player stalls. Every trade changes the price, so finding the best deal is part of the game.
 - **Upkeep.** Coins pay for fuel and repairs, so each load funds the next trip.
+- **Damage and wear.** Hitting trees, rocks, buildings or a bomb costs your vehicle health, and every load wears it down too. A damaged vehicle slows down and starts smoking until you repair it, and an empty tank leaves you crawling.
 - **Build.** Buy a plot with credits, bring its materials over as many trips as you like, and open a stall that earns coins for you.
 - **Invest.** Put coins into a merchant, reopen it if it has closed, and earn a share of what it sells.
 - **A big world.** 24 materials, 5 merchants and 30 plots across the island described below.
@@ -48,6 +49,8 @@ One island, about two kilometres across, with no loading screens between areas.
 - **Sound** changes with where you are: running water near rivers, wind in the open, and the hum of the city.
 
 ## What NEAR does here
+
+**Every action is a transaction.** Loading a resource, selling, buying, refuelling, repairing, every crash, the fuel you burn while driving, building and investing are all calls to the contract, signed and sent in the background. Players never see a wallet prompt, but every action is on-chain and visible on the explorer.
 
 **Named accounts.** A Google or email login creates a readable account, such as `alice.nverse.testnet`, under the game's parent account. There's no seed phrase to manage.
 
