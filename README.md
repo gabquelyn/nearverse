@@ -1,9 +1,19 @@
 # Nearverse
 
+![Nearverse: driving across the island](web/public/screenshot.png)
+
 A drivable 3D treasure hunt with a real, player-run economy, built for the NEAR Hackathon `games` track.
 
 **Play it:** https://nearverse-murex.vercel.app  
-**Contract (NEAR testnet):** `nearverse-game-v3.testnet`
+**Contract (NEAR testnet):** [`nearverse-game-v3.testnet`](https://testnet.nearblocks.io/address/nearverse-game-v3.testnet). Every trade is visible on the explorer.
+
+## Try it in 3 minutes
+
+1. Open https://nearverse-murex.vercel.app and sign in with Google or an email code, or press **Play as a guest**.
+2. Press **Point me to one** in the tip at the bottom of the screen (on a phone, tap **? Tip** first) and follow the arrow to a resource.
+3. Hold **E** to load it, then drive to the merchant the goal suggests and sell.
+4. Tap the price before and after selling. It drops, and the tooltip explains why.
+5. Open https://nearverse-murex.vercel.app/judge and press **Run a week** to watch a week of the market in seconds.
 
 ## The problem
 
@@ -18,6 +28,24 @@ Nearverse puts the game first. Sign in with Google or email and start driving. A
 - **Upkeep.** Coins pay for fuel and repairs, so each load funds the next trip.
 - **Build.** Buy a plot with credits, bring its materials over as many trips as you like, and open a stall that earns coins for you.
 - **Invest.** Put coins into a merchant, reopen it if it has closed, and earn a share of what it sells.
+- **A big world.** 24 materials, 5 merchants and 30 plots across the island described below.
+- **Merchants can go bust.** A merchant that runs out of cash closes completely. Only players investing coins can reopen it.
+- **Together.** Drivers see each other on the island in real time, with each car showing its player's name.
+
+## The world
+
+One island, about two kilometres across, with no loading screens between areas.
+
+- **Forest and meadow** cover the middle of the island, with trees, rocks and dirt tracks between them.
+- **Snowfields** at one end of the island turn the ground and roads white.
+- **Desert** on the far side is sand, dunes and open ground.
+- **The city** has streets, buildings and its own hum. Merchants and player stalls sit along its roads.
+- **Rivers and lakes** cut across the island: 8 rivers and 3 lakes. 5 bridges cross the rivers, or you can drive through the water, slowly, with fuel burning three times as fast.
+- **Rare pools** are 9 small pools ringed by rocks, each hiding a rare material.
+- **A railway** runs across the island, with stations along the line.
+- **Fuel stations** stand at 5 points around the island.
+- **Day and night** follow one shared clock, so every player sees the same sky. A full day takes eight minutes. At night, street lamps light up the city and the island goes dark and blue.
+- **Sound** changes with where you are: running water near rivers, wind in the open, and the hum of the city.
 
 ## What NEAR does here
 
@@ -30,6 +58,8 @@ Nearverse puts the game first. Sign in with Google or email and start driving. A
 **The economy runs in the contract.** It sets prices from merchant stock and holds coins and credits, plot ownership, stall building progress and investor shares. Prices move on the chain rather than on a game server, and a trade fails with `PRICE_MOVED` instead of filling at a surprise price.
 
 **Low gas.** A move costs about 11.5 Tgas (roughly 0.00115 NEAR), measured on testnet. That's cheap enough for every trade to settle on-chain, with the game topping up players' gas automatically.
+
+**Your progress follows you.** Materials, coins, credits, fuel and truck condition are stored under your account in the contract. Sign in on another phone or computer and the game reads them back, so you carry on with the same load.
 
 **Revenue.** `buy_credits` takes NEAR at 1 NEAR = 1000 credits, and only the owner can withdraw it. Credits buy vehicles and plots.
 
@@ -52,6 +82,8 @@ Rules live in one file, `config/merchants.rules.yaml`. The contract enforces the
 | 120 (short) | 23.09 | 20.78 | 25.40 |
 | 160 (on target) | 20.00 | 18.00 | 22.00 |
 | 320 (flooded) | 14.14 | 12.73 | 15.56 |
+
+**Prices explain themselves.** Tap any price in the game to see why it is that price: stock, target, events and margin, worked out with the same formula as the contract.
 
 Price also moves with each unit in a sale, so selling 24 at once earns less than 24 times the first price. Merchants always charge more than they pay, so buying and selling straight back loses money.
 
@@ -94,10 +126,12 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 | Web game | Browser tests in practice mode |
 | Deployed contract | Game loop run on testnet with the smoke test |
 | Google sign-in | Run on the hosted site |
-| Email codes, credit purchases and export through this login | Tested with simulated responses |
-| Other cars over Ably | Tested with injected positions |
+| Email codes | Run on the hosted site |
+| Buying credits | Run on the hosted site |
+| Key export through this login | Tested with simulated responses |
+| Other drivers in real time over Ably | Run on the hosted site with two players |
 | AI choosing ghost traders' moves | Fallbacks tested against a stub server, not run against NEAR AI |
-| Frame rate on real phones and laptops | Not measured. Detail drops automatically to hold frame rate |
+| Phones | Touch stick and Gas pedal, landscape mode, folding help tips. Frame rate not measured; detail drops automatically to hold it |
 
 ## Known limits
 
@@ -127,6 +161,6 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 
 Written during the hackathon window, with no template. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen and fontsource (Bowlby One, Atkinson Hyperlegible).
 
-No code or assets were copied. Help was recieved from Claude, an AI coding assistant, to put ideas together.
+No code or assets were copied. Help was received from Claude, an AI coding assistant, to put ideas together.
 
 License: MIT.
