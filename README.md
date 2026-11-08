@@ -31,6 +31,7 @@ Nearverse puts the game first. Sign in with Google or email and start driving. A
 - **Invest.** Put coins into a merchant, reopen it if it has closed, and earn a share of what it sells.
 - **A big world.** 24 materials, 5 merchants and 30 plots across the island described below.
 - **Merchants can go bust.** A merchant that runs out of cash closes completely. Only players investing coins can reopen it.
+- **Ghost traders.** Labeled simulated players with their own NEAR wallets drive the island and trade for real, so the market keeps moving when few people are online. With a NEAR AI key, each one asks a NEAR AI Cloud model which move to make next and why. Without one, or if the model fails, it falls back to fixed rules.
 - **Together.** Drivers see each other on the island in real time, with each car showing its player's name.
 
 ## The world
@@ -63,6 +64,8 @@ One island, about two kilometres across, with no loading screens between areas.
 **Low gas.** A move costs about 11.5 Tgas (roughly 0.00115 NEAR), measured on testnet. That's cheap enough for every trade to settle on-chain, with the game topping up players' gas automatically.
 
 **Your progress follows you.** Materials, coins, credits, fuel and truck condition are stored under your account in the contract. Sign in on another phone or computer and the game reads them back, so you carry on with the same load.
+
+**NEAR AI for ghost traders.** Ghost traders can use NEAR AI Cloud to choose their moves. The model only picks from moves the game allows and gives a short reason; the contract still enforces every price and rule, so no AI can change the market directly. This is a prototype: it has been tested against a stub server, with the rule-based fallback always on.
 
 **Revenue.** `buy_credits` takes NEAR at 1 NEAR = 1000 credits, and only the owner can withdraw it. Credits buy vehicles and plots.
 
