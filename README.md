@@ -34,6 +34,21 @@ Nearverse puts the game first. Sign in with Google or email and start driving. A
 - **Ghost traders.** Labeled simulated players with their own NEAR wallets drive the island and trade for real, so the market keeps moving when few people are online. With a NEAR AI key, each one asks a NEAR AI Cloud model which move to make next and why. Without one, or if the model fails, it falls back to fixed rules.
 - **Together.** Drivers see each other on the island in real time, with each car showing its player's name.
 
+## Vehicles
+
+![The six vehicles in Nearverse](web/public/vehicle.png)
+
+Everyone starts with the Pickup for free. Credits buy the others, and each trades cargo space, toughness and fuel use differently. The contract works out every price from the vehicle's stats.
+
+| Vehicle | Price (credits) | Cargo | Health | Fuel use | Good for |
+| --- | --- | --- | --- | --- | --- |
+| Pickup | Free | 24 | 100 | Normal | Starting out |
+| Scout | 1,620 | 16 | 90 | Half | Long, cheap trips with small loads |
+| Hauler | 1,780 | 42 | 130 | 1.4× | Big loads |
+| Bulwark | 2,320 | 30 | 240 | 1.2× | Bomb-guarded spots and rough routes |
+| Rally | 2,560 | 26 | 120 | 0.7× | Fuel-saving trips with a light bar and racing paint |
+| Titan | 3,600 | 60 | 300 | 1.5× | Carrying the most and taking the most hits |
+
 ## The world
 
 One island, about two kilometres across, with no loading screens between areas.
