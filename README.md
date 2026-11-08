@@ -51,6 +51,8 @@ Everyone starts with the Pickup for free. Credits buy the others, and each trade
 
 ## The world
 
+![The verse](web/public/world.png)
+
 One island, about two kilometres across, with no loading screens between areas.
 
 - **Forest and meadow** cover the middle of the island, with trees, rocks and dirt tracks between them.
