@@ -9,7 +9,7 @@ A drivable 3D treasure hunt with a real, player-run economy, built for the NEAR 
 
 ## Try it in 3 minutes
 
-![Nearverse on a phone, with the steering stick and Gas pedal](web/public/phone.jpeg)
+![Nearverse on a phone, with the steering stick and Gas pedal](web/public/phone.png)
 *On a phone: steer with the stick and press Gas to drive. Turn the phone sideways for the best view.*
 
 1. Open https://nearverse-murex.vercel.app and sign in with Google or an email code, or press **Play as a guest**.
@@ -87,6 +87,15 @@ One island, about two kilometres across, with no loading screens between areas.
 **Your progress follows you.** Materials, coins, credits, fuel and truck condition are stored under your account in the contract. Sign in on another phone or computer and the game reads them back, so you carry on with the same load.
 
 **NEAR AI for ghost traders.** Ghost traders can use NEAR AI Cloud to choose their moves. The model only picks from moves the game allows and gives a short reason; the contract still enforces every price and rule, so no AI can change the market directly. This is a prototype: it has been tested against a stub server, with the rule-based fallback always on.
+
+| Setting | Default if not set |
+| --- | --- |
+| `NEAR_AI_API_KEY` | None. Without it, ghost traders use fixed rules |
+| `NEAR_AI_URL` | `https://cloud-api.near.ai/v1/chat/completions` |
+| `NEAR_AI_MODEL` | `openai/gpt-5-nano` |
+| `NEAR_AI_DAILY_CALLS` | `6000`. After that, traders use fixed rules until the next day |
+
+Set these where the ghost traders run, not on the website host.
 
 **Revenue.** `buy_credits` takes NEAR at 1 NEAR = 1000 credits, and only the owner can withdraw it. Credits buy vehicles and plots.
 
