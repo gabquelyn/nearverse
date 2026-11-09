@@ -163,7 +163,7 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 - **The contract can't verify driving.** Location, crash damage and driving fuel are reported by the browser, so a modified client or script could skip the drive. On-chain limits still apply: spot stock, a gather cooldown, fuel, wear and cargo space. Resource positions can also be read from this open-source repo.
 - **Google and email sign-in hold key power on the server.** The server derives each player's key from one secret and their verified email, and stores none of them. Anyone with that secret could control these wallets, so this suits testnet only. Mainnet would need NEAR Auth production credentials.
 - **Players don't pay their own gas yet.** The game funds accounts from a treasury, and the contract pays player storage, so mass sign-ups could drain them. A relayer is planned for mainnet.
-- **Griefing.** Each merchant takes at most 10 investors, and small stakes could fill those slots. Investing is permanent. Anyone can send you items, which could fill your truck bed until you sell them.
+- **Griefing.** Each merchant takes at most 10 investors, and small stakes could fill those slots. Investing is permanent. The game has no way to send items, but the contract follows the NEP-245 standard, so anyone could send you items directly with a wallet, filling your truck bed until you sell them.
 - **Inflation.** Rich-spot bonuses and merchants' hourly income create coins, which would need attention before real value.
 - **Browser-only data.** Your discovery log and the sales marked on your chart stay in your browser, so another device starts fresh.
 - **Guest play** keeps a throwaway full-access key in the browser for a faucet-funded testnet account.
@@ -191,6 +191,6 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 
 Written during the hackathon window, with no template. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen and fontsource (Bowlby One, Atkinson Hyperlegible).
 
-No code or assets were copied. Help was received from Claude, an AI coding assistant, to put ideas together.
+Nearverse was designed and directed by me: the idea, the game design, the economy, every feature decision and all testing on the live site. Much of the code was written with Claude, an AI coding assistant, working from my direction and reviewed by me. No code or assets were copied from other projects.
 
 License: MIT.
