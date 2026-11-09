@@ -9,7 +9,7 @@ A drivable 3D treasure hunt with a real, player-run economy, built for the NEAR 
 
 ## Try it in 3 minutes
 
-![Nearverse on a phone, with the steering stick and Gas pedal](web/public/phone.png)
+![Nearverse on a phone, with the steering stick and Gas pedal](web/public/phone.jpeg)
 *On a phone: steer with the stick and press Gas to drive. Turn the phone sideways for the best view.*
 
 1. Open https://nearverse-murex.vercel.app and sign in with Google or an email code, or press **Play as a guest**.
