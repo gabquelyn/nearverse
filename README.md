@@ -74,7 +74,7 @@ One island, about two kilometres across, with no loading screens between areas.
 
 **Every action is a transaction.** Loading a resource, selling, buying, refuelling, repairing, every crash, the fuel you burn while driving, building and investing are all calls to the contract, signed and sent in the background. Players never see a wallet prompt, but every action is on-chain and visible on the explorer.
 
-**Named accounts.** A Google or email login creates a readable account, such as `alice.nverse.testnet`, under the game's parent account. There's no seed phrase to manage.
+**Named accounts.** A Google or email login creates a readable account, such as `josh.nverse.testnet`, under the game's parent account. There's no seed phrase to manage.
 
 **Function-call access keys.** The browser holds a key that can only call the game contract, with a capped gas allowance. It can't attach NEAR, so it can't buy credits or transfer items. That's why moves need no pop-ups, while `buy_credits`, `withdraw_revenue` and `mt_transfer` still need a full signature.
 
