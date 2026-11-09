@@ -9,6 +9,8 @@ A drivable 3D treasure hunt with a real, player-run economy, built for the NEAR 
 
 ## Try it in 3 minutes
 
+![Nearverse on a phone, with the steering stick and Gas pedal](web/public/phone.jpeg)
+
 1. Open https://nearverse-murex.vercel.app and sign in with Google or an email code, or press **Play as a guest**.
 2. Press **Point me to one** in the tip at the bottom of the screen (on a phone, tap **? Tip** first) and follow the arrow to a resource.
 3. Hold **E** to load it, then drive to the merchant the goal suggests and sell.
@@ -88,6 +90,8 @@ One island, about two kilometres across, with no loading screens between areas.
 **Revenue.** `buy_credits` takes NEAR at 1 NEAR = 1000 credits, and only the owner can withdraw it. Credits buy vehicles and plots.
 
 ## How prices work
+
+![Tap any price to see why it is that price](web/public/tooltip.png)
 
 Rules live in one file, `config/merchants.rules.yaml`. The contract enforces them, and the tooltips run the same formula from the same state.
 
