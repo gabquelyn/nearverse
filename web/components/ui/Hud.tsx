@@ -19,13 +19,29 @@ import { Tour } from "./Tour";
 import { Nearby, ZoomButtons } from "./Nearby";
 import { samplePrices } from "@/lib/priceLog";
 
+/** The side job: three loads from one spot within a 2-hour window earns a free rare reward. The contract counts the loads and pays it. */
+function SideJob({ tick, player }: { tick: number; player: { quest_window: number; quest_progress: number } }) {
+  const waypoint = useGame((s) => s.waypoint), setWaypoint = useGame((s) => s.setWaypoint), stock = useGame((s) => s.market.nodes);
+  const period = c.quest_period_ticks, window_ = Math.floor(tick / period), index = window_ % c.nodes.length, spot = c.nodes[index];
+  const done = player.quest_window === window_ ? player.quest_progress : 0, need = c.quest_gathers;
+  const item = c.items[spot.item].name.toLowerCase(), reward = `${c.quest_reward_qty} ${c.items[window_ % c.items.length].name.toLowerCase()}`;
+  const mins = (period - (tick % period)) * Math.round(c.tick_ms / 60_000), left = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60 ? `${mins % 60}m` : ""}`.trim() : `${mins}m`;
+  const where = spot.region === "Home" ? "near Home" : `in the ${spot.region.toLowerCase()}`, label = `Side job: ${item} spot`;
+  if (done >= need) return <small className="sidejob">Side job done: {reward} added to your truck. A new one starts in about {left}.</small>;
+  return (
+    <small className="sidejob">
+      Side job: load {item} {need} times from one marked spot {where} and get {reward} free.{" "}
+      {done > 0 ? `${done} of ${need} done. ` : ""}About {left} left.{stock[index] === 0 ? " The spot is empty right now and refills over time." : ""}
+      {waypoint?.label !== label && <> <button className="btn small action" onClick={() => setWaypoint({ x: spot.x, z: spot.z, label })}>Show me the spot</button></>}
+    </small>
+  );
+}
+
 const Stats = memo(function Stats() {
   const player = useGame((s) => s.player), tick = useGame((s) => s.market.tick), act = useGame((s) => s.act);
   const rank = useGame((s) => s.board.findIndex((r) => r.account_id === s.session?.accountId) + 1);
   const vehicle = vehicleOf(c, player), health = Math.round((player.durability / vehicle.endurance) * 100), fuelPct = Math.round((player.fuel / vehicle.tank) * 100);
   const rf = refuelQuote(c, player), rq = repairQuote(c, player);
-  const window_ = Math.floor(tick / c.quest_period_ticks), quest = c.nodes[window_ % c.nodes.length];
-  const progress = player.quest_window === window_ ? player.quest_progress : 0;
   return (
     <div className="hud">
       <div className="plate"><small>Credits</small><b data-testid="credits">{player.credits}</b></div>
@@ -39,7 +55,7 @@ const Stats = memo(function Stats() {
           <button className="btn small" disabled={rf.missing === 0} onClick={() => act({ t: "refuel", units: rf.missing })}>{rf.missing ? `Refuel: ${coins(rf.cost)}` : "Tank full"}</button>
           <button className="btn small" disabled={rq.missing === 0} onClick={() => act({ t: "repair" })}>{rq.missing ? `Repair: ${coins(rq.cost)}` : "No damage"}</button>
         </div></div>
-      <div className="plate job"><GoalLine /><small className="sidejob">Side job: {progress >= c.quest_gathers ? "Done. Reward paid." : `Find ${c.quest_gathers - progress} loads of ${c.items[quest.item].name.toLowerCase()} ${quest.region === "Home" ? "near Home" : `in the ${quest.region}`} for ${c.quest_reward_qty} ${c.items[window_ % c.items.length].name.toLowerCase()}`}</small></div>
+      <div className="plate job"><GoalLine /><SideJob tick={tick} player={player} /></div>
     </div>
   );
 });

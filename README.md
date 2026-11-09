@@ -25,6 +25,7 @@ Nearverse puts the game first. Sign in with Google or email and start driving. A
 
 - **Hunt.** Drive across an island of forest, snowfields, desert and city, through day and night. Resources aren't on the map. The rarest are guarded by bombs or sit in rock-ringed pools, and driving through water is slow and burns fuel three times as fast.
 - **Trade.** Sell to merchants and player stalls. Every trade changes the price, so finding the best deal is part of the game.
+- **Side jobs.** Every 2 hours a new side job marks one resource spot. Load from it 3 times before it changes and the contract adds 4 of a reward material, which changes with each job and can be a rare one, to your truck for free. **Show me the spot** points the arrow there.
 - **Upkeep.** Coins pay for fuel and repairs, so each load funds the next trip.
 - **Damage and wear.** Hitting trees, rocks, buildings or a bomb costs your vehicle health, and every load wears it down too. A damaged vehicle slows down and starts smoking until you repair it, and an empty tank leaves you crawling.
 - **Build.** Buy a plot with credits, bring its materials over as many trips as you like, and open a stall that earns coins for you.
@@ -51,7 +52,7 @@ Everyone starts with the Pickup for free. Credits buy the others, and each trade
 
 ## The world
 
-![The verse](web/public/world.png)
+![Snowfields, desert, the city at night, a river bridge, a rare pool and the railway](web/public/world.png)
 
 One island, about two kilometres across, with no loading screens between areas.
 
