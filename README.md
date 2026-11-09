@@ -32,7 +32,7 @@ Nearverse puts the game first. Sign in with Google or email and start driving. A
 - **Invest.** Put coins into a merchant, reopen it if it has closed, and earn a share of what it sells.
 - **A big world.** 24 materials, 5 merchants and 30 plots across the island described below.
 - **Merchants can go bust.** A merchant that runs out of cash closes completely. Only players investing coins can reopen it.
-- **Ghost traders.** Labeled simulated players with their own NEAR wallets drive the island and trade for real, so the market keeps moving when few people are online. With a NEAR AI key, each one asks a NEAR AI Cloud model which move to make next and why. Without one, or if the model fails, it falls back to fixed rules.
+- **Ghost traders.** Labeled simulated players with their own NEAR wallets that trade for real, built to keep the market moving when few people are online. They run on an always-on machine, so they aren't active on the hosted demo. With a NEAR AI key, each one asks a NEAR AI Cloud model which move to make next and why. Without one, or if the model fails, it falls back to fixed rules.
 - **Together.** Drivers see each other on the island in real time, with each car showing its player's name.
 
 ## Vehicles
@@ -169,6 +169,12 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 - **Guest play** keeps a throwaway full-access key in the browser for a faucet-funded testnet account.
 - **Other cars are visual only.** Their positions travel over Ably and never touch the contract, and you drive through them.
 - **Ghost traders** are labeled simulated players with real wallets and real trades. They need an always-on machine, so they aren't always running. No AI model can change a price.
+
+## What's next
+
+- **Player-run pricing through a Sputnik DAO.** Hand the NEAR-to-credits rate and vehicle pricing to a DAO, so players vote on what it costs to join and what credits buy. A passed vote would call the contract directly, with limits on how far a price can move at once and a delay shown in the game before it takes effect.
+- **A shared treasury.** Send revenue from credit purchases to the same DAO, so players decide how it's spent, for example on gas for new players or prizes for top traders.
+- **Mainnet.** A relayer to pay players' gas, and NEAR Auth production credentials for sign-in, so no single server secret holds key power.
 
 ## Layout
 
