@@ -1,22 +1,34 @@
-# Nearverse
+<h1 align="center">Nearverse</h1>
 
-![Nearverse: driving across the island](web/public/screenshot.png)
+<p align="center"><b>A drivable 3D treasure hunt with a real, player-run economy, on NEAR.</b></p>
 
-A drivable 3D treasure hunt with a real, player-run economy, built for the NEAR Hackathon `games` track.
+<p align="center">
+  <a href="https://nearverse-murex.vercel.app"><b>Play it</b></a> ·
+  <a href="https://testnet.nearblocks.io/address/nearverse-game-v3.testnet">Contract on NEAR testnet</a> ·
+  <a href="#try-it-in-3-minutes">Try it in 3 minutes</a> ·
+  <a href="#what-near-does-here">What NEAR does here</a> ·
+  <a href="#how-prices-work">How prices work</a> ·
+  <a href="#run-it">Run it</a>
+</p>
 
-**Play it:** https://nearverse-murex.vercel.app  
-**Contract (NEAR testnet):** [`nearverse-game-v3.testnet`](https://testnet.nearblocks.io/address/nearverse-game-v3.testnet). Every trade is visible on the explorer.
+<p align="center"><img src="web/public/screenshot.png" alt="A truck driving across the Nearverse island" width="100%"></p>
 
-## Try it in 3 minutes
+Drive a truck across a huge island, hunt for hidden materials, and sell them to merchants and other players' stalls. Every sale moves the price for everyone, merchants go bust when their cash runs out, and players can invest to bring them back. Sign in with Google or email and you're driving in moments, with no wallet, no seed phrase and no pop-ups. Every trade still settles on NEAR.
 
-![Nearverse on a phone, with the steering stick and Gas pedal](web/public/phone.jpeg)
-*On a phone: steer with the stick and press Gas to drive. Turn the phone sideways for the best view.*
+- **Play:** https://nearverse-murex.vercel.app (NEAR testnet)
+- **Contract:** [`nearverse-game-v3.testnet`](https://testnet.nearblocks.io/address/nearverse-game-v3.testnet) (Rust, near-sdk 5). Every trade is visible on the explorer.
+- **Track:** NEAR Hackathon, `games`: Games With Real Economies.
 
-1. Open https://nearverse-murex.vercel.app and sign in with Google or an email code, or press **Play as a guest**.
-2. Press **Point me to one** in the tip at the bottom of the screen (on a phone, tap **? Tip** first) and follow the arrow to a resource.
-3. Hold **E** to load it, then drive to the merchant the goal suggests and sell.
-4. Tap the price before and after selling. It drops, and the tooltip explains why.
-5. Open https://nearverse-murex.vercel.app/judge and press **Run a week** to watch a week of the market in seconds.
+<table>
+  <tr>
+    <td width="50%"><img src="web/public/tooltip.png" alt="A merchant's price tooltip explaining the price"></td>
+    <td width="50%"><img src="web/public/phone.jpeg" alt="Nearverse on a phone, with the steering stick and Gas pedal"></td>
+  </tr>
+  <tr>
+    <td><b>Prices explain themselves.</b> Tap any price to see why it is that price.</td>
+    <td><b>On a phone.</b> Steer with the stick and press Gas. Turn the phone sideways for the best view.</td>
+  </tr>
+</table>
 
 ## The problem
 
@@ -24,10 +36,24 @@ Most crypto games make people learn about wallets, seed phrases and gas before t
 
 Nearverse puts the game first. Sign in with Google or email and start driving. After that, moves are signed in the background with no wallet pop-ups, while the market and what you own live in a contract anyone can read.
 
+## Try it in 3 minutes
+
+You don't need a wallet. Every step below runs on NEAR testnet, and you can watch the transactions land on the [explorer](https://testnet.nearblocks.io/address/nearverse-game-v3.testnet) as you go.
+
+| Do this | You'll see |
+| --- | --- |
+| **1.** Open https://nearverse-murex.vercel.app and sign in with **Google** or an **email code**, or press **Play as a guest** | A real NEAR testnet account with a readable name, such as `alice.nverse.testnet`. No wallet, no seed phrase, no pop-up. |
+| **2.** Press **Point me to one** in the tip at the bottom of the screen (on a phone, tap **? Tip** first) | An arrow pointing to the nearest resource. As you get within 150 m, a notice names it and counts down the distance. |
+| **3.** Drive there with **WASD** or the arrow keys (stick and **Gas** on a phone) and hold **E** | The resource loads into your truck. That was a transaction, signed in the background. |
+| **4.** Drive to the merchant your goal suggests and tap its price | A tooltip showing why the price is what it is: stock, target, events and margin. |
+| **5.** Sell, then tap the price again | It has dropped. Your sale moved the market for every player. Your coins went up. |
+| **6.** Open https://nearverse-murex.vercel.app/judge and press **Run a week**, then **Flood the market with iron** while it plays | A week of the market in about a minute: prices recovering, events hitting, iron falling after the flood. This is a labeled simulation in the browser and sends no transactions. |
+
 ## The game
 
 - **Hunt.** Drive across an island of forest, snowfields, desert and city, through day and night. Resources aren't on the map, but when you get within 150 metres of any resource, rare ones included, a notice tells you what it is and counts down the distance as you close in, for example "Resin grove 30 m away". The rarest are guarded by bombs or sit in rock-ringed pools, and driving through water is slow and burns fuel three times as fast.
-- **Trade.** Sell to merchants and player stalls. Every trade changes the price, so finding the best deal is part of the game.
+- **Two currencies.** *Coins* are the game's own money: you earn them by selling resources, and spend them on fuel, repairs and investing. *Credits* are bought with NEAR (1 NEAR = 1000 credits) and pay for vehicles and plots. Neither can be cashed out.
+- **Trade.** Sell to merchants and player stalls for coins. Every trade changes the price, so finding the best deal is part of the game.
 - **Side jobs.** Every 2 hours a new side job marks one resource spot. Load from it 3 times before it changes and the contract adds 4 of a reward material, which changes with each job and can be a rare one, to your truck for free. **Show me the spot** points the arrow there.
 - **Upkeep.** Coins pay for fuel and repairs, so each load funds the next trip.
 - **Damage and wear.** Hitting trees, rocks, buildings or a bomb costs your vehicle health, and every load wears it down too. A damaged vehicle slows down and starts smoking until you repair it, and an empty tank leaves you crawling.
@@ -74,7 +100,7 @@ One island, about two kilometres across, with no loading screens between areas.
 
 **Every action is a transaction.** Loading a resource, selling, buying, refuelling, repairing, every crash, the fuel you burn while driving, building and investing are all calls to the contract, signed and sent in the background. Players never see a wallet prompt, but every action is on-chain and visible on the explorer.
 
-**Named accounts.** A Google or email login creates a readable account, such as `josh.nverse.testnet`, under the game's parent account. There's no seed phrase to manage.
+**Named accounts.** A Google or email login creates a readable account, such as `alice.nverse.testnet`, under the game's parent account. There's no seed phrase to manage.
 
 **Function-call access keys.** The browser holds a key that can only call the game contract, with a capped gas allowance. It can't attach NEAR, so it can't buy credits or transfer items. That's why moves need no pop-ups, while `buy_credits`, `withdraw_revenue` and `mt_transfer` still need a full signature.
 
@@ -101,8 +127,6 @@ Set these where the ghost traders run, not on the website host.
 
 ## How prices work
 
-![Tap any price to see why it is that price](web/public/tooltip.png)
-
 Rules live in one file, `config/merchants.rules.yaml`. The contract enforces them, and the tooltips run the same formula from the same state.
 
 `price = base × (target stock ÷ current stock)^k`, held between 35% and 300% of base.
@@ -125,14 +149,9 @@ Rules live in one file, `config/merchants.rules.yaml`. The contract enforces the
 
 Price also moves with each unit in a sale, so selling 24 at once earns less than 24 times the first price. Merchants always charge more than they pay, so buying and selling straight back loses money.
 
-## Try it
+## Run it
 
-**Hosted**
-
-1. Open https://nearverse-murex.vercel.app/signin, sign in with Google or an email code, and choose a username. Or press **Play as a guest**.
-2. Drive with WASD or arrows, or the on-screen stick and Gas on a phone. When a prompt says you've found a resource, hold **E** to load it.
-3. Drive to a merchant and sell. Hover or tap a price to see why it's that price.
-4. Open https://nearverse-murex.vercel.app/judge, press **Run a week**, then **Flood the market with iron**, and watch the price fall. This fast-forward is a labeled simulation in the browser and sends no transactions.
+To play the hosted game, follow [Try it in 3 minutes](#try-it-in-3-minutes).
 
 **Locally, with no chain**
 
@@ -173,16 +192,13 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 
 ## Known limits
 
-- **Testnet only.** Credits and coins can't be withdrawn.
+- **Testnet only.** Game coins and credits stay in the game and can't be withdrawn.
 - **The contract can't verify driving.** Location, crash damage and driving fuel are reported by the browser, so a modified client or script could skip the drive. On-chain limits still apply: spot stock, a gather cooldown, fuel, wear and cargo space. Resource positions can also be read from this open-source repo.
 - **Google and email sign-in hold key power on the server.** The server derives each player's key from one secret and their verified email, and stores none of them. Anyone with that secret could control these wallets, so this suits testnet only. Mainnet would need NEAR Auth production credentials.
 - **Players don't pay their own gas yet.** The game funds accounts from a treasury, and the contract pays player storage, so mass sign-ups could drain them. A relayer is planned for mainnet.
 - **Griefing.** Each merchant takes at most 10 investors, and small stakes could fill those slots. Investing is permanent. The game has no way to send items, but the contract follows the NEP-245 standard, so anyone could send you items directly with a wallet, filling your truck bed until you sell them.
-- **Inflation.** Rich-spot bonuses and merchants' hourly income create coins, which would need attention before real value.
-- **Browser-only data.** Your discovery log and the sales marked on your chart stay in your browser, so another device starts fresh.
-- **Guest play** keeps a throwaway full-access key in the browser for a faucet-funded testnet account.
-- **Other cars are visual only.** Their positions travel over Ably and never touch the contract, and you drive through them.
-- **Ghost traders** are labeled simulated players with real wallets and real trades. They need an always-on machine, so they aren't always running. No AI model can change a price.
+- **Inflation.** Rich-spot bonuses and merchants' hourly income create new game coins, which would need balancing before the game used real money.
+- **Smaller notes.** Other cars are visual only: their positions travel over Ably, never touch the contract, and you drive through them. Your discovery log and the sales marked on your chart stay in your browser. Guest play keeps a throwaway testnet key in the browser. Ghost traders need an always-on machine, so they aren't always running, and no AI model can change a price.
 
 ## What's next
 
