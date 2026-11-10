@@ -61,7 +61,7 @@ You don't need a wallet. Every step below runs on NEAR testnet, and you can watc
 - **Invest.** Put coins into a merchant, reopen it if it has closed, and earn a share of what it sells.
 - **A big world.** 24 materials, 5 merchants and 30 plots across the island described below.
 - **Merchants can go bust.** A merchant that runs out of cash closes completely. Only players investing coins can reopen it.
-- **Ghost traders.** Labeled simulated players with their own NEAR wallets that trade for real, built to keep the market moving when few people are online. They run on an always-on machine, so they aren't active on the hosted demo. With a NEAR AI key, each one asks a NEAR AI Cloud model which move to make next and why. Without one, or if the model fails, it falls back to fixed rules.
+- **AI traders.** Four computer-controlled players drive the island alongside you and trade for real, each with its own NEAR wallet, so the market keeps moving when few people are online. They're live on the hosted game. Their accounts and cars are named `ghost-1` to `ghost-4`, so they're easy to tell apart from people. Right now they decide with built-in trading rules; with a NEAR AI key, each one asks a NEAR AI Cloud model which move to make and why, and falls back to the rules if the model fails.
 - **Together.** Drivers see each other on the island in real time, with each car showing its player's name.
 
 ## Vehicles
@@ -112,16 +112,16 @@ One island, about two kilometres across, with no loading screens between areas.
 
 **Your progress follows you.** Materials, coins, credits, fuel and truck condition are stored under your account in the contract. Sign in on another phone or computer and the game reads them back, so you carry on with the same load.
 
-**NEAR AI for ghost traders.** Ghost traders can use NEAR AI Cloud to choose their moves. The model only picks from moves the game allows and gives a short reason; the contract still enforces every price and rule, so no AI can change the market directly. This is a prototype: it has been tested against a stub server, with the rule-based fallback always on.
+**NEAR AI for AI traders.** The AI traders can use NEAR AI Cloud to choose their moves. The model only picks from moves the game allows and gives a short reason; the contract still enforces every price and rule, so no AI can change the market directly. This is a prototype: it has been tested against a stub server, with the rule-based fallback always on.
 
 | Setting | Default if not set |
 | --- | --- |
-| `NEAR_AI_API_KEY` | None. Without it, ghost traders use fixed rules |
+| `NEAR_AI_API_KEY` | None. Without it, AI traders use built-in rules |
 | `NEAR_AI_URL` | `https://cloud-api.near.ai/v1/chat/completions` |
 | `NEAR_AI_MODEL` | `openai/gpt-5-nano` |
 | `NEAR_AI_DAILY_CALLS` | `6000`. After that, traders use fixed rules until the next day |
 
-Set these where the ghost traders run, not on the website host.
+Set these where the AI traders run, not on the website host.
 
 **Revenue.** `buy_credits` takes NEAR at 1 NEAR = 1000 credits, and only the owner can withdraw it. Credits buy vehicles and plots.
 
@@ -170,7 +170,8 @@ Open http://localhost:3000 for the game in practice mode, or http://localhost:30
 | `docker build --target contract-wasm --output out .` | Writes the contract to `out/nearverse.wasm` |
 | `docker compose run --build --rm deploy` | Builds and deploys the contract to testnet |
 | `docker compose run --build --rm smoke` | Runs the game loop against the deployed contract |
-| `docker compose --profile ops up -d --build ghosts tracker` | Runs labeled simulated traders and the price tracker on an always-on machine |
+| `docker compose --profile ops up -d --build ghosts tracker` | Runs the AI traders and the price tracker on an always-on machine |
+| `docker build -f ghosts.Dockerfile -t nearverse-ghosts .` | Builds the AI traders alone, for a host such as Railway, while the website stays on Vercel |
 
 To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in `.env.example`.
 
@@ -187,7 +188,7 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 | Buying credits | Run on the hosted site |
 | Key export through this login | Tested with simulated responses |
 | Other drivers in real time over Ably | Run on the hosted site with two players |
-| AI choosing ghost traders' moves | Fallbacks tested against a stub server, not run against NEAR AI |
+| AI traders | Running live against the deployed contract on built-in rules. NEAR AI choices tested against a stub server, not yet run against NEAR AI |
 | Phones | Touch stick and Gas pedal, landscape mode, folding help tips. Frame rate not measured; detail drops automatically to hold it |
 
 ## Known limits
@@ -198,7 +199,7 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 - **Players don't pay their own gas yet.** The game funds accounts from a treasury, and the contract pays player storage, so mass sign-ups could drain them. A relayer is planned for mainnet.
 - **Griefing.** Each merchant takes at most 10 investors, and small stakes could fill those slots. Investing is permanent. The game has no way to send items, but the contract follows the NEP-245 standard, so anyone could send you items directly with a wallet, filling your truck bed until you sell them.
 - **Inflation.** Rich-spot bonuses and merchants' hourly income create new game coins, which would need balancing before the game used real money.
-- **Smaller notes.** Other cars are visual only: their positions travel over Ably, never touch the contract, and you drive through them. Your discovery log and the sales marked on your chart stay in your browser. Guest play keeps a throwaway testnet key in the browser. Ghost traders need an always-on machine, so they aren't always running, and no AI model can change a price.
+- **Smaller notes.** Other cars are visual only: their positions travel over Ably, never touch the contract, and you drive through them. Your discovery log and the sales marked on your chart stay in your browser. Guest play keeps a throwaway testnet key in the browser. The AI traders need an always-on machine to keep running, and no AI model can change a price.
 
 ## What's next
 
@@ -214,7 +215,7 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 | `contracts/nearverse/` | Rust contract |
 | `packages/economy/` | Rules, simulation and tooltips in TypeScript |
 | `web/` | Next.js app (`/`, `/play`, `/signin`, `/judge`, `/profile`, `/status`) |
-| `scripts/` | Generation, deploy, smoke tests, ghost traders, price tracker |
+| `scripts/` | Generation, deploy, smoke tests, AI traders (`ghost-traders.ts`), price tracker |
 | `tests/e2e/` | Browser tests |
 
 ## Third-party code and AI disclosure
