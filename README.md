@@ -61,7 +61,7 @@ You don't need a wallet. Every step below runs on NEAR testnet, and you can watc
 - **Invest.** Put coins into a merchant, reopen it if it has closed, and earn a share of what it sells.
 - **A big world.** 24 materials, 5 merchants and 30 plots across the island described below.
 - **Merchants can go bust.** A merchant that runs out of cash closes completely. Only players investing coins can reopen it.
-- **AI merchants.** Four computer-controlled traders, separate from the city's merchant shops, drive the island alongside you and trade for real, each with its own NEAR wallet, so the market keeps moving when few people are online. They're live on the hosted game. Their accounts and cars are named `ghost-1` to `ghost-4`, so they're easy to tell apart from people. Right now they decide with built-in trading rules; with a NEAR AI key, each one asks a NEAR AI Cloud model which move to make and why, and falls back to the rules if the model fails.
+- **AI merchants.** Four computer-controlled traders, separate from the city's merchant shops, drive the island alongside you and trade for real, each with its own NEAR wallet, so the market keeps moving when few people are online. Their accounts and cars are named `ghost-1` to `ghost-4`, so they're easy to tell apart from people. Right now they decide with built-in trading rules; with a NEAR AI key, each one asks a NEAR AI Cloud model which move to make and why, and falls back to the rules if the model fails.
 - **Together.** Drivers see each other on the island in real time, with each car showing its player's name.
 
 ## Vehicles
