@@ -116,12 +116,10 @@ One island, about two kilometres across, with no loading screens between areas.
 
 | Setting | Default if not set |
 | --- | --- |
-| `NEAR_AI_API_KEY` | None. Without it, AI traders use built-in rules |
+| `NEAR_AI_API_KEY` | None. Without it, built-in rules are used |
 | `NEAR_AI_URL` | `https://cloud-api.near.ai/v1/chat/completions` |
 | `NEAR_AI_MODEL` | `openai/gpt-5-nano` |
 | `NEAR_AI_DAILY_CALLS` | `6000`. After that, traders use fixed rules until the next day |
-
-Set these where the AI traders run, not on the website host.
 
 **Revenue.** `buy_credits` takes NEAR at 1 NEAR = 1000 credits, and only the owner can withdraw it. Credits buy vehicles and plots.
 
