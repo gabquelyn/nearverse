@@ -96,6 +96,18 @@ One island, about two kilometres across, with no loading screens between areas.
 - **Day and night** follow one shared clock, so every player sees the same sky. A full day takes eight minutes. At night, street lamps light up the city and the island goes dark and blue.
 - **Sound** changes with where you are: running water near rivers, wind in the open, and the hum of the city.
 
+## Leaderboard
+
+![The leaderboard of players](web/public/leaderboard.png)
+
+Top players ranked by net worth, read straight from the contract. Your coins, the value of what you’re carrying and the stalls you’ve built all count, so the board changes as people trade.
+
+## Sales Performance
+
+![The sale performance of materials and merchants](web/public/performance.png)
+
+Any material’s price over time at each merchant, with your own sales marked on the line. You can see how each sale moved the price, and when it’s worth coming back to sell again.
+
 ## What NEAR does here
 
 **Every action is a transaction.** Loading a resource, selling, buying, refuelling, repairing, every crash, the fuel you burn while driving, building and investing are all calls to the contract, signed and sent in the background. Players never see a wallet prompt, but every action is on-chain and visible on the explorer.
