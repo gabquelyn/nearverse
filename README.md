@@ -216,10 +216,10 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 | `scripts/` | Generation, deploy, smoke tests, AI traders (`ghost-traders.ts`), price tracker |
 | `tests/e2e/` | Browser tests |
 
-## Third-party code and AI disclosure
+## Third-party code
 
 Written during the hackathon window, with no template. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen and fontsource (Bowlby One, Atkinson Hyperlegible).
 
-Nearverse was designed and directed by me: the idea, the game design, the economy, every feature decision and all testing on the live site. Much of the code was written with Claude, an AI coding assistant, working from my direction and reviewed by me. No code or assets were copied from other projects.
+Nearverse was designed and developed by [gabquelyn](https://github.com/gabquelyn/)
 
 License: MIT.
