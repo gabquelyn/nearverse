@@ -220,6 +220,7 @@ To run your own testnet copy, see [DEPLOY.md](DEPLOY.md). Variable names are in 
 
 Written during the hackathon window, with no template. Libraries: near-sdk, near-kit, near-api-js, NEAR Auth SDK (`@fast-auth-near/*`), Next.js, React, three.js, react-three-fiber, react-three-rapier, Rapier, zustand, Ably, Google Identity Services, NEAR AI Cloud (optional), yaml, vitest, Playwright, binaryen and fontsource (Bowlby One, Atkinson Hyperlegible).
 
-Nearverse was designed and developed by [gabquelyn](https://github.com/gabquelyn/)
+## Author
+Nearverse was designed and developed by [@gabquelyn](https://github.com/gabquelyn/)
 
 License: MIT.
